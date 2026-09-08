@@ -1,0 +1,95 @@
+/**
+ * The bridge.
+ *
+ * Every operation the window is allowed to perform, listed by name. Nothing else
+ * crosses: no filesystem, no database handle, no keys. If an operation is not
+ * here, the UI cannot do it.
+ *
+ * The list is written out rather than generated, so that reading this file tells
+ * you the renderer's entire reach without having to follow anything.
+ */
+
+import { contextBridge, ipcRenderer } from 'electron';
+
+import type { VaultpApi } from '../shared/api.js';
+
+const api: VaultpApi = {
+  // A listener, not a channel the window can send on: the main process talks,
+  // the renderer only hears.
+  onVaultChanged: (listener) => {
+    ipcRenderer.on('vault:changed', () => listener());
+  },
+
+  status: () => ipcRenderer.invoke('vault:status'),
+  create: (passphrase) => ipcRenderer.invoke('vault:create', passphrase),
+  unlock: (passphrase) => ipcRenderer.invoke('vault:unlock', passphrase),
+  adopt: (passphrase) => ipcRenderer.invoke('vault:adopt', passphrase),
+  joinFolder: (passphrase) => ipcRenderer.invoke('vault:joinFolder', passphrase),
+  chooseSyncFolder: () => ipcRenderer.invoke('vault:chooseSyncFolder'),
+  sync: () => ipcRenderer.invoke('vault:sync'),
+  setSyncTarget: (target) => ipcRenderer.invoke('vault:setSyncTarget', target),
+
+  driveStatus: () => ipcRenderer.invoke('drive:status'),
+  connectDrive: (input) => ipcRenderer.invoke('drive:connect', input),
+  disconnectDrive: () => ipcRenderer.invoke('drive:disconnect'),
+
+  overview: () => ipcRenderer.invoke('overview:read'),
+  readAllowanceConfig: () => ipcRenderer.invoke('overview:allowanceConfig'),
+  saveAllowanceConfig: (config) => ipcRenderer.invoke('overview:saveAllowanceConfig', config),
+
+  listExpenses: (query) => ipcRenderer.invoke('expenses:list', query),
+  listCategories: () => ipcRenderer.invoke('expenses:categories'),
+  listCurrencies: () => ipcRenderer.invoke('expenses:currencies'),
+  addExpense: (input) => ipcRenderer.invoke('expenses:add', input),
+  updateExpense: (id, input) => ipcRenderer.invoke('expenses:update', id, input),
+  deleteExpense: (id) => ipcRenderer.invoke('expenses:delete', id),
+  listUnsettled: () => ipcRenderer.invoke('expenses:unsettled'),
+  settleExpense: (id, charged) => ipcRenderer.invoke('expenses:settle', id, charged),
+  exportExpensesCsv: () => ipcRenderer.invoke('expenses:exportCsv'),
+
+  listNotes: (includeDone) => ipcRenderer.invoke('notes:list', includeDone),
+  addNote: (form) => ipcRenderer.invoke('notes:add', form),
+  updateNote: (id, form) => ipcRenderer.invoke('notes:update', id, form),
+  setNoteDone: (id, done) => ipcRenderer.invoke('notes:setDone', id, done),
+  deleteNote: (id) => ipcRenderer.invoke('notes:delete', id),
+
+  search: (term) => ipcRenderer.invoke('search:everything', term),
+
+  addCategory: (form) => ipcRenderer.invoke('categories:add', form),
+  archiveCategory: (id) => ipcRenderer.invoke('categories:archive', id),
+
+  exportBackup: () => ipcRenderer.invoke('backup:export'),
+  restoreBackup: () => ipcRenderer.invoke('backup:restore'),
+
+  listDocuments: (search) => ipcRenderer.invoke('documents:list', search),
+  addDocumentFromFile: () => ipcRenderer.invoke('documents:addFromFile'),
+  addDocument: (form) => ipcRenderer.invoke('documents:add', form),
+  updateDocument: (id, form) => ipcRenderer.invoke('documents:update', id, form),
+  deleteDocument: (id) => ipcRenderer.invoke('documents:delete', id),
+  previewDocument: (id) => ipcRenderer.invoke('documents:preview', id),
+  exportDocument: (id) => ipcRenderer.invoke('documents:export', id),
+  recogniseDocument: (id) => ipcRenderer.invoke('documents:recognise', id),
+  listTags: () => ipcRenderer.invoke('documents:tags'),
+  addTag: (name) => ipcRenderer.invoke('documents:addTag', name),
+  tagDocument: (documentId, tagId, tagged) =>
+    ipcRenderer.invoke('documents:tagDocument', documentId, tagId, tagged),
+  listRules: () => ipcRenderer.invoke('rules:list'),
+  addRule: (form) => ipcRenderer.invoke('rules:add', form),
+  setRuleState: (id, state) => ipcRenderer.invoke('rules:setState', id, state),
+  updateRuleAmount: (id, amount, currency) =>
+    ipcRenderer.invoke('rules:updateAmount', id, amount, currency),
+  runAutoLog: () => ipcRenderer.invoke('rules:runAutoLog'),
+  listPendingReminders: () => ipcRenderer.invoke('rules:pending'),
+  listUpcoming: () => ipcRenderer.invoke('rules:upcoming'),
+
+  listBalances: () => ipcRenderer.invoke('debts:balances'),
+  listPeople: () => ipcRenderer.invoke('debts:people'),
+  addPerson: (input) => ipcRenderer.invoke('debts:addPerson', input),
+  archivePerson: (id) => ipcRenderer.invoke('debts:archivePerson', id),
+  ledgerFor: (personId) => ipcRenderer.invoke('debts:ledger', personId),
+  addDebtEntry: (form) => ipcRenderer.invoke('debts:addEntry', form),
+  voidDebtEntry: (id, note) => ipcRenderer.invoke('debts:voidEntry', id, note),
+  settleDebt: (personId, note) => ipcRenderer.invoke('debts:settle', personId, note),
+};
+
+contextBridge.exposeInMainWorld('vaultp', api);

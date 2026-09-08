@@ -1,0 +1,59 @@
+# Packaging the desktop app into something you can hand someone.
+#
+# Two outputs: an installer for a machine that keeps the app, and a single
+# portable .exe for one that does not — a borrowed computer, or a stick carried
+# alongside the sync folder. Both open the same vault.
+appId: com.vaultp.desktop
+productName: VaultP
+copyright: Copyright © VaultP
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**
+  - package.json
+  # Only the "fast" models are ever loaded. Shipping the alternates as well
+  # would add tens of megabytes nothing opens.
+  - '!**/node_modules/@tesseract.js-data/*/4.0.0_best_int/**'
+  # Every WebAssembly variant is kept: which one loads is decided at runtime
+  # from what the processor supports, so trimming them breaks some machines and
+  # not the one doing the trimming.
+
+# The SQLite binary is a compiled module that must match Electron's ABI, and it
+# is put in place by scripts/native.mjs rather than rebuilt here. Letting
+# electron-builder rebuild it would require a C++ toolchain on every machine
+# that packages the app, which is exactly what the prebuilt binaries avoid.
+npmRebuild: false
+
+# Anything that must exist as a real file on disk rather than inside the
+# archive: the native module is dlopen'd, and Tesseract's worker and language
+# data are read by a worker thread with its own idea of the filesystem.
+asarUnpack:
+  - '**/*.node'
+  - '**/node_modules/tesseract.js/**'
+  - '**/node_modules/tesseract.js-core/**'
+  - '**/node_modules/@tesseract.js-data/**'
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.png
+
+nsis:
+  # Not a one-click installer: this app holds someone's documents and debts, and
+  # where it is installed is a decision worth offering rather than assuming.
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  # Per-user, so installing needs no administrator and the vault stays in the
+  # profile of whoever installed it.
+  perMachine: false
+  createDesktopShortcut: true
+  shortcutName: VaultP
+
+portable:
+  artifactName: VaultP-${version}-portable.exe

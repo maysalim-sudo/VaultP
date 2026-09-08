@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "id": "TRX+gE1W/utVByfM",
+  "kdf": {
+    "algorithm": "PBKDF2-SHA512",
+    "iterations": 210000
+  },
+  "slots": [
+    {
+      "id": "primary",
+      "salt": "DQkYIpkZgKiT6BfzEWKUBQ==",
+      "wrapped": "LJPtvjfo4dFJbAux3F6rX+QReyFugCiUhudsYYnfW2tLROcqXuBZfj1xj5pCeJy5tHmipKED+6N1/4HE"
+    },
+    {
+      "id": "decoy",
+      "salt": "RBNBMksUE69H1+1bTJkn2w==",
+      "wrapped": "trtfbgL0WrEbClD8FLGUDuEeNfT3T/+UTsRW5akXdUW43QjTx3GodSSM1HoVbIkwpPee/QEI0P9EKO3W"
+    }
+  ]
+}

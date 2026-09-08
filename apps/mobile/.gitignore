@@ -1,0 +1,48 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+# The native project IS tracked.
+#
+# Expo's default ignores it, on the assumption that prebuild regenerates it from
+# app.json. That holds only while nothing in it is hand-edited — and the signing
+# configuration and the single-ABI setting are exactly that. Untracked, they
+# would vanish on a fresh clone and the build would silently fall back to a
+# throwaway debug key. Its own .gitignore still excludes build output.
+# /android

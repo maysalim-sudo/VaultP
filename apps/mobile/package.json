@@ -1,0 +1,41 @@
+{
+  "name": "@vaultp/mobile",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@op-engineering/op-sqlite": "^18.2.0",
+    "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-ml-kit/text-recognition": "^2.0.0",
+    "@vaultp/core": "*",
+    "expo": "~57.0.20",
+    "expo-file-system": "~57.0.6",
+    "expo-image-picker": "~57.0.16",
+    "expo-local-authentication": "~57.0.2",
+    "expo-notifications": "~57.0.17",
+    "expo-secure-store": "~57.0.3",
+    "expo-sharing": "~57.0.18",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-get-random-values": "~2.0.0",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-quick-base64": "^3.0.1",
+    "react-native-quick-crypto": "^1.1.7"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
+  },
+  "private": true,
+  "op-sqlite": {
+    "sqlcipher": true
+  }
+}

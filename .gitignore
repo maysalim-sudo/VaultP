@@ -1,0 +1,31 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
+*.db
+*.sqlite
+*.sqlite3
+vault/
+.DS_Store
+Thumbs.db
+
+# Release signing. The keystore and its password decide whether a future build
+# can update this app in place; losing them means uninstalling to install a new
+# version, which erases the vault. Keep both backed up outside the repo, and out
+# of version control.
+*.keystore
+*.jks
+apps/mobile/android/keystore.properties
+
+# Cached native binaries, one per ABI. Downloaded on demand.
+apps/desktop/.native-cache/
+
+# Packaged installers. Built on demand and far too large to version.
+apps/desktop/release/
+
+# The desktop icon is a source file, not build output — `build/` above is a
+# blanket rule and would otherwise swallow it.
+!apps/desktop/build/
+!apps/desktop/build/**

@@ -1,0 +1,201 @@
+/* Dark by default: the phone is, and a window that flashes white when the same
+   vault opens on a second screen reads as a different application. */
+:root {
+  --bg: #121417;
+  --surface: #1a1d21;
+  --border: #343a40;
+  --text: #f8f9fa;
+  --dim: #868e96;
+  --accent: #4dabf7;
+  --danger: #ff6b6b;
+  --warn: #ff922b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.centre {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+}
+
+.panel {
+  width: min(440px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+h1 { margin: 0; font-size: 30px; }
+h2 { margin: 2px 0 0; font-size: 26px; }
+h3 { margin: 24px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); }
+
+.muted { color: var(--dim); }
+.small { font-size: 12px; }
+.warn { color: var(--warn); }
+.error { color: var(--danger); font-weight: 600; }
+
+input, select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 13px;
+  font: inherit;
+  flex: 1;
+  min-width: 0;
+}
+
+button {
+  background: var(--accent);
+  color: #06131f;
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+button.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+button:disabled { opacity: 0.45; cursor: default; }
+
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+.shell { display: grid; grid-template-columns: 208px 1fr; min-height: 100vh; }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.brand { font-size: 18px; font-weight: 700; padding: 4px 12px 18px; }
+.nav {
+  background: transparent;
+  color: var(--dim);
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.nav:hover { color: var(--text); }
+.nav.active { background: var(--bg); color: var(--text); }
+.nav-icon { width: 16px; text-align: center; opacity: 0.8; }
+
+.page { padding: 24px 32px 48px; min-width: 0; }
+
+.syncbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+/* A long folder path must not push the buttons off the row. */
+.syncbar .path { max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 16px; margin: 16px 0 24px; }
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.figure { font-size: 23px; font-weight: 700; line-height: 1.2; }
+
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 8px; }
+@media (max-width: 900px) { .columns { grid-template-columns: 1fr; } }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid #25292e;
+}
+.list .right { text-align: right; white-space: nowrap; }
+.list em { font-style: normal; }
+/* Direction in words, not a sign: "-200" reads as either the moment you stop
+   concentrating. */
+.owed { color: #51cf66; }
+.owing { color: var(--danger); }
+
+.head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.head h2 { margin: 0; }
+
+.clickable { cursor: pointer; }
+.clickable:hover { background: var(--surface); }
+
+.field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+.narrow { max-width: 150px; flex: 0 0 auto; }
+.spacer { flex: 1; }
+
+button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 10;
+}
+.modal {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.modal-head h3 { margin: 0; }
+.modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+.modal-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 14px 20px; border-top: 1px solid var(--border); }
+/* A footer of actions reads as a row of labels; letting them break mid-phrase
+   turns "I paid them back" into three stacked words. */
+.modal-foot button { white-space: nowrap; }
+
+.net { display: flex; flex-direction: column; gap: 2px; }
+.side { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-top: 1px solid var(--border); }
+
+button.link { background: none; border: 0; color: var(--dim); padding: 0 0 0 12px; font-weight: 600; text-decoration: underline; }
+button.link:hover { color: var(--danger); }
+
+.check { gap: 8px; }
+.check input { flex: 0 0 auto; width: 16px; height: 16px; }
+
+.grow { flex: 1; min-width: 0; }
+.bar { height: 6px; border-radius: 3px; background: var(--bg); margin: 6px 0 2px; overflow: hidden; }
+.bar .fill { height: 100%; background: var(--accent); }
+.bar .fill.over { background: var(--danger); }
+
+.preview { max-height: 260px; width: auto; align-self: center; border-radius: 10px; border: 1px solid var(--border); }
+.tags { gap: 6px; }
+button.tag { background: var(--bg); color: var(--dim); border: 1px solid var(--border); padding: 6px 11px; font-size: 12px; }
+button.tag.on { background: var(--accent); color: #06131f; border-color: var(--accent); }
+.scroll { max-height: 140px; overflow-y: auto; margin: 0; white-space: pre-wrap; }
+
+.strike { text-decoration: line-through; }
