@@ -24,11 +24,18 @@ export function Dashboard() {
 
       <section className="cards">
         <div className="card">
-          <span className="muted small">Spent this month</span>
-          <strong className="figure">
-            {data ? `${data.month.total.text} ${data.month.total.currency}` : '—'}
+          <span className="stat-label">Spent this month</span>
+          <strong className="stat-value hero">
+            {data ? (
+              <>
+                {data.month.total.text}
+                <span className="unit">{data.month.total.currency}</span>
+              </>
+            ) : (
+              '—'
+            )}
           </strong>
-          <span className="muted small">
+          <span className="stat-note">
             {data?.month.transactionCount ?? 0} transaction
             {data?.month.transactionCount === 1 ? '' : 's'}
           </span>
@@ -36,18 +43,25 @@ export function Dashboard() {
             // Said out loud rather than folded into the figure above: those
             // charges have no known value, and counting them as zero would make
             // the total quietly wrong.
-            <span className="warn small">{data.month.unvaluedCount} awaiting statement</span>
+            <span className="stat-note warn">{data.month.unvaluedCount} awaiting statement</span>
           ) : null}
         </div>
 
         <div className="card">
-          <span className="muted small">Projected by month end</span>
-          <strong className="figure">
-            {data ? `${data.forecast.projectedTotal.text} ${data.forecast.projectedTotal.currency}` : '—'}
+          <span className="stat-label">Projected by month end</span>
+          <strong className="stat-value hero">
+            {data ? (
+              <>
+                {data.forecast.projectedTotal.text}
+                <span className="unit">{data.forecast.projectedTotal.currency}</span>
+              </>
+            ) : (
+              '—'
+            )}
           </strong>
           {data ? (
             <>
-              <span className="muted small">
+              <span className="stat-note">
                 {data.forecast.committed.text} already scheduled ·{' '}
                 {data.forecast.daysRemaining} day
                 {data.forecast.daysRemaining === 1 ? '' : 's'} left
@@ -56,18 +70,18 @@ export function Dashboard() {
                 // The projection rests on too few days that actually had
                 // spending. One sitting of back-dated entries looks like a
                 // furious daily rate, so this is a hint, not a number.
-                <span className="warn small">
+                <span className="stat-note warn">
                   Based on {data.forecast.daysWithSpending} day
                   {data.forecast.daysWithSpending === 1 ? '' : 's'} of spending — treat the
                   everyday part as a rough hint
                 </span>
               ) : (
-                <span className="muted small">
+                <span className="stat-note">
                   {data.forecast.dailyAverage.text} a day so far
                 </span>
               )}
               {data.forecast.rulesWithoutRate > 0 ? (
-                <span className="warn small">
+                <span className="stat-note warn">
                   {data.forecast.rulesWithoutRate} rule
                   {data.forecast.rulesWithoutRate === 1 ? '' : 's'} with no known rate — this
                   is a floor
@@ -78,23 +92,23 @@ export function Dashboard() {
         </div>
 
         <div className="card">
-          <span className="muted small">Owed</span>
-          <strong className="figure">{data?.openBalances.length ?? 0}</strong>
-          <span className="muted small">open balances</span>
+          <span className="stat-label">Owed</span>
+          <strong className="stat-value">{data?.openBalances.length ?? 0}</strong>
+          <span className="stat-note">open balances</span>
         </div>
 
         <div className="card">
-          <span className="muted small">Needs attention</span>
+          <span className="stat-label">Needs attention</span>
           <strong
-            className={`figure ${
+            className={`stat-value ${
               (data?.expiringDocuments.length ?? 0) + (data?.overdueNotes.length ?? 0) > 0
-                ? 'warn'
+                ? 'owing'
                 : ''
             }`}
           >
             {(data?.expiringDocuments.length ?? 0) + (data?.overdueNotes.length ?? 0)}
           </strong>
-          <span className="muted small">expiring documents and overdue notes</span>
+          <span className="stat-note">expiring documents and overdue notes</span>
         </div>
       </section>
 
@@ -210,24 +224,24 @@ function Allowance({ data }: { data: AllowanceDto }) {
       <h3>Foreign allowance — {data.label}</h3>
       <div className="cards">
         <div className="card">
-          <span className="muted small">Used</span>
+          <span className="stat-label">Used</span>
           <strong className="figure">
             {data.used.text} / {data.ceiling.text} {data.ceiling.currency}
           </strong>
-          <span className="muted small">{data.remaining.text} remaining</span>
+          <span className="stat-note">{data.remaining.text} remaining</span>
           {data.unvaluedCount > 0 ? (
             // The used figure skips these rather than counting them as zero,
             // so it is a floor, and saying so is the difference between a
             // number and a misleading one.
-            <span className="warn small">
+            <span className="stat-note warn">
               {data.unvaluedCount} charge{data.unvaluedCount === 1 ? '' : 's'} with no
               debited value yet — used is a floor
             </span>
           ) : null}
         </div>
         <div className="card">
-          <span className="muted small">Projected</span>
-          <strong className={`figure ${data.projectedOverrun.amountMinor > 0 ? 'warn' : ''}`}>
+          <span className="stat-label">Projected</span>
+          <strong className={`figure ${data.projectedOverrun.amountMinor > 0 ? 'owing' : ''}`}>
             {data.projectedTotal.text} {data.projectedTotal.currency}
           </strong>
           {data.projectedOverrun.amountMinor > 0 ? (

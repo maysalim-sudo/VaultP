@@ -1,60 +1,80 @@
 /**
- * Colours, in one place.
+ * The phone's palette, derived from the shared design tokens.
  *
- * Two palettes rather than a theming library: the app has a handful of surfaces,
- * and the phone's own light/dark setting is the only input. Anything more would be
- * machinery in search of a use.
+ * The colours no longer live here — they live in `@vaultp/core` design tokens,
+ * the same source the desktop draws from, so the two devices cannot drift. This
+ * file only *adapts* them into the shape the screens already expect, and adds a
+ * few roles the richer language introduced. Every field the existing screens
+ * read is still here, so nothing outside the redesigned screens has to change.
  */
+
+import { darkTheme, lightTheme, type Theme } from '@vaultp/core';
 
 export interface Palette {
   readonly background: string;
   readonly surface: string;
+  /** A surface lifted above the card layer: pressed rows, inputs, the drawer's fill. */
+  readonly surfaceOverlay: string;
   readonly text: string;
   readonly dim: string;
+  /** The least important line: placeholders, faint metadata. */
+  readonly textFaint: string;
+  /** A pressed/disabled fill. */
   readonly key: string;
   readonly ripple: string;
   readonly border: string;
   readonly divider: string;
   readonly accent: string;
+  /** Text/icons printed on the accent. */
+  readonly onAccent: string;
   readonly danger: string;
   readonly success: string;
   readonly warning: string;
+  /** Owed to you. */
+  readonly positive: string;
+  /** You owe / overspent. */
+  readonly negative: string;
+  /** The `≈` state — provisional, neither fact nor error. */
+  readonly estimate: string;
+  /** Android elevation for a card / for an overlay. */
+  readonly elevationCard: number;
+  readonly elevationOverlay: number;
 }
 
-export const lightPalette: Palette = {
-  background: '#FFFFFF',
-  surface: '#F8F9FA',
-  text: '#111417',
-  dim: '#868E96',
-  key: '#F1F3F5',
-  ripple: '#DEE2E6',
-  border: '#DEE2E6',
-  divider: '#F1F3F5',
-  accent: '#1971C2',
-  danger: '#C92A2A',
-  success: '#2F9E44',
-  warning: '#E8590C',
-};
+function paletteFromTheme(theme: Theme): Palette {
+  const c = theme.colors;
+  return {
+    background: c.bg,
+    surface: c.surfaceRaised,
+    surfaceOverlay: c.surfaceOverlay,
+    text: c.text,
+    dim: c.textDim,
+    textFaint: c.textFaint,
+    key: c.surfaceOverlay,
+    ripple: c.border,
+    border: c.border,
+    divider: c.divider,
+    accent: c.accent,
+    onAccent: c.onAccent,
+    danger: c.danger,
+    success: c.success,
+    warning: c.warning,
+    positive: c.positive,
+    negative: c.negative,
+    estimate: c.estimate,
+    elevationCard: theme.depth.rnElevationCard,
+    elevationOverlay: theme.depth.rnElevationOverlay,
+  };
+}
 
-export const darkPalette: Palette = {
-  background: '#121417',
-  surface: '#1A1D21',
-  text: '#F8F9FA',
-  dim: '#868E96',
-  key: '#1E2126',
-  ripple: '#343A40',
-  border: '#343A40',
-  divider: '#25292E',
-  accent: '#4DABF7',
-  danger: '#FF6B6B',
-  success: '#51CF66',
-  warning: '#FF922B',
-};
+export const lightPalette: Palette = paletteFromTheme(lightTheme);
+export const darkPalette: Palette = paletteFromTheme(darkTheme);
 
 /**
  * React Native reports 'unspecified' as well as light/dark, so the parameter is
- * widened rather than narrowed at each call site. Anything that is not explicitly
- * dark renders light.
+ * widened rather than narrowed at each call site. Anything not explicitly dark
+ * renders light — and the light theme is now a considered first-class theme, not
+ * a washed-out fallback.
  */
 export function paletteFor(scheme: string | null | undefined): Palette {
   return scheme === 'dark' ? darkPalette : lightPalette;

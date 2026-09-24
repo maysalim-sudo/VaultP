@@ -26,8 +26,11 @@ import {
   money,
   monthTotal,
   pendingReminders,
+  radii,
+  spacing,
   todayIn,
   toDecimalString,
+  typeScale,
   upcomingCharges,
   type Expense,
   type LedgerBalance,
@@ -167,7 +170,10 @@ export function Home({
       */}
       <Pressable
         onPress={() => onNavigate('insights')}
-        style={[styles.stats, { backgroundColor: palette.surface }]}
+        style={[
+          styles.stats,
+          { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
+        ]}
         android_ripple={{ color: palette.ripple }}
       >
         {/*
@@ -179,9 +185,9 @@ export function Home({
           {formatMoney(month.total, 'fr-TN')}
         </Text>
 
-        <View style={styles.statLine}>
+        <View style={[styles.statLine, { borderTopColor: palette.divider }]}>
           <Text style={[styles.statLabel, { color: palette.dim }]}>Today</Text>
-          <Text style={[styles.statToday, { color: palette.dim }]} numberOfLines={1}>
+          <Text style={[styles.statToday, { color: palette.text }]} numberOfLines={1}>
             {formatMoney(money(todayTotal, BASE_CURRENCY), 'fr-TN')}
           </Text>
         </View>
@@ -322,6 +328,17 @@ export function Home({
                       : 'awaiting statement'
                     : undefined
                 }
+                // An estimate reads as provisional, a missing statement as faint
+                // and unknown — neither the same as a settled figure.
+                subRightColor={
+                  expense.amount.currency === BASE_CURRENCY
+                    ? undefined
+                    : expense.base
+                      ? expense.baseEstimated
+                        ? palette.estimate
+                        : palette.dim
+                      : palette.textFaint
+                }
                 palette={palette}
                 // Straight into the editor: a mistake is easiest to fix while you
                 // still remember making it.
@@ -334,9 +351,10 @@ export function Home({
 
       <Pressable
         onPress={() => onNavigate('add')}
-        style={[styles.addButton, { backgroundColor: palette.accent }]}
+        style={[styles.addButton, { backgroundColor: palette.accent, elevation: palette.elevationCard }]}
+        android_ripple={{ color: palette.ripple }}
       >
-        <Text style={styles.addButtonText}>Add an expense</Text>
+        <Text style={[styles.addButtonText, { color: palette.onAccent }]}>Add an expense</Text>
       </Pressable>
     </ScrollView>
   );
@@ -354,7 +372,16 @@ function Section({
   return (
     <View style={styles.section}>
       <Text style={[styles.sectionTitle, { color: palette.dim }]}>{title}</Text>
-      {children}
+      {/* Rows grouped on a lifted surface, so a section reads as one thing rather
+          than a run of lines floating on the page. */}
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
@@ -365,6 +392,7 @@ function Row({
   detail,
   right,
   subRight,
+  subRightColor,
   tone,
   palette,
   onPress,
@@ -375,19 +403,22 @@ function Row({
   detail?: string;
   right?: string;
   subRight?: string;
+  subRightColor?: string;
   tone?: 'warning' | 'danger' | 'success';
   palette: Palette;
   onPress: () => void;
   /** A one-tap resolution, for rows where the obvious answer is usually yes. */
   action?: { label: string; onPress: () => void };
 }) {
+  // The money meanings go through the semantic roles: what is owed to you is
+  // positive, what you owe is negative, whatever the tone was named.
   const detailColour =
     tone === 'danger'
-      ? palette.danger
+      ? palette.negative
       : tone === 'warning'
         ? palette.warning
         : tone === 'success'
-          ? palette.success
+          ? palette.positive
           : palette.dim;
 
   return (
@@ -411,7 +442,9 @@ function Row({
         <View style={styles.rowRight}>
           <Text style={[styles.rowAmount, { color: palette.text }]}>{right}</Text>
           {subRight ? (
-            <Text style={[styles.rowDetail, { color: palette.dim }]}>{subRight}</Text>
+            <Text style={[styles.rowDetail, styles.figure, { color: subRightColor ?? palette.dim }]}>
+              {subRight}
+            </Text>
           ) : null}
         </View>
       ) : null}
@@ -422,7 +455,7 @@ function Row({
           style={[styles.action, { backgroundColor: palette.accent }]}
           hitSlop={6}
         >
-          <Text style={styles.actionText}>{action.label}</Text>
+          <Text style={[styles.actionText, { color: palette.onAccent }]}>{action.label}</Text>
         </Pressable>
       ) : null}
     </Pressable>
@@ -430,47 +463,72 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  body: { padding: 20, paddingTop: 48, paddingBottom: 48 },
-  greeting: { fontSize: 13 },
+  body: { padding: spacing.xl, paddingTop: 44, paddingBottom: 44 },
+  greeting: { fontSize: typeScale.sm },
 
-  stats: { marginTop: 10, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14 },
+  stats: {
+    marginTop: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+  },
   statLine: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    gap: 12,
-    marginTop: 10,
+    gap: spacing.md,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  statLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
-  statValue: { fontSize: 28, fontWeight: '700', marginTop: 2 },
-  statToday: { fontSize: 15, fontWeight: '600', flexShrink: 1 },
-  note: { fontSize: 11, marginTop: 6 },
+  statLabel: { fontSize: typeScale.xs, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '600' },
+  // The figure a screen exists to show, sized as such and shrinking only if a
+  // three-decimal dinar total is long enough to need it.
+  statValue: {
+    fontSize: typeScale.hero,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+    letterSpacing: -0.5,
+    fontVariant: ['tabular-nums'],
+  },
+  statToday: { fontSize: typeScale.md, fontWeight: '700', flexShrink: 1, fontVariant: ['tabular-nums'] },
+  note: { fontSize: typeScale.xs, marginTop: spacing.sm },
 
-  section: { marginTop: 28 },
+  section: { marginTop: spacing.xl },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: typeScale.xs,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 6,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
   },
-  empty: { paddingVertical: 20, lineHeight: 20 },
+  card: {
+    borderRadius: radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
+    overflow: 'hidden',
+  },
+  empty: { paddingVertical: spacing.lg, lineHeight: 20 },
 
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
+    gap: spacing.md,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  rowIcon: { fontSize: 16, width: 22, textAlign: 'center' },
+  rowIcon: { fontSize: typeScale.md, width: 24, textAlign: 'center' },
   rowMain: { flex: 1 },
-  rowTitle: { fontSize: 15, fontWeight: '600' },
-  rowDetail: { fontSize: 12, marginTop: 2 },
+  rowTitle: { fontSize: typeScale.md, fontWeight: '600' },
+  rowDetail: { fontSize: typeScale.xs, marginTop: 2 },
   rowRight: { alignItems: 'flex-end' },
-  action: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 },
-  actionText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  rowAmount: { fontWeight: '600' },
+  figure: { fontVariant: ['tabular-nums'] },
+  action: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill },
+  actionText: { fontWeight: '700', fontSize: typeScale.sm },
+  rowAmount: { fontWeight: '600', fontVariant: ['tabular-nums'] },
 
-  addButton: { marginTop: 28, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  addButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  addButton: { marginTop: spacing.xl, borderRadius: radii.lg, paddingVertical: 16, alignItems: 'center' },
+  addButtonText: { fontWeight: '700', fontSize: typeScale.md },
 });

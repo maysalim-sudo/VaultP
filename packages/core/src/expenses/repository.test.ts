@@ -421,6 +421,10 @@ describe('auto-logging', () => {
         anchorDate: '2026-09-15',
         autoLog: true,
       });
+      // Pin createdOn before the occurrence, or the "no back-fill" floor (which
+      // uses the real clock for a rule's creation date) drops the charge once
+      // today has moved past the hard-coded asOf below.
+      backdateRule(ctx.store, 'r_claude', '2026-09-01');
       runAutoLog(ctx.repo, '2026-09-20');
     }
 
