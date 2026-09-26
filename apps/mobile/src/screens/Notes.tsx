@@ -279,7 +279,12 @@ function NoteCard({
         {note.dueOn ? (
           <View style={[styles.chip, { backgroundColor: wash(scheme) }]}>
             <Text
-              style={[styles.chipText, { color: overdue ? palette.danger : palette.text }]}
+              // Overdue is carried by weight, not a warning colour: the chip sits on
+              // the note's own shade, and ochre on a yellow or orange card is unreadable.
+              style={[
+                styles.chipText,
+                { color: palette.text, fontWeight: overdue ? '700' : undefined },
+              ]}
               numberOfLines={1}
             >
               {note.notify ? '🔔 ' : '🕒 '}

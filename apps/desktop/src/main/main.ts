@@ -7,10 +7,10 @@
  * anything that ends up running inside a web page.
  */
 
-import { BrowserWindow, app, dialog, ipcMain, shell } from 'electron';
+import { BrowserWindow, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
 import { join } from 'node:path';
 
-import { BASE_CURRENCY } from '@vaultp/core';
+import { BASE_CURRENCY, darkColors, lightColors } from '@vaultp/core';
 
 import { shutdownOcr } from './ocr.js';
 
@@ -45,7 +45,9 @@ function createWindow(): void {
     width: 1100,
     height: 760,
     minWidth: 760,
-    backgroundColor: '#121417',
+    // Painted before the page loads, so it must match the theme the page is
+    // about to draw or the window flashes the wrong ground on open.
+    backgroundColor: nativeTheme.shouldUseDarkColors ? darkColors.bg : lightColors.bg,
     title: 'VaultP',
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/preload.cjs'),

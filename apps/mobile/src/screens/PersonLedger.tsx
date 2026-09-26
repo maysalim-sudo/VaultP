@@ -143,7 +143,7 @@ export function PersonLedger({
                   <Text
                     style={[
                       styles.balance,
-                      { color: net > 0 ? palette.success : palette.danger },
+                      { color: net > 0 ? palette.positive : palette.negative },
                     ]}
                   >
                     {toDecimalString(money(Math.abs(net), balance.currency))}{' '}

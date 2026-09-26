@@ -199,7 +199,7 @@ function Group({
               <Text
                 style={[
                   styles.amount,
-                  { color: net > 0 ? palette.success : net < 0 ? palette.danger : palette.dim },
+                  { color: net > 0 ? palette.positive : net < 0 ? palette.negative : palette.dim },
                 ]}
               >
                 {toDecimalString(

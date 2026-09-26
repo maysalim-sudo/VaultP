@@ -10,25 +10,25 @@
  * nothing more.
  */
 :root {
-  --bg: #0e1013;
-  --surface: #16191f;
-  --surface-raised: #16191f;
-  --surface-overlay: #1e222a;
-  --text: #f2f4f7;
-  --dim: #9aa3af;
-  --text-dim: #9aa3af;
-  --text-faint: #6b7280;
-  --border: #2a2f38;
-  --divider: #20242b;
-  --accent: #7c93ff;
-  --on-accent: #0b1020;
-  --positive: #4ade80;
-  --negative: #f87171;
-  --estimate: #8aa0c0;
-  --success: #4ade80;
-  --warning: #fb923c;
-  --warn: #fb923c;
-  --danger: #f87171;
+  --bg: #0b0e12;
+  --surface: #191c20;
+  --surface-raised: #191c20;
+  --surface-overlay: #1d2024;
+  --text: #e6e8eb;
+  --dim: #9ba3ac;
+  --text-dim: #9ba3ac;
+  --text-faint: #6e7680;
+  --border: #282b30;
+  --divider: #1f2226;
+  --accent: #7ea0b8;
+  --on-accent: #0b0e12;
+  --positive: #68a37f;
+  --negative: #d49d42;
+  --estimate: #a59cc8;
+  --success: #68a37f;
+  --warning: #d49d42;
+  --warn: #d49d42;
+  --danger: #c9826b;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.55);
 
@@ -328,7 +328,7 @@ button.link:hover { color: var(--danger); filter: none; }
 .grow { flex: 1; min-width: 0; }
 .bar { height: 6px; border-radius: var(--radius-pill); background: var(--surface-overlay); margin: 6px 0 2px; overflow: hidden; }
 .bar .fill { height: 100%; background: var(--accent); border-radius: var(--radius-pill); }
-.bar .fill.over { background: var(--danger); }
+.bar .fill.over { background: var(--negative); }
 
 .preview { max-height: 260px; width: auto; align-self: center; border-radius: var(--radius-md); border: 1px solid var(--border); }
 .tags { gap: 6px; }

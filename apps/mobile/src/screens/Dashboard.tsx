@@ -204,11 +204,11 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
                 <Meter
                   ratio={allowance.ratioUsed}
                   palette={palette}
-                  colour={allowance.ratioUsed > 0.9 ? palette.danger : palette.accent}
+                  colour={allowance.ratioUsed > 0.9 ? palette.negative : palette.accent}
                 />
 
                 {allowance.exhaustionDate ? (
-                  <Note palette={palette} tone="danger">
+                  <Note palette={palette} tone="warning">
                     At this rate the ceiling runs out on {allowance.exhaustionDate}.
                     After that, foreign payments start being declined.
                   </Note>
@@ -321,11 +321,11 @@ function Note({
   children,
 }: {
   palette: Palette;
-  tone: 'dim' | 'warning' | 'danger';
+  // No 'danger' tone: a money note is never red, however close the ceiling is.
+  tone: 'dim' | 'warning';
   children: React.ReactNode;
 }) {
-  const colour =
-    tone === 'danger' ? palette.danger : tone === 'warning' ? palette.warning : palette.dim;
+  const colour = tone === 'warning' ? palette.warning : palette.dim;
   return <Text style={[styles.note, { color: colour }]}>{children}</Text>;
 }
 
@@ -358,7 +358,7 @@ function BudgetRow({
   onPress: () => void;
 }) {
   const colour = budget.overspent
-    ? palette.danger
+    ? palette.negative
     : (budget.ratioUsed ?? 0) > 0.85
       ? palette.warning
       : (budget.category.color ?? palette.accent);
@@ -369,7 +369,7 @@ function BudgetRow({
         <Text style={[styles.budgetName, { color: palette.text }]} numberOfLines={1}>
           {budget.category.icon ?? ''} {budget.category.name}
         </Text>
-        <Text style={[styles.budgetNumbers, { color: budget.overspent ? palette.danger : palette.dim }]}>
+        <Text style={[styles.budgetNumbers, { color: budget.overspent ? palette.negative : palette.dim }]}>
           {toDecimalString(budget.spend.total)} / {toDecimalString(budget.available!)}
         </Text>
       </View>

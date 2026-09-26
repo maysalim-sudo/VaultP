@@ -282,7 +282,7 @@ function DocumentRow({
           <Text
             style={[
               styles.meta,
-              { color: expired ? palette.danger : days < 30 ? palette.warning : palette.dim },
+              { color: expired ? palette.negative : days < 30 ? palette.warning : palette.dim },
             ]}
           >
             {expired
