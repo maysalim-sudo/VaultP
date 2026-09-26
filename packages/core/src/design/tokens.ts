@@ -183,8 +183,63 @@ export const radii = {
   sm: 8,
   md: 12,
   lg: 16,
+  /** The generous, friendly rounding of the money screens. */
+  xl: 24,
   pill: 999,
 } as const;
+
+/**
+ * Note card shades, by colour name, for each theme.
+ *
+ * Keyed by the same names as the notes' own colour field, which stores a name
+ * rather than a value so that each theme can pick a shade that reads on its
+ * ground: pale pastels behind dark text in light, deep muted tones behind light
+ * text in dark. A test holds this in step with the list of names notes accept.
+ */
+export const noteShades: Record<ColorScheme, Readonly<Record<string, string>>> = {
+  light: {
+    red: '#FAAFA8',
+    orange: '#F39F76',
+    yellow: '#FFF8B8',
+    green: '#E2F6D3',
+    teal: '#B4DDD3',
+    blue: '#D4E4ED',
+    purple: '#D3BFDB',
+    pink: '#F6E2DD',
+    brown: '#E9E3D4',
+    grey: '#EFEFF1',
+  },
+  dark: {
+    red: '#77172E',
+    orange: '#692B17',
+    yellow: '#7C4A03',
+    green: '#264D3B',
+    teal: '#0C625D',
+    blue: '#256377',
+    purple: '#472E5B',
+    pink: '#6C394F',
+    brown: '#4B443A',
+    grey: '#2C2E33',
+  },
+};
+
+/**
+ * Vivid fills for category tiles, for any category that has not been given a
+ * colour of its own.
+ *
+ * Deep enough to carry a white glyph in either theme. A category is assigned one
+ * by its id, so it keeps the same colour everywhere and on both devices.
+ */
+export const categoryPalette: readonly string[] = [
+  '#5C3DF5',
+  '#12A876',
+  '#E5384F',
+  '#E8672A',
+  '#2F7BEA',
+  '#B43DDB',
+  '#0E9494',
+  '#8A5A44',
+];
 
 export const fontStacks = {
   ui: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -199,6 +254,23 @@ export const fontStacks = {
 export const numericFeatures = "'tnum' 1, 'lnum' 1";
 
 export type ColorScheme = 'light' | 'dark';
+
+/**
+ * The fill for a category tile.
+ *
+ * A colour the user chose wins. Otherwise one is derived from the id — not
+ * random, and not by position in a list — so a category is the same colour on
+ * the phone and the desktop, and stays that colour when others are added.
+ */
+export function categoryColourFor(categoryId: string, chosen?: string | null): string {
+  if (chosen && /^#[0-9a-f]{6}$/i.test(chosen)) return chosen;
+
+  let hash = 0;
+  for (let index = 0; index < categoryId.length; index += 1) {
+    hash = (hash * 31 + categoryId.charCodeAt(index)) | 0;
+  }
+  return categoryPalette[Math.abs(hash) % categoryPalette.length]!;
+}
 
 /** React Native reports 'unspecified'; anything not explicitly dark renders light. */
 export function themeFor(scheme: string | null | undefined): Theme {

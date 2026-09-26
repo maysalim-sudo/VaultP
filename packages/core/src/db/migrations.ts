@@ -291,6 +291,35 @@ const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 6,
+    name: 'note-colour',
+    up(db) {
+      // A name ('yellow', 'teal'…) rather than a hex value: each theme maps it to
+      // its own shade, so a note chosen on a light phone still reads on a dark
+      // desktop.
+      db.exec(`ALTER TABLE note ADD COLUMN colour TEXT`);
+
+      // A newer build on the other device may already have written a colour,
+      // which this one parked in _extra because it had no column for it. The
+      // note repository reads columns directly, so without this the new, empty
+      // column would hide that value until the note happened to be edited again.
+      const parked = db.all<{ id: string; _extra: string | null }>(
+        `SELECT id, _extra FROM note WHERE _extra LIKE '%"colour"%'`,
+      );
+      for (const row of parked) {
+        const extra = JSON.parse(row._extra ?? '{}') as Record<string, unknown>;
+        if (!('colour' in extra)) continue;
+        const value = extra.colour;
+        delete extra.colour;
+        db.run(`UPDATE note SET colour = ?, _extra = ? WHERE id = ?`, [
+          typeof value === 'string' ? value : null,
+          JSON.stringify(extra),
+          row.id,
+        ]);
+      }
+    },
+  },
 ];
 
 export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
@@ -311,12 +340,18 @@ export function currentVersion(db: SqlDatabase): number {
   return row?.user_version ?? 0;
 }
 
-export function migrate(db: SqlDatabase): number {
+/**
+ * Bring the schema up to date.
+ *
+ * `upTo` exists so a test can build a database exactly as an older release left
+ * it, and then prove the upgrade from there. The app always migrates fully.
+ */
+export function migrate(db: SqlDatabase, upTo: number = LATEST_VERSION): number {
   const from = currentVersion(db);
   if (from > LATEST_VERSION) throw new SchemaTooNewError(from);
 
   for (const migration of MIGRATIONS) {
-    if (migration.version <= from) continue;
+    if (migration.version <= from || migration.version > upTo) continue;
     db.transaction(() => {
       migration.up(db);
       // PRAGMA does not accept parameters; the value is a literal from our own

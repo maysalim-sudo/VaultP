@@ -14,6 +14,33 @@ import type { VaultStore } from '../db/store.js';
 import type { Json } from '../oplog/event.js';
 import { type IsoDate, compareDates, parseDate } from '../time/date.js';
 
+/**
+ * The colours a note can be, by name.
+ *
+ * Names, not hex values: each theme maps a name to its own shade, so a note
+ * coloured on a light phone still reads on a dark desktop. The set is closed on
+ * write — an unknown name is rejected — but tolerant on read, so a colour added
+ * by a newer build shows as the default here rather than breaking the list.
+ */
+export const NOTE_COLOURS = [
+  'red',
+  'orange',
+  'yellow',
+  'green',
+  'teal',
+  'blue',
+  'purple',
+  'pink',
+  'brown',
+  'grey',
+] as const;
+
+export type NoteColour = (typeof NOTE_COLOURS)[number];
+
+export function isNoteColour(value: unknown): value is NoteColour {
+  return typeof value === 'string' && (NOTE_COLOURS as readonly string[]).includes(value);
+}
+
 export interface Note {
   readonly id: string;
   readonly body: string;
@@ -23,6 +50,8 @@ export interface Note {
   readonly done: boolean;
   readonly doneAt: string | null;
   readonly pinned: boolean;
+  /** Null is the default, uncoloured card. */
+  readonly colour: NoteColour | null;
 }
 
 export class NoteValidationError extends Error {
@@ -40,6 +69,14 @@ interface NoteRow {
   done: number | null;
   done_at: string | null;
   pinned: number | null;
+  colour: string | null;
+}
+
+function assertColour(colour: NoteColour | null | undefined): void {
+  if (colour === undefined || colour === null) return;
+  if (!isNoteColour(colour)) {
+    throw new NoteValidationError(`Not a note colour: "${String(colour)}".`);
+  }
 }
 
 export class NoteRepository {
@@ -50,12 +87,14 @@ export class NoteRepository {
     dueOn?: IsoDate;
     notify?: boolean;
     pinned?: boolean;
+    colour?: NoteColour | null;
     id?: string;
   }): Note {
     if (input.body.trim() === '') {
       throw new NoteValidationError('A note needs something written in it.');
     }
     if (input.dueOn) parseDate(input.dueOn);
+    assertColour(input.colour);
 
     const id = input.id ?? uuidv7();
     this.store.commit('note', id, {
@@ -65,6 +104,7 @@ export class NoteRepository {
       done: false,
       done_at: null,
       pinned: input.pinned ?? false,
+      colour: input.colour ?? null,
     });
     return this.getNote(id)!;
   }
@@ -76,6 +116,8 @@ export class NoteRepository {
       dueOn?: IsoDate | null;
       notify?: boolean;
       pinned?: boolean;
+      /** Null clears it back to the default card. */
+      colour?: NoteColour | null;
     },
   ): Note {
     const fields: Record<string, Json> = {};
@@ -95,6 +137,10 @@ export class NoteRepository {
     }
     if (patch.notify !== undefined) fields.notify = patch.notify;
     if (patch.pinned !== undefined) fields.pinned = patch.pinned;
+    if (patch.colour !== undefined) {
+      assertColour(patch.colour);
+      fields.colour = patch.colour;
+    }
 
     if (Object.keys(fields).length > 0) this.store.commit('note', id, fields);
     return this.getNote(id)!;
@@ -176,5 +222,6 @@ function toNote(row: NoteRow): Note {
     done: row.done === 1,
     doneAt: row.done_at,
     pinned: row.pinned === 1,
+    colour: isNoteColour(row.colour) ? row.colour : null,
   };
 }

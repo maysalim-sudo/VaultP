@@ -1,14 +1,16 @@
 /**
- * The first screen.
+ * The first screen, in the manner of Ivy Wallet.
  *
  * Ordered by what you can still do something about:
  *
- *   1. what is owed or due soon    — acting on it has a deadline
- *   2. what has been spent         — the number you open the app to check
+ *   1. what has been spent         — the number you open the app to check
+ *   2. what is owed or due soon    — acting on it has a deadline
  *   3. what was added recently     — and can be corrected while you remember it
  *
- * Every figure here is tappable through to the thing it came from. A dashboard
- * that only reports leaves you hunting for the screen that can change it.
+ * The month's spend is the hero, centred and large. Categories carry colour, so
+ * a list of spending can be read by shape before it is read by word. Every figure
+ * is tappable through to the thing it came from: a dashboard that only reports
+ * leaves you hunting for the screen that can change it.
  */
 
 import { useMemo } from 'react';
@@ -16,31 +18,68 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'r
 
 import {
   BASE_CURRENCY,
+  addDays,
   autoLogId,
+  categoryColourFor,
   daysBetween,
-  formatMoney,
-  loadAllowanceConfig,
-  isAllowanceConfigured,
+  exponentOf,
   forecastAllowance,
-  monthKey,
+  isAllowanceConfigured,
+  loadAllowanceConfig,
+  minorUnitsPerMajor,
   money,
+  monthKey,
   monthTotal,
   pendingReminders,
   radii,
   spacing,
   todayIn,
-  toDecimalString,
   typeScale,
   upcomingCharges,
+  type Category,
+  type DueOccurrence,
   type Expense,
   type LedgerBalance,
-  type DueOccurrence,
+  type Money,
 } from '@vaultp/core';
 
 import { describeDate } from '../components/DateField.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import type { ViewName } from '../components/Sidebar.js';
 import { useOpenVault } from '../vault/VaultContext.js';
+
+const LOCALE = 'fr-TN';
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+/**
+ * An amount split into its figure and its unit, so the figure can be set large
+ * and the unit small beside it.
+ *
+ * The exponent is looked up, never assumed: the dinar has three decimals, and a
+ * formatter that defaulted to two would quietly drop the millimes.
+ */
+function amountParts(amount: Money): { figure: string; unit: string } {
+  const exponent = exponentOf(amount.currency);
+  const figure = new Intl.NumberFormat(LOCALE, {
+    minimumFractionDigits: exponent,
+    maximumFractionDigits: exponent,
+  }).format(amount.amountMinor / minorUnitsPerMajor(amount.currency));
+  return { figure, unit: amount.currency === BASE_CURRENCY ? 'DT' : amount.currency };
+}
+
+function formatAmount(amount: Money): string {
+  const { figure, unit } = amountParts(amount);
+  return `${figure} ${unit}`;
+}
+
+/** A colour at low opacity, for tinted fills. Tokens are six-digit hex. */
+function tint(hex: string, alpha = '26'): string {
+  return /^#[0-9a-f]{6}$/i.test(hex) ? `${hex}${alpha}` : hex;
+}
 
 export function Home({
   onNavigate,
@@ -52,26 +91,35 @@ export function Home({
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const today = todayIn();
+  const yesterday = addDays(today, -1);
 
   const month = useMemo(
     () => monthTotal(vault.db, monthKey(today), BASE_CURRENCY),
     [vault, version, today],
   );
 
-  const todayTotal = useMemo(
-    () =>
-      vault.expenses
-        .listExpenses({ from: today, to: today })
-        .reduce((sum, expense) => sum + (expense.base?.amountMinor ?? 0), 0),
-    [vault, version, today],
-  );
+  /**
+   * Today's spend, with the charges whose value is not known yet counted
+   * separately. Folding them in as zero would make the figure quietly wrong.
+   */
+  const todaySpend = useMemo(() => {
+    const expenses = vault.expenses.listExpenses({ from: today, to: today });
+    let known = 0;
+    let unvalued = 0;
+    for (const expense of expenses) {
+      if (expense.base) known += expense.base.amountMinor;
+      else unvalued += 1;
+    }
+    return { total: money(known, BASE_CURRENCY), unvalued };
+  }, [vault, version, today]);
 
-  const recent = useMemo(
-    () => vault.expenses.listExpenses({ limit: 6 }),
-    [vault, version],
-  );
+  const recent = useMemo(() => vault.expenses.listExpenses({ limit: 12 }), [vault, version]);
 
-  const categories = useMemo(() => vault.expenses.listCategories(), [vault, version]);
+  const categories = useMemo(() => vault.expenses.listCategories(true), [vault, version]);
+  const categoryById = useMemo(
+    () => new Map(categories.map((category) => [category.id, category])),
+    [categories],
+  );
 
   /** The next few scheduled charges, whether they log themselves or not. */
   const upcoming = useMemo(
@@ -101,14 +149,14 @@ export function Home({
    * screen, one unrepresentable person should cost that person's row, not every
    * other balance.
    */
-  const debts = useMemo(() => {
-    const balances: { balance: LedgerBalance; name: string }[] = [];
+  const balances = useMemo(() => {
+    const found: { balance: LedgerBalance; name: string }[] = [];
 
     for (const person of vault.debts.listPeople(true)) {
       try {
         const balance = vault.debts.ledgerFor(person.id, today);
         if (balance && balance.net.amountMinor !== 0) {
-          balances.push({ balance, name: person.name });
+          found.push({ balance, name: person.name });
         }
       } catch {
         // Mixed-currency ledger. It is shown, with its explanation, on the debts
@@ -116,13 +164,19 @@ export function Home({
       }
     }
 
-    return balances
-      .sort(
-        (a, b) =>
-          Math.abs(b.balance.net.amountMinor) - Math.abs(a.balance.net.amountMinor),
-      )
-      .slice(0, 3);
+    return found.sort(
+      (a, b) => Math.abs(b.balance.net.amountMinor) - Math.abs(a.balance.net.amountMinor),
+    );
   }, [vault, version, today]);
+
+  /** Owed to you, in dinars. Other currencies are not converted — see debts. */
+  const owedToYou = useMemo(
+    () =>
+      balances
+        .filter(({ balance }) => balance.currency === BASE_CURRENCY && balance.net.amountMinor > 0)
+        .reduce((sum, { balance }) => sum + balance.net.amountMinor, 0),
+    [balances],
+  );
 
   const allowance = useMemo(() => {
     const config = loadAllowanceConfig(vault.store);
@@ -150,230 +204,328 @@ export function Home({
     );
   }
 
-  const needsAttention =
-    overdue.length + dueNotes.length + expiring.length > 0 ||
-    (allowance?.exhaustionDate ?? null) !== null;
+  const attentionCount =
+    overdue.length + dueNotes.length + expiring.length + (allowance?.exhaustionDate ? 1 : 0);
+
+  /** Recent expenses grouped by the day they happened, newest first. */
+  const days = useMemo(() => {
+    const groups: { date: string; expenses: Expense[] }[] = [];
+    for (const expense of recent) {
+      const last = groups[groups.length - 1];
+      if (last && last.date === expense.occurredOn) last.expenses.push(expense);
+      else groups.push({ date: expense.occurredOn, expenses: [expense] });
+    }
+    return groups;
+  }, [recent]);
+
+  const hero = amountParts(month.total);
+  const [year, monthNumber] = monthKey(today).split('-');
 
   return (
-    <ScrollView
-      style={{ backgroundColor: palette.background }}
-      contentContainerStyle={styles.body}
-    >
-      <Text style={[styles.greeting, { color: palette.dim }]}>{describeDate(today)}</Text>
+    <View style={[styles.root, { backgroundColor: palette.background }]}>
+      <ScrollView contentContainerStyle={styles.body}>
+        {/* ------------------------------------------------------------ hero */}
+        <View style={styles.heroBlock}>
+          <View style={[styles.period, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+            <Text style={[styles.periodText, { color: palette.text }]}>
+              {MONTHS[Number(monthNumber) - 1]} {year}
+            </Text>
+          </View>
 
-      {/* ------------------------------------------------------- spending */}
-      {/*
-        Stacked rather than side by side. A three-decimal dinar total runs to
-        eleven characters, and two of them beside each other wrap in the middle of
-        the number on a narrow screen — which is exactly where a figure must not
-        break.
-      */}
-      <Pressable
-        onPress={() => onNavigate('insights')}
-        style={[
-          styles.stats,
-          { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
-        ]}
-        android_ripple={{ color: palette.ripple }}
-      >
-        {/*
-          Label above the figure, not beside it: sharing a line means the label
-          and the number compete for width, and it is the number that gets cut.
-        */}
-        <Text style={[styles.statLabel, { color: palette.dim }]}>This month</Text>
-        <Text style={[styles.statValue, { color: palette.text }]} numberOfLines={1}>
-          {formatMoney(month.total, 'fr-TN')}
-        </Text>
+          <Text style={[styles.heroLabel, { color: palette.dim }]}>Spent this month</Text>
+          <Pressable
+            onPress={() => onNavigate('insights')}
+            style={({ pressed }) => [styles.heroFigureRow, pressed ? styles.pressed : null]}
+          >
+            <Text
+              style={[styles.heroFigure, { color: palette.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.55}
+            >
+              {hero.figure}
+            </Text>
+            <Text style={[styles.heroUnit, { color: palette.dim }]}>{hero.unit}</Text>
+          </Pressable>
 
-        <View style={[styles.statLine, { borderTopColor: palette.divider }]}>
-          <Text style={[styles.statLabel, { color: palette.dim }]}>Today</Text>
-          <Text style={[styles.statToday, { color: palette.text }]} numberOfLines={1}>
-            {formatMoney(money(todayTotal, BASE_CURRENCY), 'fr-TN')}
-          </Text>
+          {month.unvaluedCount > 0 ? (
+            // Never let an unknown amount hide inside a total.
+            <Text style={[styles.heroNote, { color: palette.warning }]}>
+              + {month.unvaluedCount} amount{month.unvaluedCount === 1 ? '' : 's'} not yet known
+            </Text>
+          ) : null}
         </View>
 
-        {month.unvaluedCount > 0 ? (
-          // Never let an unknown amount hide inside a total.
-          <Text style={[styles.note, { color: palette.warning }]}>
-            {month.unvaluedCount} amount{month.unvaluedCount === 1 ? '' : 's'} not yet
-            known
-          </Text>
+        {/* ------------------------------------------------------- stat tiles */}
+        <View style={styles.tiles}>
+          <StatTile
+            glyph="🗓️"
+            colour={palette.accent}
+            label="Today"
+            value={formatAmount(todaySpend.total)}
+            note={todaySpend.unvalued > 0 ? `+ ${todaySpend.unvalued} not yet known` : undefined}
+            noteColour={palette.warning}
+            palette={palette}
+            onPress={() => onNavigate('insights')}
+          />
+          <StatTile
+            glyph="🤝"
+            colour={palette.positive}
+            label="Owed to you"
+            value={owedToYou > 0 ? formatAmount(money(owedToYou, BASE_CURRENCY)) : 'Nothing'}
+            palette={palette}
+            onPress={() => onNavigate('debts')}
+          />
+        </View>
+
+        {/* ------------------------------------------------------- attention */}
+        {attentionCount > 0 ? (
+          <Section title="Needs you" count={attentionCount} countColour={palette.warning} palette={palette}>
+            {overdue.map((due) => (
+              <ActionRow
+                key={`due-${due.rule.id}-${due.date}`}
+                glyph="🔁"
+                colour={palette.warning}
+                title={`${due.rule.name} was due`}
+                detail={describeDate(due.date)}
+                detailColour={palette.warning}
+                right={formatAmount(due.rule.amount)}
+                palette={palette}
+                onPress={() => onNavigate('recurring')}
+                action={{ label: 'Log', onPress: () => confirmReminder(due) }}
+              />
+            ))}
+
+            {dueNotes.map((note) => (
+              <ActionRow
+                key={`note-${note.id}`}
+                glyph="📝"
+                colour={palette.warning}
+                title={note.body}
+                detail={note.dueOn ? describeDate(note.dueOn) : ''}
+                detailColour={palette.warning}
+                palette={palette}
+                onPress={() => onNavigate('notes')}
+              />
+            ))}
+
+            {expiring.map((document) => {
+              const days = document.expiryDate ? daysBetween(today, document.expiryDate) : 0;
+              return (
+                <ActionRow
+                  key={`doc-${document.id}`}
+                  glyph="📄"
+                  colour={days < 0 ? palette.negative : palette.warning}
+                  title={document.title}
+                  detail={
+                    days < 0
+                      ? `expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`
+                      : `expires in ${days} day${days === 1 ? '' : 's'}`
+                  }
+                  detailColour={days < 0 ? palette.negative : palette.warning}
+                  palette={palette}
+                  onPress={() => onNavigate('documents')}
+                />
+              );
+            })}
+
+            {allowance?.exhaustionDate ? (
+              <ActionRow
+                glyph="💳"
+                colour={palette.negative}
+                title="Foreign allowance running out"
+                detail={`projected empty by ${describeDate(allowance.exhaustionDate)}`}
+                detailColour={palette.negative}
+                right={`${formatAmount(allowance.remaining)} left`}
+                palette={palette}
+                onPress={() => onNavigate('insights')}
+              />
+            ) : null}
+          </Section>
         ) : null}
-      </Pressable>
 
-      {/* ------------------------------------------------------ attention */}
-      {needsAttention ? (
-        <Section title="Needs you" palette={palette}>
-          {overdue.map((due) => (
-            <Row
-              key={`due-${due.rule.id}-${due.date}`}
-              icon="🔁"
-              title={`${due.rule.name} was due`}
-              detail={describeDate(due.date)}
-              right={`${toDecimalString(due.rule.amount)} ${due.rule.amount.currency}`}
-              tone="warning"
-              palette={palette}
-              onPress={() => onNavigate('recurring')}
-              action={{ label: 'Log', onPress: () => confirmReminder(due) }}
-            />
-          ))}
+        {/* -------------------------------------------------------- upcoming */}
+        {upcoming.length > 0 ? (
+          <Section title="Upcoming" count={upcoming.length} countColour={palette.accent} palette={palette}>
+            {upcoming.map((charge) => {
+              const category = charge.rule.categoryId
+                ? categoryById.get(charge.rule.categoryId)
+                : undefined;
+              return (
+                <ActionRow
+                  key={`${charge.rule.id}-${charge.date}`}
+                  glyph={category?.icon ?? (charge.rule.autoLog ? '🔁' : '🔔')}
+                  colour={
+                    category ? categoryColourFor(category.id, category.color) : palette.accent
+                  }
+                  solid={Boolean(category)}
+                  title={charge.rule.name}
+                  detail={`${describeDate(charge.date)}${charge.rule.autoLog ? ' · logs itself' : ''}`}
+                  right={formatAmount(charge.rule.amount)}
+                  palette={palette}
+                  onPress={() => onNavigate('recurring')}
+                />
+              );
+            })}
+          </Section>
+        ) : null}
 
-          {dueNotes.map((note) => (
-            <Row
-              key={`note-${note.id}`}
-              icon="📝"
-              title={note.body}
-              detail={note.dueOn ? describeDate(note.dueOn) : ''}
-              tone="warning"
-              palette={palette}
-              onPress={() => onNavigate('notes')}
-            />
-          ))}
+        {/* ----------------------------------------------------------- debts */}
+        {balances.length > 0 ? (
+          <Section title="Debts" count={balances.length} countColour={palette.dim} palette={palette}>
+            {balances.slice(0, 3).map(({ balance, name }) => {
+              const owed = balance.net.amountMinor > 0;
+              return (
+                <ActionRow
+                  key={balance.personId}
+                  glyph={name.slice(0, 1).toUpperCase()}
+                  colour={owed ? palette.positive : palette.negative}
+                  title={name}
+                  // Direction in words, never a sign: "-200" reads as either the
+                  // moment you stop concentrating.
+                  detail={owed ? 'owes you' : 'you owe'}
+                  detailColour={owed ? palette.positive : palette.negative}
+                  right={formatAmount(money(Math.abs(balance.net.amountMinor), balance.currency))}
+                  palette={palette}
+                  onPress={() => onNavigate('debts')}
+                />
+              );
+            })}
+          </Section>
+        ) : null}
 
-          {expiring.map((document) => {
-            const days = document.expiryDate ? daysBetween(today, document.expiryDate) : 0;
-            return (
-              <Row
-                key={`doc-${document.id}`}
-                icon="📄"
-                title={document.title}
-                detail={
-                  days < 0
-                    ? `expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`
-                    : `expires in ${days} day${days === 1 ? '' : 's'}`
-                }
-                tone={days < 0 ? 'danger' : 'warning'}
-                palette={palette}
-                onPress={() => onNavigate('documents')}
-              />
-            );
-          })}
+        {/* ---------------------------------------------------- transactions */}
+        <Text style={[styles.sectionTitle, styles.transactionsTitle, { color: palette.text }]}>
+          Recent
+        </Text>
 
-          {allowance?.exhaustionDate ? (
-            <Row
-              icon="💳"
-              title="Foreign allowance running out"
-              detail={`projected empty by ${describeDate(allowance.exhaustionDate)}`}
-              right={`${toDecimalString(allowance.remaining)} left`}
-              tone="danger"
-              palette={palette}
-              onPress={() => onNavigate('insights')}
-            />
-          ) : null}
-        </Section>
-      ) : null}
+        {days.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyGlyph}>🧾</Text>
+            <Text style={[styles.emptyText, { color: palette.dim }]}>
+              No expenses yet. Tap + to add your first.
+            </Text>
+          </View>
+        ) : null}
 
-      {/* -------------------------------------------------------- upcoming */}
-      {upcoming.length > 0 ? (
-        <Section title="Coming up" palette={palette}>
-          {upcoming.map((charge) => (
-            <Row
-              key={`${charge.rule.id}-${charge.date}`}
-              icon={charge.rule.autoLog ? '🔁' : '🔔'}
-              title={charge.rule.name}
-              detail={`${describeDate(charge.date)}${charge.rule.autoLog ? ' · logs itself' : ''}`}
-              right={`${toDecimalString(charge.rule.amount)} ${charge.rule.amount.currency}`}
-              palette={palette}
-              onPress={() => onNavigate('recurring')}
-            />
-          ))}
-        </Section>
-      ) : null}
+        {days.map((day) => {
+          let known = 0;
+          let unvalued = 0;
+          for (const expense of day.expenses) {
+            if (expense.base) known += expense.base.amountMinor;
+            else unvalued += 1;
+          }
+          const label =
+            day.date === today ? 'Today' : day.date === yesterday ? 'Yesterday' : describeDate(day.date);
 
-      {/* ----------------------------------------------------------- debts */}
-      {debts.length > 0 ? (
-        <Section title="Debts" palette={palette}>
-          {debts.map(({ balance, name }) => {
-            const owed = balance.net.amountMinor > 0;
-            return (
-              <Row
-                key={balance.personId}
-                icon="🤝"
-                title={name}
-                detail={owed ? 'owes you' : 'you owe'}
-                right={`${toDecimalString(
-                  money(Math.abs(balance.net.amountMinor), balance.currency),
-                )} ${balance.currency}`}
-                tone={owed ? 'success' : 'danger'}
-                palette={palette}
-                onPress={() => onNavigate('debts')}
-              />
-            );
-          })}
-        </Section>
-      ) : null}
+          return (
+            <View key={day.date} style={styles.day}>
+              <View style={styles.dayHead}>
+                <Text style={[styles.dayLabel, { color: palette.text }]}>{label}</Text>
+                {/* A day with an unvalued charge says so rather than presenting a
+                    partial sum as the whole. */}
+                <Text style={[styles.dayTotal, { color: palette.dim }]}>
+                  {formatAmount(money(known, BASE_CURRENCY))}
+                  {unvalued > 0 ? ' + ?' : ''}
+                </Text>
+              </View>
 
-      {/* ---------------------------------------------------------- recent */}
-      <Section title="Recently added" palette={palette}>
-        {recent.length === 0 ? (
-          <Text style={[styles.empty, { color: palette.dim }]}>
-            Nothing logged yet. Tap Add expense to start.
-          </Text>
-        ) : (
-          recent.map((expense) => {
-            const category = categories.find((c) => c.id === expense.categoryId);
-            return (
-              <Row
-                key={expense.id}
-                icon={category?.icon ?? '•'}
-                title={expense.merchant ?? category?.name ?? 'Uncategorised'}
-                detail={
-                  expense.occurredOn === today ? 'today' : describeDate(expense.occurredOn)
-                }
-                right={`${toDecimalString(expense.amount)} ${expense.amount.currency}`}
-                subRight={
-                  expense.amount.currency !== BASE_CURRENCY
-                    ? expense.base
-                      ? `${expense.baseEstimated ? '≈ ' : ''}${toDecimalString(expense.base)} ${BASE_CURRENCY}`
-                      : 'awaiting statement'
-                    : undefined
-                }
-                // An estimate reads as provisional, a missing statement as faint
-                // and unknown — neither the same as a settled figure.
-                subRightColor={
-                  expense.amount.currency === BASE_CURRENCY
-                    ? undefined
-                    : expense.base
-                      ? expense.baseEstimated
-                        ? palette.estimate
-                        : palette.dim
-                      : palette.textFaint
-                }
-                palette={palette}
-                // Straight into the editor: a mistake is easiest to fix while you
-                // still remember making it.
-                onPress={() => onEditExpense(expense)}
-              />
-            );
-          })
-        )}
-      </Section>
+              {day.expenses.map((expense) => (
+                <TransactionRow
+                  key={expense.id}
+                  expense={expense}
+                  category={expense.categoryId ? categoryById.get(expense.categoryId) : undefined}
+                  palette={palette}
+                  // Straight into the editor: a mistake is easiest to fix while
+                  // you still remember making it.
+                  onPress={() => onEditExpense(expense)}
+                />
+              ))}
+            </View>
+          );
+        })}
+      </ScrollView>
 
-      <Pressable
-        onPress={() => onNavigate('add')}
-        style={[styles.addButton, { backgroundColor: palette.accent, elevation: palette.elevationCard }]}
-        android_ripple={{ color: palette.ripple }}
-      >
-        <Text style={[styles.addButtonText, { color: palette.onAccent }]}>Add an expense</Text>
-      </Pressable>
-    </ScrollView>
+      {/* The one primary action, always within thumb's reach. */}
+      <View style={styles.fabDock} pointerEvents="box-none">
+        <Pressable
+          onPress={() => onNavigate('add')}
+          accessibilityLabel="Add an expense"
+          style={({ pressed }) => [
+            styles.fab,
+            { backgroundColor: palette.accent, elevation: palette.elevationOverlay },
+            pressed ? styles.fabPressed : null,
+          ]}
+        >
+          <Text style={[styles.fabGlyph, { color: palette.onAccent }]}>+</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function StatTile({
+  glyph,
+  colour,
+  label,
+  value,
+  note,
+  noteColour,
+  palette,
+  onPress,
+}: {
+  glyph: string;
+  colour: string;
+  label: string;
+  value: string;
+  note?: string;
+  noteColour?: string;
+  palette: Palette;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.tile,
+        { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
+        pressed ? styles.pressed : null,
+      ]}
+    >
+      <View style={[styles.tileIcon, { backgroundColor: tint(colour, '33') }]}>
+        <Text style={styles.tileGlyph}>{glyph}</Text>
+      </View>
+      <Text style={[styles.tileLabel, { color: palette.dim }]}>{label}</Text>
+      <Text style={[styles.tileValue, { color: palette.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        {value}
+      </Text>
+      {note ? <Text style={[styles.tileNote, { color: noteColour ?? palette.dim }]}>{note}</Text> : null}
+    </Pressable>
   );
 }
 
 function Section({
   title,
+  count,
+  countColour,
   palette,
   children,
 }: {
   title: string;
+  count: number;
+  countColour: string;
   palette: Palette;
   children: React.ReactNode;
 }) {
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: palette.dim }]}>{title}</Text>
-      {/* Rows grouped on a lifted surface, so a section reads as one thing rather
-          than a run of lines floating on the page. */}
+      <View style={styles.sectionHead}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>{title}</Text>
+        <View style={[styles.badge, { backgroundColor: tint(countColour, '2E') }]}>
+          <Text style={[styles.badgeText, { color: countColour }]}>{count}</Text>
+        </View>
+      </View>
+      {/* Rows grouped on one generous, rounded surface. */}
       <View
         style={[
           styles.card,
@@ -386,74 +538,62 @@ function Section({
   );
 }
 
-function Row({
-  icon,
+/** A round tile with a glyph: solid for a category, tinted for everything else. */
+function Dot({ glyph, colour, solid }: { glyph: string; colour: string; solid: boolean }) {
+  return (
+    <View style={[styles.dot, { backgroundColor: solid ? colour : tint(colour, '33') }]}>
+      <Text style={[styles.dotGlyph, { color: solid ? '#FFFFFF' : colour }]}>{glyph}</Text>
+    </View>
+  );
+}
+
+function ActionRow({
+  glyph,
+  colour,
+  solid = false,
   title,
   detail,
+  detailColour,
   right,
-  subRight,
-  subRightColor,
-  tone,
   palette,
   onPress,
   action,
 }: {
-  icon: string;
+  glyph: string;
+  colour: string;
+  solid?: boolean;
   title: string;
   detail?: string;
+  detailColour?: string;
   right?: string;
-  subRight?: string;
-  subRightColor?: string;
-  tone?: 'warning' | 'danger' | 'success';
   palette: Palette;
   onPress: () => void;
   /** A one-tap resolution, for rows where the obvious answer is usually yes. */
   action?: { label: string; onPress: () => void };
 }) {
-  // The money meanings go through the semantic roles: what is owed to you is
-  // positive, what you owe is negative, whatever the tone was named.
-  const detailColour =
-    tone === 'danger'
-      ? palette.negative
-      : tone === 'warning'
-        ? palette.warning
-        : tone === 'success'
-          ? palette.positive
-          : palette.dim;
-
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.row, { borderBottomColor: palette.divider }]}
-      android_ripple={{ color: palette.ripple }}
-    >
-      <Text style={styles.rowIcon}>{icon}</Text>
+    <Pressable onPress={onPress} style={styles.row} android_ripple={{ color: palette.ripple }}>
+      <Dot glyph={glyph} colour={colour} solid={solid} />
       <View style={styles.rowMain}>
         <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
           {title}
         </Text>
         {detail ? (
-          <Text style={[styles.rowDetail, { color: detailColour }]} numberOfLines={1}>
+          <Text style={[styles.rowDetail, { color: detailColour ?? palette.dim }]} numberOfLines={1}>
             {detail}
           </Text>
         ) : null}
       </View>
-      {right ? (
-        <View style={styles.rowRight}>
-          <Text style={[styles.rowAmount, { color: palette.text }]}>{right}</Text>
-          {subRight ? (
-            <Text style={[styles.rowDetail, styles.figure, { color: subRightColor ?? palette.dim }]}>
-              {subRight}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-
+      {right ? <Text style={[styles.rowAmount, { color: palette.text }]}>{right}</Text> : null}
       {action ? (
         <Pressable
           onPress={action.onPress}
-          style={[styles.action, { backgroundColor: palette.accent }]}
           hitSlop={6}
+          style={({ pressed }) => [
+            styles.action,
+            { backgroundColor: palette.accent },
+            pressed ? styles.pressed : null,
+          ]}
         >
           <Text style={[styles.actionText, { color: palette.onAccent }]}>{action.label}</Text>
         </Pressable>
@@ -462,73 +602,183 @@ function Row({
   );
 }
 
-const styles = StyleSheet.create({
-  body: { padding: spacing.xl, paddingTop: 44, paddingBottom: 44 },
-  greeting: { fontSize: typeScale.sm },
+function TransactionRow({
+  expense,
+  category,
+  palette,
+  onPress,
+}: {
+  expense: Expense;
+  category: Category | undefined;
+  palette: Palette;
+  onPress: () => void;
+}) {
+  const name = category?.name ?? 'Uncategorised';
+  const glyph = category?.icon ?? name.slice(0, 1).toUpperCase();
+  const foreign = expense.amount.currency !== BASE_CURRENCY;
 
-  stats: {
-    marginTop: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+  // Three states for a foreign charge, kept apart: what the bank debited, an
+  // estimate marked as one, or nothing known yet — never a zero standing in.
+  const converted = !foreign
+    ? null
+    : expense.base
+      ? {
+          text: `${expense.baseEstimated ? '≈ ' : ''}${formatAmount(expense.base)}`,
+          colour: expense.baseEstimated ? palette.estimate : palette.dim,
+        }
+      : { text: 'awaiting statement', colour: palette.textFaint };
+
+  return (
+    <Pressable onPress={onPress} style={styles.transaction} android_ripple={{ color: palette.ripple }}>
+      {category ? (
+        <Dot glyph={glyph} colour={categoryColourFor(category.id, category.color)} solid />
+      ) : (
+        <View style={[styles.dot, { backgroundColor: palette.key }]}>
+          <Text style={[styles.dotGlyph, { color: palette.dim }]}>•</Text>
+        </View>
+      )}
+      <View style={styles.rowMain}>
+        <Text style={[styles.rowTitle, { color: palette.text }]} numberOfLines={1}>
+          {expense.merchant ?? name}
+        </Text>
+        <Text style={[styles.rowDetail, { color: palette.dim }]} numberOfLines={1}>
+          {expense.merchant ? name : 'No merchant'}
+        </Text>
+      </View>
+      <View style={styles.rowRight}>
+        <Text style={[styles.rowAmount, { color: palette.text }]}>{formatAmount(expense.amount)}</Text>
+        {converted ? (
+          <Text style={[styles.rowDetail, styles.figure, { color: converted.colour }]}>
+            {converted.text}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  body: { paddingHorizontal: spacing.lg, paddingTop: 40, paddingBottom: 120 },
+
+  heroBlock: { alignItems: 'center', paddingVertical: spacing.lg },
+  period: {
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: spacing.lg,
   },
-  statLine: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  statLabel: { fontSize: typeScale.xs, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '600' },
-  // The figure a screen exists to show, sized as such and shrinking only if a
-  // three-decimal dinar total is long enough to need it.
-  statValue: {
-    fontSize: typeScale.hero,
-    fontWeight: '700',
-    marginTop: spacing.xs,
-    letterSpacing: -0.5,
+  periodText: { fontSize: typeScale.sm, fontWeight: '600' },
+  heroLabel: { fontSize: typeScale.sm, fontWeight: '500' },
+  heroFigureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: spacing.xs },
+  heroFigure: {
+    fontSize: 46,
+    fontWeight: '800',
+    letterSpacing: -1,
     fontVariant: ['tabular-nums'],
+    flexShrink: 1,
   },
-  statToday: { fontSize: typeScale.md, fontWeight: '700', flexShrink: 1, fontVariant: ['tabular-nums'] },
-  note: { fontSize: typeScale.xs, marginTop: spacing.sm },
+  heroUnit: { fontSize: typeScale.lg, fontWeight: '700' },
+  heroNote: { fontSize: typeScale.xs, marginTop: spacing.xs, fontWeight: '500' },
+
+  tiles: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+  tile: {
+    flex: 1,
+    borderRadius: radii.xl,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: spacing.lg,
+    gap: 4,
+  },
+  tileIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  tileGlyph: { fontSize: 18 },
+  tileLabel: { fontSize: typeScale.xs, fontWeight: '600' },
+  tileValue: { fontSize: typeScale.md, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  tileNote: { fontSize: 11, fontWeight: '500' },
 
   section: { marginTop: spacing.xl },
-  sectionTitle: {
-    fontSize: typeScale.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.sm,
     marginLeft: spacing.xs,
   },
+  sectionTitle: { fontSize: typeScale.md, fontWeight: '800' },
+  transactionsTitle: { marginTop: spacing.xl, marginBottom: spacing.xs, marginLeft: spacing.xs },
+  badge: { minWidth: 24, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.pill, alignItems: 'center' },
+  badgeText: { fontSize: typeScale.xs, fontWeight: '800' },
   card: {
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
     overflow: 'hidden',
   },
-  empty: { paddingVertical: spacing.lg, lineHeight: 20 },
 
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
   },
-  rowIcon: { fontSize: typeScale.md, width: 24, textAlign: 'center' },
+  transaction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  dot: {
+    width: 42,
+    height: 42,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dotGlyph: { fontSize: 17, fontWeight: '800' },
   rowMain: { flex: 1 },
-  rowTitle: { fontSize: typeScale.md, fontWeight: '600' },
+  rowTitle: { fontSize: typeScale.md, fontWeight: '700' },
   rowDetail: { fontSize: typeScale.xs, marginTop: 2 },
   rowRight: { alignItems: 'flex-end' },
+  rowAmount: { fontSize: typeScale.base, fontWeight: '800', fontVariant: ['tabular-nums'] },
   figure: { fontVariant: ['tabular-nums'] },
   action: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill },
-  actionText: { fontWeight: '700', fontSize: typeScale.sm },
-  rowAmount: { fontWeight: '600', fontVariant: ['tabular-nums'] },
+  actionText: { fontWeight: '800', fontSize: typeScale.sm },
 
-  addButton: { marginTop: spacing.xl, borderRadius: radii.lg, paddingVertical: 16, alignItems: 'center' },
-  addButtonText: { fontWeight: '700', fontSize: typeScale.md },
+  day: { marginTop: spacing.md },
+  dayHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingHorizontal: spacing.xs,
+    marginBottom: 2,
+  },
+  dayLabel: { fontSize: typeScale.sm, fontWeight: '800' },
+  dayTotal: { fontSize: typeScale.sm, fontWeight: '600', fontVariant: ['tabular-nums'] },
+
+  empty: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
+  emptyGlyph: { fontSize: 44, opacity: 0.5 },
+  emptyText: { fontSize: typeScale.sm },
+
+  fabDock: { position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' },
+  fab: {
+    width: 64,
+    height: 64,
+    borderRadius: radii.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabGlyph: { fontSize: 34, fontWeight: '400', marginTop: -3 },
+
+  // Press feedback: the element answers the finger before anything else happens.
+  pressed: { transform: [{ scale: 0.97 }] },
+  fabPressed: { transform: [{ scale: 0.93 }] },
 });
