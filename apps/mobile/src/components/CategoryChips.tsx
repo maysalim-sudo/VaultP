@@ -107,7 +107,7 @@ export function CategoryChips({
   );
 }
 
-function NewCategory({
+export function NewCategory({
   palette,
   onClose,
   onCreated,

@@ -34,7 +34,7 @@ import { Documents } from './Documents.js';
 import { ExpenseEditor } from './ExpenseEditor.js';
 import { Home } from './Home.js';
 import { Notes } from './Notes.js';
-import { QuickEntry } from './QuickEntry.js';
+import { AddEntry } from './AddEntry.js';
 import { RecurringRules } from './RecurringRules.js';
 import { Search } from './Search.js';
 
@@ -110,7 +110,7 @@ export function Shell() {
       case 'home':
         return <Home onNavigate={navigate} onEditExpense={setEditing} />;
       case 'add':
-        return <QuickEntry />;
+        return <AddEntry />;
       case 'insights':
         return <Dashboard />;
       case 'recurring':

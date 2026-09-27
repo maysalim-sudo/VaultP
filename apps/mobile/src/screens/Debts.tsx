@@ -1,27 +1,32 @@
 /**
  * Who owes what.
  *
- * The list shows a net figure per person and its direction in words rather than a
- * sign, because "-200" is ambiguous the moment you stop concentrating: it reads as
- * either direction depending on which way round you were thinking. "You owe" and
- * "owes you" cannot be misread.
+ * Two figures first — what is owed to you, what you owe — then the people, each
+ * a card with their balance in words and how far it has been paid down. A net
+ * figure is never shown as a signed number: "-200" reads as either direction
+ * the moment attention lapses, and "owes you" / "you owe" cannot be misread.
  */
 
 import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
+
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useColorScheme,
-} from 'react-native';
+  BASE_CURRENCY,
+  money,
+  radii,
+  repaymentProgress,
+  spacing,
+  todayIn,
+  toDecimalString,
+  typeScale,
+  type LedgerBalance,
+  type Person,
+} from '@vaultp/core';
 
-import { todayIn, toDecimalString, type LedgerBalance, type Person } from '@vaultp/core';
-
-import { paletteFor, type Palette } from '../components/theme.js';
+import { Avatar } from '../components/Avatar.js';
 import { Screen } from '../components/Screen.js';
+import { TextPrompt } from '../components/TextPrompt.js';
+import { paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { PersonLedger } from './PersonLedger.js';
 
@@ -31,41 +36,44 @@ export function Debts({ onClose }: { onClose?: () => void }) {
   const today = todayIn();
 
   const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
   const [openPerson, setOpenPerson] = useState<Person | null>(null);
 
   const people = useMemo(() => vault.debts.listPeople(), [vault, version]);
 
   const balances = useMemo(() => {
-    const byPerson = new Map<string, LedgerBalance>();
+    const byPerson = new Map<string, LedgerBalance | 'mixed'>();
     for (const person of people) {
-      // A ledger mixing currencies cannot be netted, and throwing here would take
-      // the whole screen down over one bad row.
+      // A ledger mixing currencies cannot be netted; it must not take the list down.
       try {
         const balance = vault.debts.ledgerFor(person.id, today);
         if (balance) byPerson.set(person.id, balance);
       } catch {
-        // Shown as "mixed currencies" below rather than crashing the list.
+        byPerson.set(person.id, 'mixed');
       }
     }
     return byPerson;
   }, [vault, version, people, today]);
 
-  const owedToMe = people.filter(
-    (person) => (balances.get(person.id)?.net.amountMinor ?? 0) > 0,
-  );
-  const owedByMe = people.filter(
-    (person) => (balances.get(person.id)?.net.amountMinor ?? 0) < 0,
-  );
-  const settled = people.filter(
-    (person) => (balances.get(person.id)?.net.amountMinor ?? 0) === 0,
-  );
+  const netOf = (person: Person) => {
+    const balance = balances.get(person.id);
+    return balance && balance !== 'mixed' ? balance.net.amountMinor : 0;
+  };
 
-  function addPerson() {
-    if (name.trim() === '') return;
-    mutate((v) => v.debts.addPerson({ name: name.trim() }));
-    setName('');
-    setAdding(false);
+  // Owed to you first, then what you owe, then the square and the mixed; the
+  // largest amounts at the top of each.
+  const ordered = [...people].sort((a, b) => {
+    const rank = (n: number) => (n > 0 ? 0 : n < 0 ? 1 : 2);
+    return rank(netOf(a)) - rank(netOf(b)) || Math.abs(netOf(b)) - Math.abs(netOf(a));
+  });
+
+  // Totals in the base currency only: adding dinars to euros would be a number
+  // that means nothing.
+  let owedToYou = 0;
+  let youOwe = 0;
+  for (const balance of balances.values()) {
+    if (balance === 'mixed' || balance.currency !== BASE_CURRENCY) continue;
+    if (balance.net.amountMinor > 0) owedToYou += balance.net.amountMinor;
+    else youOwe -= balance.net.amountMinor;
   }
 
   return (
@@ -74,190 +82,173 @@ export function Debts({ onClose }: { onClose?: () => void }) {
         <View style={styles.header}>
           {onClose ? (
             <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.headerAction, { color: palette.dim }]}>Close</Text>
+              <Text style={[styles.headerAction, { color: palette.dim }]}>←</Text>
             </Pressable>
-          ) : (
-            // Keeps the title centred in a three-slot header when there is
-            // nothing to close: this screen is the page, not a layer over one.
-            <View />
-          )}
-          <Text style={[styles.headerTitle, { color: palette.text }]}>Debts</Text>
-          <Pressable onPress={() => setAdding(true)} hitSlop={12}>
-            <Text style={[styles.headerAction, { color: palette.accent }]}>New</Text>
+          ) : null}
+          <Text style={[styles.title, { color: palette.text }]}>Debts</Text>
+          <Pressable
+            onPress={() => setAdding(true)}
+            hitSlop={8}
+            style={({ pressed }) => [styles.newButton, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
+          >
+            <Text style={[styles.newText, { color: palette.text }]}>＋ Person</Text>
           </Pressable>
         </View>
 
-        {adding ? (
-          <View style={styles.addRow}>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="Name"
-              placeholderTextColor={palette.dim}
-              autoFocus
-              onSubmitEditing={addPerson}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.border,
-                  backgroundColor: palette.surface,
-                },
-              ]}
-            />
-            <Pressable
-              onPress={addPerson}
-              style={[styles.addButton, { backgroundColor: palette.accent }]}
-            >
-              <Text style={styles.addButtonText}>Add</Text>
-            </Pressable>
+        <ScrollView contentContainerStyle={styles.body}>
+          <View style={styles.totals}>
+            <Total label="Owed to you" minor={owedToYou} colour={palette.positive} palette={palette} />
+            <Total label="You owe" minor={youOwe} colour={palette.negative} palette={palette} />
           </View>
-        ) : null}
 
-        <ScrollView contentContainerStyle={styles.list}>
           {people.length === 0 ? (
-            <Text style={[styles.empty, { color: palette.dim }]}>
-              Nobody yet. Add someone you have lent money to, or borrowed from.
-            </Text>
+            <View style={styles.empty}>
+              <Text style={styles.emptyIcon}>🤝</Text>
+              <Text style={[styles.emptyText, { color: palette.dim }]}>
+                Nobody yet. Add someone you have lent money to, or borrowed from — or record it straight from the ＋
+                on the home screen.
+              </Text>
+            </View>
           ) : null}
 
-          <Group
-            title="Owes you"
-            people={owedToMe}
-            balances={balances}
-            palette={palette}
-            onOpen={setOpenPerson}
-          />
-          <Group
-            title="You owe"
-            people={owedByMe}
-            balances={balances}
-            palette={palette}
-            onOpen={setOpenPerson}
-          />
-          <Group
-            title="Settled"
-            people={settled}
-            balances={balances}
-            palette={palette}
-            onOpen={setOpenPerson}
-          />
+          {ordered.map((person) => (
+            <PersonCard
+              key={person.id}
+              person={person}
+              balance={balances.get(person.id)}
+              palette={palette}
+              onOpen={() => setOpenPerson(person)}
+            />
+          ))}
         </ScrollView>
 
-        {openPerson ? (
-          <PersonLedger person={openPerson} onClose={() => setOpenPerson(null)} />
+        {adding ? (
+          <TextPrompt
+            title="Someone new"
+            placeholder="Their name"
+            action="Add"
+            palette={palette}
+            onCancel={() => setAdding(false)}
+            onSave={(name) => {
+              const created = mutate((v) => v.debts.addPerson({ name }));
+              setAdding(false);
+              if (created) setOpenPerson(created);
+            }}
+          />
         ) : null}
+
+        {openPerson ? <PersonLedger person={openPerson} onClose={() => setOpenPerson(null)} /> : null}
       </View>
     </Screen>
   );
 }
 
-function Group({
-  title,
-  people,
-  balances,
+function Total({ label, minor, colour, palette }: { label: string; minor: number; colour: string; palette: Palette }) {
+  return (
+    <View style={[styles.total, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+      <Text style={[styles.totalLabel, { color: palette.dim }]}>{label}</Text>
+      <Text style={[styles.totalValue, { color: minor > 0 ? colour : palette.dim }]}>
+        {toDecimalString(money(minor, BASE_CURRENCY))}
+        <Text style={[styles.totalUnit, { color: palette.dim }]}> DT</Text>
+      </Text>
+    </View>
+  );
+}
+
+function PersonCard({
+  person,
+  balance,
   palette,
   onOpen,
 }: {
-  title: string;
-  people: readonly Person[];
-  balances: Map<string, LedgerBalance>;
+  person: Person;
+  balance: LedgerBalance | 'mixed' | undefined;
   palette: Palette;
-  onOpen: (person: Person) => void;
+  onOpen: () => void;
 }) {
-  if (people.length === 0) return null;
+  const real = balance && balance !== 'mixed' ? balance : null;
+  const net = real?.net.amountMinor ?? 0;
+  const tone = net > 0 ? palette.positive : net < 0 ? palette.negative : palette.dim;
+  const progress = real ? repaymentProgress(real) : null;
 
   return (
-    <>
-      <Text style={[styles.sectionLabel, { color: palette.dim }]}>{title}</Text>
-      {people.map((person) => {
-        const balance = balances.get(person.id);
-        const net = balance?.net.amountMinor ?? 0;
-        const interest = (balance?.owedToMe.interestMinor ?? 0) + (balance?.owedByMe.interestMinor ?? 0);
-
-        return (
-          <Pressable
-            key={person.id}
-            onPress={() => onOpen(person)}
-            style={[styles.row, { borderBottomColor: palette.divider }]}
-            android_ripple={{ color: palette.ripple }}
-          >
-            <View style={styles.rowMain}>
-              <Text style={[styles.name, { color: palette.text }]}>{person.name}</Text>
-              {!balance ? (
-                <Text style={[styles.meta, { color: palette.dim }]}>
-                  mixed currencies — open to see
-                </Text>
-              ) : interest > 0 ? (
-                <Text style={[styles.meta, { color: palette.dim }]}>
-                  includes {toDecimalString(balance.owedToMe.loans[0]?.loan.amount ?? balance.net)}{' '}
-                  interest
-                </Text>
-              ) : null}
-            </View>
-            {balance ? (
-              <Text
-                style={[
-                  styles.amount,
-                  { color: net > 0 ? palette.positive : net < 0 ? palette.negative : palette.dim },
-                ]}
-              >
-                {toDecimalString(
-                  net < 0 ? { ...balance.net, amountMinor: -net } : balance.net,
-                )}{' '}
-                {balance.currency}
-              </Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
-    </>
+    <Pressable
+      onPress={onOpen}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: palette.surface, borderColor: palette.border },
+        net === 0 ? styles.square : null,
+        pressed ? styles.pressed : null,
+      ]}
+    >
+      <Avatar id={person.id} name={person.name} size={42} />
+      <View style={styles.cardMain}>
+        <View style={styles.cardTop}>
+          <Text style={[styles.cardName, { color: palette.text }]} numberOfLines={1}>
+            {person.name}
+          </Text>
+          {real && net !== 0 ? (
+            <Text style={[styles.cardAmount, { color: tone }]}>
+              {toDecimalString(money(Math.abs(net), real.currency))} {real.currency}
+            </Text>
+          ) : null}
+        </View>
+        <Text style={[styles.cardSub, { color: balance === 'mixed' ? palette.warning : palette.dim }]}>
+          {balance === 'mixed'
+            ? 'mixed currencies — open to see'
+            : net > 0
+              ? 'owes you'
+              : net < 0
+                ? 'you owe'
+                : balance
+                  ? 'square'
+                  : 'nothing recorded yet'}
+          {progress ? `  ·  ${Math.round(progress.ratio * 100)}% paid back` : ''}
+        </Text>
+        {progress ? (
+          <View style={[styles.track, { backgroundColor: palette.key }]}>
+            <View style={[styles.fill, { width: `${Math.round(progress.ratio * 100)}%`, backgroundColor: tone }]} />
+          </View>
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 52 },
-  header: {
+  screen: { flex: 1, paddingTop: 48 },
+  pressed: { transform: [{ scale: 0.97 }] },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  headerAction: { fontSize: 24, fontWeight: '600' },
+  title: { flex: 1, fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },
+  newButton: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radii.pill },
+  newText: { fontSize: typeScale.sm, fontWeight: '700' },
+
+  body: { paddingHorizontal: spacing.lg, paddingBottom: 56, gap: spacing.sm },
+  totals: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  total: { flex: 1, borderRadius: radii.lg, borderWidth: 1, padding: spacing.lg },
+  totalLabel: { fontSize: typeScale.xs, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
+  totalValue: { fontSize: typeScale.lg, fontWeight: '700', marginTop: 4, fontVariant: ['tabular-nums'] },
+  totalUnit: { fontSize: typeScale.sm, fontWeight: '600' },
+
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  headerTitle: { fontWeight: '700', fontSize: 17 },
-  headerAction: { fontSize: 16, fontWeight: '600' },
-
-  addRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingBottom: 12 },
-  input: {
-    flex: 1,
+    gap: spacing.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    padding: spacing.md,
   },
-  addButton: { paddingHorizontal: 20, justifyContent: 'center', borderRadius: 12 },
-  addButtonText: { color: '#fff', fontWeight: '700' },
+  square: { opacity: 0.7 },
+  cardMain: { flex: 1, gap: 3 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
+  cardName: { fontSize: typeScale.md, fontWeight: '600', flexShrink: 1 },
+  cardAmount: { fontSize: typeScale.md, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  cardSub: { fontSize: typeScale.xs },
+  track: { height: 5, borderRadius: radii.pill, overflow: 'hidden', marginTop: 4 },
+  fill: { height: '100%', borderRadius: radii.pill },
 
-  list: { paddingHorizontal: 20, paddingBottom: 40 },
-  empty: { textAlign: 'center', paddingVertical: 40, lineHeight: 20 },
-  sectionLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
-  },
-  rowMain: { flexShrink: 1 },
-  name: { fontSize: 16, fontWeight: '600' },
-  meta: { fontSize: 12, marginTop: 3 },
-  amount: { fontWeight: '700' },
+  empty: { alignItems: 'center', paddingTop: 60, gap: spacing.md, paddingHorizontal: spacing.lg },
+  emptyIcon: { fontSize: 56, opacity: 0.4 },
+  emptyText: { fontSize: typeScale.base, textAlign: 'center', lineHeight: 21 },
 });

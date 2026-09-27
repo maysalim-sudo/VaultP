@@ -39,6 +39,7 @@ import {
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
+import { YearGauge } from '../components/YearGauge.js';
 import { BackupScreen } from './BackupScreen.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
@@ -194,38 +195,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
           <Section title="Foreign currency allowance" palette={palette}>
             {allowance ? (
               <>
-                <Text style={[styles.big, { color: palette.text }]}>
-                  {formatMoney(allowance.remaining, 'fr-TN')}
-                </Text>
-                <Text style={[styles.caption, { color: palette.dim }]}>
-                  left of {toDecimalString(allowance.ceiling)} for {allowance.period.label}
-                </Text>
-
-                <Meter
-                  ratio={allowance.ratioUsed}
-                  palette={palette}
-                  colour={allowance.ratioUsed > 0.9 ? palette.negative : palette.accent}
-                />
-
-                {allowance.exhaustionDate ? (
-                  <Note palette={palette} tone="warning">
-                    At this rate the ceiling runs out on {allowance.exhaustionDate}.
-                    After that, foreign payments start being declined.
-                  </Note>
-                ) : (
-                  <Note palette={palette} tone="dim">
-                    Committed subscriptions take it to{' '}
-                    {toDecimalString(allowance.projectedTotal)} by the end of the period.
-                  </Note>
-                )}
-
-                {allowance.rulesWithoutRate.length > 0 ? (
-                  <Note palette={palette} tone="warning">
-                    {allowance.rulesWithoutRate.length} subscription
-                    {allowance.rulesWithoutRate.length === 1 ? '' : 's'} not yet valued,
-                    so the projection is a floor.
-                  </Note>
-                ) : null}
+                <YearGauge allowance={allowance} today={today} palette={palette} />
 
                 <Pressable onPress={() => setEditingCeiling(true)} style={styles.link}>
                   <Text style={{ color: palette.accent, fontWeight: '600' }}>

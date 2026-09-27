@@ -1,66 +1,60 @@
 /**
- * One person's ledger.
+ * One person's ledger, told as a story.
  *
- * Four actions rather than a direction toggle, because a toggle is exactly the
- * control people get backwards. "I lent them" and "they paid me back" cannot be
- * confused; "direction: owed_to_me" absolutely can.
+ * The page answers one question first — where do we stand? — with the balance
+ * as the hero, its direction in words, and a bar for how much has already come
+ * back. Below it, the action you most likely came to take is the big button: if
+ * they owe you, "They paid me"; if you owe them, "I paid them". Adding to the
+ * debt is beside it, and the rarer moves (the other direction, settling up) are
+ * one tap away rather than four equal buttons asking to be misread.
  *
- * The entry list is the audit trail. Nothing here edits a past row: a mistake is
- * corrected by a visible adjustment, so the ledger shows that something changed
- * and when.
+ * Still four distinct actions underneath, never a direction toggle: "I lent them"
+ * and "they paid me back" cannot be confused, and a toggle is exactly the
+ * control people get backwards.
+ *
+ * The history is the audit trail, as a timeline by month. Nothing here edits a
+ * past row: a mistake is corrected by a visible adjustment.
  */
 
 import { useMemo, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useColorScheme,
-} from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
   money,
+  radii,
+  repaymentProgress,
+  spacing,
   todayIn,
   toDecimalString,
+  typeScale,
   type DebtEntry,
   type LedgerBalance,
   type Person,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
+import { Avatar } from '../components/Avatar.js';
+import { describeDate } from '../components/DateField.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 type Action = 'lend' | 'borrow' | 'repaid_to_me' | 'repaid_by_me';
 
-const ACTIONS: ReadonlyArray<{ key: Action; label: string; hint: string }> = [
-  { key: 'lend', label: 'I lent them', hint: 'Money you gave them.' },
-  { key: 'borrow', label: 'I borrowed', hint: 'Money they gave you.' },
-  { key: 'repaid_to_me', label: 'They paid me', hint: 'A repayment you received.' },
-  { key: 'repaid_by_me', label: 'I paid them', hint: 'A repayment you made.' },
-];
+const ACTIONS: Record<Action, { label: string; hint: string }> = {
+  lend: { label: 'I lent them', hint: 'Money you gave them.' },
+  borrow: { label: 'I borrowed', hint: 'Money they gave you.' },
+  repaid_to_me: { label: 'They paid me', hint: 'A repayment you received.' },
+  repaid_by_me: { label: 'I paid them', hint: 'A repayment you made.' },
+};
 
-export function PersonLedger({
-  person,
-  onClose,
-}: {
-  person: Person;
-  onClose: () => void;
-}) {
+export function PersonLedger({ person, onClose }: { person: Person; onClose: () => void }) {
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const today = todayIn();
 
   const [action, setAction] = useState<Action | null>(null);
 
-  const entries = useMemo(
-    () => [...vault.debts.entriesFor(person.id)].reverse(),
-    [vault, version, person.id],
-  );
+  const entries = useMemo(() => [...vault.debts.entriesFor(person.id)].reverse(), [vault, version, person.id]);
 
   const balance = useMemo<LedgerBalance | undefined>(() => {
     try {
@@ -69,33 +63,33 @@ export function PersonLedger({
       return undefined;
     }
   }, [vault, version, person.id, today]);
+  const mixed = entries.length > 0 && !balance;
 
   const net = balance?.net.amountMinor ?? 0;
-  const interest =
-    (balance?.owedToMe.interestMinor ?? 0) + (balance?.owedByMe.interestMinor ?? 0);
+  const interest = (balance?.owedToMe.interestMinor ?? 0) + (balance?.owedByMe.interestMinor ?? 0);
+  const progress = balance ? repaymentProgress(balance) : null;
+  const tone = net > 0 ? palette.positive : net < 0 ? palette.negative : palette.dim;
+
+  // The likely next move is the big button; its opposite sits beside it.
+  const primary: Action = net < 0 ? 'repaid_by_me' : net > 0 ? 'repaid_to_me' : 'lend';
+  const secondary: Action = net < 0 ? 'borrow' : net > 0 ? 'lend' : 'borrow';
+  const rest = (Object.keys(ACTIONS) as Action[]).filter((key) => key !== primary && key !== secondary);
+
+  const months = useMemo(() => groupByMonth(entries), [entries]);
 
   function record(kind: Action, minor: number, currency: string) {
     if (minor <= 0) return;
-    const amount = money(minor, currency);
-
+    const input = { personId: person.id, amount: money(minor, currency), occurredOn: today };
     mutate((v) => {
       switch (kind) {
         case 'lend':
-          return v.debts.lend({ personId: person.id, amount, occurredOn: today });
+          return v.debts.lend(input);
         case 'borrow':
-          return v.debts.borrow({ personId: person.id, amount, occurredOn: today });
+          return v.debts.borrow(input);
         case 'repaid_to_me':
-          return v.debts.recordRepaymentToMe({
-            personId: person.id,
-            amount,
-            occurredOn: today,
-          });
+          return v.debts.recordRepaymentToMe(input);
         case 'repaid_by_me':
-          return v.debts.recordRepaymentByMe({
-            personId: person.id,
-            amount,
-            occurredOn: today,
-          });
+          return v.debts.recordRepaymentByMe(input);
       }
     });
     setAction(null);
@@ -104,17 +98,11 @@ export function PersonLedger({
   function settle() {
     Alert.alert(
       'Settle up?',
-      `Records that ${person.name} and you are square as of today, and stops any ` +
-        `interest. The history stays — this is the receipt, not an erasure.`,
+      `Records that ${person.name} and you are square as of today, and stops any interest. ` +
+        `The history stays — this is the receipt, not an erasure.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Settle',
-          style: 'destructive',
-          onPress: () => {
-            mutate((v) => v.debts.settle(person.id, today));
-          },
-        },
+        { text: 'Settle', onPress: () => mutate((v) => v.debts.settle(person.id, today)) },
       ],
     );
   }
@@ -123,85 +111,109 @@ export function PersonLedger({
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View style={[styles.screen, { backgroundColor: palette.background }]}>
         <View style={styles.header}>
-          <Pressable onPress={onClose} hitSlop={12}>
-            <Text style={[styles.headerAction, { color: palette.dim }]}>Back</Text>
+          <Pressable onPress={onClose} hitSlop={12} style={({ pressed }) => (pressed ? styles.pressed : null)}>
+            <Text style={[styles.back, { color: palette.dim }]}>←</Text>
           </Pressable>
-          <Text style={[styles.headerTitle, { color: palette.text }]} numberOfLines={1}>
+          <Avatar id={person.id} name={person.name} size={34} />
+          <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>
             {person.name}
           </Text>
-          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView contentContainerStyle={styles.body}>
-          <View style={styles.balanceBlock}>
-            {balance ? (
-              <>
-                <Text style={[styles.balanceLabel, { color: palette.dim }]}>
-                  {net > 0 ? 'Owes you' : net < 0 ? 'You owe' : 'Settled up'}
-                </Text>
-                {net !== 0 ? (
-                  <Text
-                    style={[
-                      styles.balance,
-                      { color: net > 0 ? palette.positive : palette.negative },
-                    ]}
-                  >
-                    {toDecimalString(money(Math.abs(net), balance.currency))}{' '}
-                    {balance.currency}
-                  </Text>
-                ) : null}
-                {interest > 0 ? (
-                  <Text style={[styles.note, { color: palette.dim }]}>
-                    includes {toDecimalString(money(interest, balance.currency))} interest
-                    accrued to today
-                  </Text>
-                ) : null}
-              </>
-            ) : (
-              <Text style={[styles.note, { color: palette.warning }]}>
-                This ledger mixes currencies, so it cannot be netted into one figure.
-                Converting a debt at today's rate would change what is owed.
+          {/* Where we stand. */}
+          {mixed ? (
+            <Text style={[styles.mixed, { color: palette.warning }]}>
+              This ledger mixes currencies, so it cannot be netted into one figure. Converting a debt at
+              today's rate would change what is owed.
+            </Text>
+          ) : (
+            <>
+              <Text style={[styles.standing, { color: palette.dim }]}>
+                {net > 0 ? `${person.name} owes you` : net < 0 ? `You owe ${person.name}` : 'You are square'}
               </Text>
-            )}
-          </View>
-
-          <View style={styles.actions}>
-            {ACTIONS.map((option) => (
-              <Pressable
-                key={option.key}
-                onPress={() => setAction(option.key)}
-                style={[
-                  styles.actionButton,
-                  { borderColor: palette.border, backgroundColor: palette.surface },
-                ]}
-              >
-                <Text style={{ color: palette.text, fontWeight: '600' }}>
-                  {option.label}
+              <Text style={[styles.hero, { color: tone }]}>
+                {net !== 0 && balance
+                  ? `${toDecimalString(money(Math.abs(net), balance.currency))} ${balance.currency}`
+                  : '—'}
+              </Text>
+              {progress && balance ? (
+                <>
+                  <View style={[styles.track, { backgroundColor: palette.key }]}>
+                    <View style={[styles.fill, { width: `${Math.round(progress.ratio * 100)}%`, backgroundColor: tone }]} />
+                  </View>
+                  <Text style={[styles.caption, { color: palette.dim }]}>
+                    {progress.direction === 'owed_to_me' ? 'paid back' : 'you have paid back'}{' '}
+                    {toDecimalString(money(progress.repaidMinor, balance.currency))} of{' '}
+                    {toDecimalString(money(progress.lentMinor, balance.currency))}
+                  </Text>
+                </>
+              ) : null}
+              {interest > 0 && balance ? (
+                <Text style={[styles.caption, { color: palette.dim }]}>
+                  includes {toDecimalString(money(interest, balance.currency))} interest to today
                 </Text>
+              ) : null}
+            </>
+          )}
+
+          {/* What to do next. */}
+          <View style={styles.buttons}>
+            <Pressable
+              onPress={() => setAction(primary)}
+              style={({ pressed }) => [
+                styles.primary,
+                { backgroundColor: net === 0 ? palette.accent : tone },
+                pressed ? styles.pressed : null,
+              ]}
+            >
+              <Text style={[styles.primaryText, { color: palette.background }]}>{ACTIONS[primary].label}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setAction(secondary)}
+              style={({ pressed }) => [styles.secondary, { borderColor: palette.border }, pressed ? styles.pressed : null]}
+            >
+              <Text style={[styles.secondaryText, { color: palette.text }]}>
+                {net > 0 ? 'Lend more' : net < 0 ? 'Borrow more' : ACTIONS[secondary].label}
+              </Text>
+            </Pressable>
+          </View>
+          <View style={styles.links}>
+            {rest.map((key) => (
+              <Pressable key={key} onPress={() => setAction(key)} hitSlop={6}>
+                <Text style={[styles.link, { color: palette.accent }]}>{ACTIONS[key].label}</Text>
               </Pressable>
             ))}
+            {net !== 0 ? (
+              <Pressable onPress={settle} hitSlop={6}>
+                <Text style={[styles.link, { color: palette.accent }]}>Settle up</Text>
+              </Pressable>
+            ) : null}
           </View>
 
-          {net !== 0 ? (
-            <Pressable onPress={settle} style={styles.settle}>
-              <Text style={{ color: palette.accent, fontWeight: '600' }}>Settle up</Text>
-            </Pressable>
-          ) : null}
-
-          <Text style={[styles.sectionLabel, { color: palette.dim }]}>History</Text>
+          {/* The story so far. */}
           {entries.length === 0 ? (
-            <Text style={[styles.note, { color: palette.dim }]}>Nothing recorded yet.</Text>
+            <Text style={[styles.empty, { color: palette.dim }]}>
+              Nothing recorded with {person.name} yet. Lend or borrow to start their ledger.
+            </Text>
           ) : (
-            entries.map((entry) => (
-              <EntryRow key={entry.id} entry={entry} palette={palette} />
+            months.map(({ label, items }) => (
+              <View key={label}>
+                <Text style={[styles.month, { color: palette.textFaint }]}>{label}</Text>
+                <View style={[styles.timeline, { borderLeftColor: palette.border }]}>
+                  {items.map((entry) => (
+                    <EntryRow key={entry.id} entry={entry} palette={palette} />
+                  ))}
+                </View>
+              </View>
             ))
           )}
         </ScrollView>
 
         {action ? (
           <AmountSheet
-            title={ACTIONS.find((option) => option.key === action)!.label}
-            hint={ACTIONS.find((option) => option.key === action)!.hint}
+            title={ACTIONS[action].label}
+            hint={ACTIONS[action].hint}
             allowCurrencyChange
             confirmLabel="Record"
             onCancel={() => setAction(null)}
@@ -213,33 +225,47 @@ export function PersonLedger({
   );
 }
 
+function groupByMonth(entries: readonly DebtEntry[]): { label: string; items: DebtEntry[] }[] {
+  const groups: { label: string; items: DebtEntry[] }[] = [];
+  for (const entry of entries) {
+    const [y, m] = entry.occurredOn.split('-').map(Number) as [number, number];
+    const label = new Date(y, m - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(entry);
+    else groups.push({ label, items: [entry] });
+  }
+  return groups;
+}
+
 function EntryRow({ entry, palette }: { entry: DebtEntry; palette: Palette }) {
-  const description =
+  // Money that left you goes up and away; money that came back comes down.
+  const { text, glyph, colour } =
     entry.kind === 'settlement'
-      ? 'Settled up'
+      ? { text: 'Settled up', glyph: '✓', colour: palette.dim }
       : entry.kind === 'adjustment'
-        ? 'Correction'
+        ? { text: 'Correction', glyph: '±', colour: palette.dim }
         : entry.kind === 'loan'
           ? entry.direction === 'owed_to_me'
-            ? 'You lent'
-            : 'You borrowed'
+            ? { text: 'You lent', glyph: '↗', colour: palette.negative }
+            : { text: 'You borrowed', glyph: '↙', colour: palette.positive }
           : entry.direction === 'owed_to_me'
-            ? 'They paid you'
-            : 'You paid them';
+            ? { text: 'They paid you', glyph: '↙', colour: palette.positive }
+            : { text: 'You paid them', glyph: '↗', colour: palette.negative };
 
   return (
-    <View style={[styles.entry, { borderBottomColor: palette.divider }]}>
+    <View style={styles.entry}>
+      <View style={[styles.dot, { backgroundColor: palette.background, borderColor: colour }]}>
+        <Text style={[styles.dotGlyph, { color: colour }]}>{glyph}</Text>
+      </View>
       <View style={styles.entryMain}>
-        <Text style={{ color: palette.text, fontWeight: '600' }}>{description}</Text>
-        <Text style={[styles.note, { color: palette.dim }]}>
-          {entry.occurredOn}
+        <Text style={[styles.entryTitle, { color: palette.text }]}>{text}</Text>
+        <Text style={[styles.entryMeta, { color: palette.dim }]} numberOfLines={2}>
+          {describeDate(entry.occurredOn)}
           {entry.note ? `  ·  ${entry.note}` : ''}
-          {entry.terms.method !== 'none'
-            ? `  ·  ${(entry.terms.rate * 100).toFixed(1)}% ${entry.terms.period}`
-            : ''}
+          {entry.terms.method !== 'none' ? `  ·  ${(entry.terms.rate * 100).toFixed(1)}% ${entry.terms.period}` : ''}
         </Text>
       </View>
-      <Text style={{ color: palette.text }}>
+      <Text style={[styles.entryAmount, { color: palette.text }]}>
         {toDecimalString(entry.amount)} {entry.amount.currency}
       </Text>
     </View>
@@ -247,50 +273,36 @@ function EntryRow({ entry, palette }: { entry: DebtEntry; palette: Palette }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 52 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    gap: 12,
-  },
-  headerTitle: { fontWeight: '700', fontSize: 17, flexShrink: 1, textAlign: 'center' },
-  headerAction: { fontSize: 16, fontWeight: '600' },
-  headerSpacer: { width: 44 },
+  screen: { flex: 1, paddingTop: 48 },
+  pressed: { transform: [{ scale: 0.97 }] },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  back: { fontSize: 24, fontWeight: '600', paddingRight: spacing.xs },
+  name: { fontSize: typeScale.lg, fontWeight: '700', flexShrink: 1 },
 
-  body: { paddingHorizontal: 20, paddingBottom: 48 },
-  balanceBlock: { paddingVertical: 12 },
-  balanceLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
-  balance: { fontSize: 34, fontWeight: '700', marginTop: 4 },
-  note: { fontSize: 12, lineHeight: 18, marginTop: 4 },
+  body: { paddingHorizontal: spacing.xl, paddingBottom: 56 },
+  standing: { fontSize: typeScale.base, marginTop: spacing.md },
+  hero: { fontSize: 40, fontWeight: '700', letterSpacing: -1, fontVariant: ['tabular-nums'], marginTop: 2 },
+  track: { height: 8, borderRadius: radii.pill, overflow: 'hidden', marginTop: spacing.md },
+  fill: { height: '100%', borderRadius: radii.pill },
+  caption: { fontSize: typeScale.sm, marginTop: 6 },
+  mixed: { fontSize: typeScale.base, lineHeight: 21, marginTop: spacing.md },
 
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  actionButton: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    flexGrow: 1,
-    alignItems: 'center',
-  },
-  settle: { alignItems: 'center', paddingVertical: 16 },
+  buttons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },
+  primary: { flex: 1.3, borderRadius: radii.lg, paddingVertical: 15, alignItems: 'center' },
+  primaryText: { fontSize: typeScale.md, fontWeight: '700' },
+  secondary: { flex: 1, borderRadius: radii.lg, paddingVertical: 15, alignItems: 'center', borderWidth: 1 },
+  secondaryText: { fontSize: typeScale.md, fontWeight: '600' },
+  links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.md },
+  link: { fontSize: typeScale.sm, fontWeight: '600' },
 
-  sectionLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 24,
-    marginBottom: 4,
-  },
-  entry: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 12,
-  },
-  entryMain: { flexShrink: 1 },
+  empty: { textAlign: 'center', marginTop: 48, lineHeight: 21 },
+  month: { fontSize: typeScale.xs, fontWeight: '600', letterSpacing: 0.8, textTransform: 'uppercase', marginTop: spacing.xl, marginBottom: spacing.sm },
+  timeline: { borderLeftWidth: 2, marginLeft: 13, paddingLeft: 0, gap: spacing.md, borderRadius: 0 },
+  entry: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginLeft: -14 },
+  dot: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  dotGlyph: { fontSize: 13, fontWeight: '800' },
+  entryMain: { flex: 1 },
+  entryTitle: { fontSize: typeScale.base, fontWeight: '600' },
+  entryMeta: { fontSize: typeScale.xs, marginTop: 2 },
+  entryAmount: { fontSize: typeScale.base, fontWeight: '600', fontVariant: ['tabular-nums'] },
 });
