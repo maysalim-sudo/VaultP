@@ -117,7 +117,19 @@ export const ENTITIES: Partial<Record<EntityName, EntityDef>> = {
   },
   note: {
     table: 'note',
-    columns: ['body', 'due_on', 'notify', 'done', 'done_at', 'pinned', 'colour', ...COMMON],
+    columns: [
+      'body',
+      'title',
+      'content',
+      'due_on',
+      'notify',
+      'done',
+      'done_at',
+      'pinned',
+      'archived',
+      'colour',
+      ...COMMON,
+    ],
   },
   tag: {
     table: 'tag',

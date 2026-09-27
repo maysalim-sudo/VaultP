@@ -304,23 +304,57 @@ const MIGRATIONS: readonly Migration[] = [
       // which this one parked in _extra because it had no column for it. The
       // note repository reads columns directly, so without this the new, empty
       // column would hide that value until the note happened to be edited again.
-      const parked = db.all<{ id: string; _extra: string | null }>(
-        `SELECT id, _extra FROM note WHERE _extra LIKE '%"colour"%'`,
-      );
-      for (const row of parked) {
-        const extra = JSON.parse(row._extra ?? '{}') as Record<string, unknown>;
-        if (!('colour' in extra)) continue;
-        const value = extra.colour;
-        delete extra.colour;
-        db.run(`UPDATE note SET colour = ?, _extra = ? WHERE id = ?`, [
-          typeof value === 'string' ? value : null,
-          JSON.stringify(extra),
-          row.id,
-        ]);
-      }
+      promoteParked(db, 'note', ['colour']);
+    },
+  },
+  {
+    version: 7,
+    name: 'rich-notes',
+    up(db) {
+      // `content` is the note as blocks (JSON); `body` stays, derived from it on
+      // every write, as the plain text search reads and older builds display.
+      db.exec(`
+        ALTER TABLE note ADD COLUMN title TEXT;
+        ALTER TABLE note ADD COLUMN content TEXT;
+        ALTER TABLE note ADD COLUMN archived INTEGER;
+      `);
+      promoteParked(db, 'note', ['title', 'content', 'archived']);
     },
   },
 ];
+
+/**
+ * Move values parked in `_extra` into columns that now exist for them.
+ *
+ * A newer build on the other device may have written a field before this one
+ * had a column for it; replay parked it rather than dropping it. Repositories
+ * read columns, so without this the value would stay invisible until the row
+ * happened to be written again.
+ */
+function promoteParked(db: SqlDatabase, table: string, columns: readonly string[]): void {
+  const parked = db.all<{ id: string; _extra: string | null }>(
+    `SELECT id, _extra FROM ${table} WHERE ${columns.map(() => `_extra LIKE ?`).join(' OR ')}`,
+    columns.map((column) => `%"${column}"%`),
+  );
+
+  for (const row of parked) {
+    const extra = JSON.parse(row._extra ?? '{}') as Record<string, unknown>;
+    const present = columns.filter((column) => column in extra);
+    if (present.length === 0) continue;
+
+    const values = present.map((column) => {
+      const value = extra[column];
+      delete extra[column];
+      if (typeof value === 'boolean') return value ? 1 : 0;
+      return typeof value === 'string' || typeof value === 'number' ? value : null;
+    });
+
+    db.run(
+      `UPDATE ${table} SET ${present.map((column) => `${column} = ?`).join(', ')}, _extra = ? WHERE id = ?`,
+      [...values, JSON.stringify(extra), row.id],
+    );
+  }
+}
 
 export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
 

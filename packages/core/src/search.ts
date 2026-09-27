@@ -15,6 +15,7 @@
 import type { SqlDatabase, SqlValue } from './db/adapter.js';
 import { BASE_CURRENCY, type CurrencyCode } from './money/currency.js';
 import { type Money, money } from './money/money.js';
+import { noteHeadline } from './notes/repository.js';
 import type { IsoDate } from './time/date.js';
 
 export type SearchResultKind = 'expense' | 'debt' | 'document' | 'note';
@@ -170,26 +171,39 @@ export function searchEverything(
   }
 
   // ---------------------------------------------------------------- notes
+  //
+  // `body` is the plain-text rendering of the note's blocks, so this finds words
+  // inside checklist items, table cells and image captions as well.
   const notes = db.all<{
     id: string;
+    title: string | null;
     body: string | null;
     due_on: string | null;
     done: number | null;
+    archived: number | null;
   }>(
-    `SELECT id, body, due_on, done
+    `SELECT id, title, body, due_on, done, archived
        FROM note
-      WHERE deleted_at IS NULL AND body LIKE ? ESCAPE '\\'
+      WHERE deleted_at IS NULL
+        AND (body LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\')
       ORDER BY done ASC, due_on ASC
       LIMIT ?`,
-    [pattern, limit] as SqlValue[],
+    [pattern, pattern, limit] as SqlValue[],
   );
 
   for (const row of notes) {
     results.push({
       kind: 'note',
       id: row.id,
-      title: row.body ?? '',
-      detail: row.done === 1 ? 'done' : row.due_on ? `due ${row.due_on}` : 'note',
+      title: noteHeadline({ title: row.title ?? '', body: row.body ?? '' }, 120),
+      detail:
+        row.done === 1
+          ? 'done'
+          : row.archived === 1
+            ? 'archived'
+            : row.due_on
+              ? `due ${row.due_on}`
+              : 'note',
       amount: null,
       date: row.due_on,
       parentId: null,

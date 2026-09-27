@@ -14,7 +14,7 @@ import type { SqlDatabase } from './db/adapter.js';
 import { type AllowanceConfig, forecastAllowance } from './expenses/allowance.js';
 import { isAllowanceConfigured } from './settings.js';
 import type { DocumentRepository } from './documents/repository.js';
-import type { NoteRepository } from './notes/repository.js';
+import { type NoteRepository, noteHeadline } from './notes/repository.js';
 import { dueOccurrences, upcomingCharges } from './expenses/scheduler.js';
 import type { ExpenseRepository } from './expenses/repository.js';
 import { toDecimalString } from './money/money.js';
@@ -163,8 +163,9 @@ export function planNotifications(
 
       const date = compareDates(note.dueOn, asOf) < 0 ? asOf : note.dueOn;
       const overdue = compareDates(note.dueOn, asOf) < 0;
-      // The body is the note; a title repeating it would say everything twice.
-      const summary = note.body.length > 60 ? `${note.body.slice(0, 57)}…` : note.body;
+      // The note's own title if it has one, else its first line: a notification
+      // quoting a whole checklist would say nothing at a glance.
+      const summary = noteHeadline(note);
 
       planned.push({
         id: `note:${note.id}:${note.dueOn}`,

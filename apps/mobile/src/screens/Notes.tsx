@@ -1,15 +1,19 @@
 /**
  * Notes, in the manner of Google Keep.
  *
- * A two-column grid of cards rather than a list, because a note is something you
- * glance at, not something you read down a column. Cards keep their own height —
- * a one-line reminder and a paragraph sit side by side without either being
- * padded or cut to match — and the columns are balanced by height, not by count,
- * so neither side runs long.
+ * A grid of cards (or a single column, if you prefer), each showing what the
+ * note actually holds: its first image across the top, its title, its opening
+ * lines, the first few checklist items with their ticks, a table's size. A note
+ * is something you glance at, so the card has to say what is in it.
  *
- * Adding is still a single field at the top: anything that makes you stop and
- * configure before writing loses the thought you were trying to keep. Colour,
- * pin and date come afterwards, in the note itself.
+ * Starting a note costs one tap. The bar at the top opens a blank note, or one
+ * already set up as a checklist or with an image picked — anything that makes you
+ * configure first loses the thought you were trying to keep.
+ *
+ * Filters along the top: your notes, the archive, what is done, and each label.
+ * Search looks through titles and everything inside notes — checklist items,
+ * table cells, captions — because the plain-text copy the vault keeps covers all
+ * of them.
  */
 
 import { useMemo, useState } from 'react';
@@ -24,24 +28,35 @@ import {
 } from 'react-native';
 
 import {
-  NOTE_COLOURS,
   noteShades,
   radii,
+  readSetting,
   spacing,
   todayIn,
   typeScale,
+  writeSetting,
+  type Block,
   type Note,
-  type NoteColour,
 } from '@vaultp/core';
 
-import { DateField, describeDate } from '../components/DateField.js';
+import { describeDate } from '../components/DateField.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
+import { NoteImage } from '../notes/images.js';
+import { NoteEditor, wash, type EditorStart } from '../notes/NoteEditor.js';
+import type { OpenVault } from '../vault/open.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 type Scheme = 'light' | 'dark';
+type Layout = 'grid' | 'list';
+type Filter = { kind: 'notes' } | { kind: 'archive' } | { kind: 'done' } | { kind: 'label'; id: string };
 
-/** The card fill for a note: its chosen shade, or the plain surface. */
+const LAYOUT_SETTING = 'notes_layout';
+
+function isLayout(value: unknown): value is Layout {
+  return value === 'grid' || value === 'list';
+}
+
 function cardColours(note: Note, scheme: Scheme, palette: Palette) {
   if (note.colour) {
     const shade = noteShades[scheme][note.colour] ?? palette.surface;
@@ -50,32 +65,39 @@ function cardColours(note: Note, scheme: Scheme, palette: Palette) {
   return { backgroundColor: palette.surface, borderColor: palette.border };
 }
 
-/** A translucent wash that reads on any card colour, for chips and controls. */
-function wash(scheme: Scheme): string {
-  return scheme === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)';
+/**
+ * A rough rendered height, for balancing the two columns.
+ *
+ * Exact measurement would mean laying everything out twice; this is close
+ * enough that neither column visibly runs long.
+ */
+function estimateHeight(note: Note): number {
+  let height = 36;
+  if (note.title) height += 26;
+  const image = note.content.blocks.find((b) => b.type === 'image');
+  if (image && image.type === 'image') {
+    const ratio = image.width && image.height ? image.height / image.width : 0.75;
+    height += Math.min(220, 170 * ratio);
+  }
+  height += Math.min(10, preview(note.content.blocks).length) * 21;
+  if (note.dueOn) height += 30;
+  return height;
 }
 
-/**
- * Split notes into two columns of roughly equal height.
- *
- * Each note goes to whichever column is currently shorter, using its text length
- * as a stand-in for its rendered height. Exact measurement would mean laying
- * everything out twice; this is close enough that neither column visibly runs
- * long, and it keeps the reading order top-to-bottom within a column.
- */
 function balance(notes: readonly Note[]): [Note[], Note[]] {
   const columns: [Note[], Note[]] = [[], []];
   const heights = [0, 0];
-
   for (const note of notes) {
-    const lines = Math.min(10, Math.ceil(Math.max(note.body.length, 1) / 22));
-    const estimate = 44 + lines * 21 + (note.dueOn ? 30 : 0);
     const target = heights[0]! <= heights[1]! ? 0 : 1;
     columns[target].push(note);
-    heights[target] += estimate;
+    heights[target] += estimateHeight(note);
   }
-
   return columns;
+}
+
+/** The blocks a card shows: everything but images, which go across the top. */
+function preview(blocks: readonly Block[]): Block[] {
+  return blocks.filter((b) => b.type !== 'image' && b.type !== 'unknown' && !(b.type === 'text' && b.text.trim() === ''));
 }
 
 export function Notes({ onClose }: { onClose?: () => void }) {
@@ -84,125 +106,188 @@ export function Notes({ onClose }: { onClose?: () => void }) {
   const palette = paletteFor(scheme);
   const today = todayIn();
 
-  const [draft, setDraft] = useState('');
-  const [editing, setEditing] = useState<Note | null>(null);
-  const [showDone, setShowDone] = useState(false);
+  const [editor, setEditor] = useState<EditorStart | null>(null);
+  const [filter, setFilter] = useState<Filter>({ kind: 'notes' });
+  const [query, setQuery] = useState('');
 
-  const open = useMemo(() => vault.notes.listOpen(), [vault, version]);
-  const done = useMemo(
-    () => (showDone ? vault.notes.listDone() : []),
-    [vault, version, showDone],
+  const layout = useMemo(
+    () => readSetting<Layout>(vault.store, LAYOUT_SETTING, 'grid', isLayout),
+    [vault, version],
   );
+  const labels = useMemo(() => vault.notes.listLabels(), [vault, version]);
 
-  const pinned = open.filter((note) => note.pinned);
-  const others = open.filter((note) => !note.pinned);
+  const notes = useMemo(() => {
+    let list: Note[];
+    switch (filter.kind) {
+      case 'archive':
+        list = vault.notes.listArchived();
+        break;
+      case 'done':
+        list = vault.notes.listDone(200);
+        break;
+      case 'label': {
+        const ids = vault.notes.notesLabelled(filter.id);
+        list = [...vault.notes.listOpen(), ...vault.notes.listDone(200), ...vault.notes.listArchived()].filter(
+          (note) => ids.has(note.id),
+        );
+        break;
+      }
+      default:
+        list = vault.notes.listOpen();
+    }
+    const term = query.trim().toLowerCase();
+    if (term === '') return list;
+    // Search the whole vault's notes, not just the current filter: looking for
+    // something is not the moment to remember where you put it.
+    const everything =
+      filter.kind === 'notes'
+        ? [...vault.notes.listOpen(), ...vault.notes.listArchived(), ...vault.notes.listDone(200)]
+        : list;
+    return everything.filter(
+      (note) => note.title.toLowerCase().includes(term) || note.body.toLowerCase().includes(term),
+    );
+  }, [vault, version, filter, query]);
 
-  function add() {
-    if (draft.trim() === '') return;
-    mutate((v) => v.notes.addNote({ body: draft }));
-    setDraft('');
+  const pinned = filter.kind === 'notes' && query === '' ? notes.filter((n) => n.pinned) : [];
+  const others = filter.kind === 'notes' && query === '' ? notes.filter((n) => !n.pinned) : notes;
+
+  function setLayout(next: Layout) {
+    mutate((v) => writeSetting(v.store, LAYOUT_SETTING, next));
   }
 
-  function grid(notes: readonly Note[]) {
-    const [left, right] = balance(notes);
+  function cards(list: readonly Note[]) {
+    const card = (note: Note) => (
+      <NoteCard
+        key={note.id}
+        note={note}
+        vault={vault}
+        today={today}
+        scheme={scheme}
+        palette={palette}
+        labelNames={vault.notes.labelsFor(note.id).map((label) => label.name)}
+        onOpen={() => setEditor({ kind: 'existing', note })}
+      />
+    );
+    if (layout === 'list') return <View style={styles.column}>{list.map(card)}</View>;
+    const [left, right] = balance(list);
     return (
       <View style={styles.grid}>
-        {[left, right].map((column, index) => (
-          <View key={index} style={styles.column}>
-            {column.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                today={today}
-                scheme={scheme}
-                palette={palette}
-                onOpen={() => setEditing(note)}
-                onToggle={() => mutate((v) => v.notes.setDone(note.id, !note.done))}
-              />
-            ))}
-          </View>
-        ))}
+        <View style={styles.column}>{left.map(card)}</View>
+        <View style={styles.column}>{right.map(card)}</View>
       </View>
     );
   }
 
+  const filters: { key: string; label: string; filter: Filter }[] = [
+    { key: 'notes', label: 'Notes', filter: { kind: 'notes' } },
+    ...labels.map((label) => ({ key: label.id, label: `🏷 ${label.name}`, filter: { kind: 'label', id: label.id } as Filter })),
+    { key: 'archive', label: '🗄 Archive', filter: { kind: 'archive' } },
+    { key: 'done', label: '✓ Done', filter: { kind: 'done' } },
+  ];
+  const isActive = (f: Filter) =>
+    f.kind === filter.kind && (f.kind !== 'label' || (filter.kind === 'label' && filter.id === f.id));
+
   return (
     <Screen onClose={onClose}>
       <View style={[styles.screen, { backgroundColor: palette.background }]}>
-        {/* The pill header Keep is recognised by. */}
+        {/* Keep's search pill. */}
         <View
           style={[
             styles.bar,
-            {
-              backgroundColor: palette.surface,
-              borderColor: palette.border,
-              elevation: palette.elevationCard,
-            },
+            { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
           ]}
         >
           {onClose ? (
             <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.barAction, { color: palette.dim }]}>Close</Text>
+              <Text style={[styles.barGlyph, { color: palette.text }]}>←</Text>
+            </Pressable>
+          ) : (
+            <Text style={[styles.barGlyph, { color: palette.dim }]}>⌕</Text>
+          )}
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search your notes"
+            placeholderTextColor={palette.textFaint}
+            style={[styles.search, { color: palette.text }]}
+          />
+          {query !== '' ? (
+            <Pressable onPress={() => setQuery('')} hitSlop={10}>
+              <Text style={[styles.barGlyph, { color: palette.dim }]}>✕</Text>
             </Pressable>
           ) : null}
-          <Text style={[styles.barTitle, { color: palette.dim }]}>Your notes</Text>
           <Pressable
-            onPress={() => setShowDone((current) => !current)}
-            hitSlop={8}
-            style={({ pressed }) => [
-              styles.barChip,
-              { backgroundColor: showDone ? palette.accent : wash(scheme) },
-              pressed ? styles.pressed : null,
-            ]}
+            onPress={() => setLayout(layout === 'grid' ? 'list' : 'grid')}
+            hitSlop={10}
+            accessibilityLabel={layout === 'grid' ? 'Show as a list' : 'Show as a grid'}
+            style={({ pressed }) => [styles.layoutButton, pressed ? styles.pressed : null]}
           >
-            <Text
-              style={[styles.barChipText, { color: showDone ? palette.onAccent : palette.text }]}
-            >
-              {showDone ? 'Hide done' : 'Show done'}
-            </Text>
+            <Text style={[styles.barGlyph, { color: palette.text }]}>{layout === 'grid' ? '☰' : '▦'}</Text>
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          {/* "Take a note…" — one field, nothing to choose first. */}
-          <View
-            style={[
-              styles.take,
-              {
-                backgroundColor: palette.surface,
-                borderColor: palette.border,
-                elevation: palette.elevationCard,
-              },
-            ]}
-          >
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Take a note…"
-              placeholderTextColor={palette.textFaint}
-              onSubmitEditing={add}
-              returnKeyType="done"
-              style={[styles.takeInput, { color: palette.text }]}
-            />
-            {draft.trim() !== '' ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filtersScroll}
+          contentContainerStyle={styles.filters}
+        >
+          {filters.map((f) => {
+            const active = isActive(f.filter);
+            return (
               <Pressable
-                onPress={add}
+                key={f.key}
+                onPress={() => setFilter(f.filter)}
                 style={({ pressed }) => [
-                  styles.takeButton,
-                  { backgroundColor: palette.accent },
+                  styles.filter,
+                  {
+                    backgroundColor: active ? palette.accent : 'transparent',
+                    borderColor: active ? palette.accent : palette.border,
+                  },
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <Text style={[styles.takeButtonText, { color: palette.onAccent }]}>Add</Text>
+                <Text style={[styles.filterText, { color: active ? palette.onAccent : palette.text }]}>
+                  {f.label}
+                </Text>
               </Pressable>
-            ) : null}
-          </View>
+            );
+          })}
+        </ScrollView>
 
-          {open.length === 0 && done.length === 0 ? (
+        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          {filter.kind === 'notes' && query === '' ? (
+            // "Take a note…" with Keep's shortcuts: a checklist, an image.
+            <View
+              style={[
+                styles.take,
+                { backgroundColor: palette.surface, borderColor: palette.border, elevation: palette.elevationCard },
+              ]}
+            >
+              <Pressable style={styles.takeText} onPress={() => setEditor({ kind: 'new', with: 'text' })}>
+                <Text style={[styles.takePlaceholder, { color: palette.textFaint }]}>Take a note…</Text>
+              </Pressable>
+              <TakeButton glyph="☑" label="New checklist" colour={palette.text} onPress={() => setEditor({ kind: 'new', with: 'checklist' })} />
+              <TakeButton glyph="🖼" label="New note with image" colour={palette.text} onPress={() => setEditor({ kind: 'new', with: 'library' })} />
+              <TakeButton glyph="📷" label="New note with photo" colour={palette.text} onPress={() => setEditor({ kind: 'new', with: 'camera' })} />
+            </View>
+          ) : null}
+
+          {notes.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>💡</Text>
+              <Text style={styles.emptyIcon}>
+                {query !== '' ? '🔍' : filter.kind === 'archive' ? '🗄' : filter.kind === 'done' ? '✓' : '💡'}
+              </Text>
               <Text style={[styles.emptyText, { color: palette.dim }]}>
-                Notes you add appear here
+                {query !== ''
+                  ? 'No note has that in it'
+                  : filter.kind === 'archive'
+                    ? 'Archived notes appear here'
+                    : filter.kind === 'done'
+                      ? 'Nothing marked done yet'
+                      : filter.kind === 'label'
+                        ? 'No notes with this label'
+                        : 'Notes you add appear here'}
               </Text>
             </View>
           ) : null}
@@ -210,53 +295,87 @@ export function Notes({ onClose }: { onClose?: () => void }) {
           {pinned.length > 0 ? (
             <>
               <Text style={[styles.section, { color: palette.dim }]}>PINNED</Text>
-              {grid(pinned)}
+              {cards(pinned)}
             </>
           ) : null}
 
           {others.length > 0 ? (
             <>
-              {/* Keep only labels the rest once there is a pinned group to tell
-                  them apart from. */}
-              {pinned.length > 0 ? (
-                <Text style={[styles.section, { color: palette.dim }]}>OTHERS</Text>
-              ) : null}
-              {grid(others)}
-            </>
-          ) : null}
-
-          {done.length > 0 ? (
-            <>
-              <Text style={[styles.section, { color: palette.dim }]}>DONE</Text>
-              {grid(done)}
+              {pinned.length > 0 ? <Text style={[styles.section, { color: palette.dim }]}>OTHERS</Text> : null}
+              {cards(others)}
             </>
           ) : null}
         </ScrollView>
 
-        {editing ? (
-          <NoteEditor note={editing} scheme={scheme} onClose={() => setEditing(null)} />
-        ) : null}
+        {/* Keep's floating "new note" for when the bar has scrolled away. */}
+        <Pressable
+          onPress={() => setEditor({ kind: 'new', with: 'text' })}
+          accessibilityLabel="New note"
+          style={({ pressed }) => [
+            styles.fab,
+            { backgroundColor: palette.accent, elevation: palette.elevationOverlay },
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Text style={[styles.fabGlyph, { color: palette.onAccent }]}>＋</Text>
+        </Pressable>
+
+        {editor ? <NoteEditor start={editor} scheme={scheme} onClose={() => setEditor(null)} /> : null}
       </View>
     </Screen>
   );
 }
 
+function TakeButton({
+  glyph,
+  label,
+  colour,
+  onPress,
+}: {
+  glyph: string;
+  label: string;
+  colour: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={6}
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.takeButton, pressed ? styles.pressed : null]}
+    >
+      <Text style={[styles.takeGlyph, { color: colour }]}>{glyph}</Text>
+    </Pressable>
+  );
+}
+
+const PREVIEW_LINES = 8;
+
 function NoteCard({
   note,
+  vault,
   today,
   scheme,
   palette,
+  labelNames,
   onOpen,
-  onToggle,
 }: {
   note: Note;
+  vault: OpenVault;
   today: string;
   scheme: Scheme;
   palette: Palette;
+  labelNames: string[];
   onOpen: () => void;
-  onToggle: () => void;
 }) {
   const overdue = !note.done && note.dueOn !== null && note.dueOn <= today;
+  const image = note.content.blocks.find((b) => b.type === 'image');
+  const lines = preview(note.content.blocks);
+  const shown = lines.slice(0, PREVIEW_LINES);
+  const hiddenTicked =
+    note.content.checkedLast ? lines.filter((b) => b.type === 'check' && b.checked).length : 0;
+  const fill = wash(scheme);
+  let number = 0;
 
   return (
     <Pressable
@@ -268,270 +387,122 @@ function NoteCard({
         pressed ? styles.pressed : null,
       ]}
     >
-      <Text
-        numberOfLines={10}
-        style={[styles.cardBody, { color: palette.text }, note.done ? styles.struck : null]}
-      >
-        {note.body}
-      </Text>
+      {image && image.type === 'image' ? (
+        <NoteImage
+          vault={vault}
+          fileId={image.fileId}
+          width={image.width}
+          height={image.height}
+          maxHeight={220}
+          placeholderColour={fill}
+          textColour={palette.dim}
+        />
+      ) : null}
 
-      <View style={styles.cardFoot}>
-        {note.dueOn ? (
-          <View style={[styles.chip, { backgroundColor: wash(scheme) }]}>
-            <Text
-              // Overdue is carried by weight, not a warning colour: the chip sits on
-              // the note's own shade, and ochre on a yellow or orange card is unreadable.
-              style={[
-                styles.chipText,
-                { color: palette.text, fontWeight: overdue ? '700' : undefined },
-              ]}
-              numberOfLines={1}
-            >
-              {note.notify ? '🔔 ' : '🕒 '}
-              {describeDate(note.dueOn)}
-            </Text>
+      <View style={styles.cardInner}>
+        {note.title ? (
+          <Text numberOfLines={2} style={[styles.cardTitle, { color: palette.text }]}>
+            {note.title}
+          </Text>
+        ) : null}
+
+        {shown
+          .filter((b) => !(note.content.checkedLast && b.type === 'check' && b.checked))
+          .map((block) => {
+            number = block.type === 'numbered' ? number + 1 : 0;
+            switch (block.type) {
+              case 'check':
+                return (
+                  <View key={block.id} style={styles.cardCheck}>
+                    <Text style={[styles.cardBox, { color: palette.dim }]}>{block.checked ? '☑' : '☐'}</Text>
+                    <Text
+                      numberOfLines={2}
+                      style={[
+                        styles.cardLine,
+                        { color: block.checked ? palette.dim : palette.text },
+                        block.checked ? styles.struck : null,
+                      ]}
+                    >
+                      {block.text}
+                    </Text>
+                  </View>
+                );
+              case 'table':
+                return (
+                  <Text key={block.id} style={[styles.cardMeta, { color: palette.dim }]}>
+                    ▦ Table · {block.rows.length} × {block.rows[0]?.length ?? 0}
+                  </Text>
+                );
+              case 'divider':
+                return <View key={block.id} style={[styles.cardDivider, { backgroundColor: palette.dim }]} />;
+              case 'bullet':
+              case 'numbered':
+                return (
+                  <Text key={block.id} numberOfLines={2} style={[styles.cardLine, { color: palette.text }]}>
+                    {block.type === 'bullet' ? '• ' : `${number}. `}
+                    {block.text}
+                  </Text>
+                );
+              case 'text':
+                return (
+                  <Text
+                    key={block.id}
+                    numberOfLines={block.style === 'body' ? 6 : 2}
+                    style={[
+                      styles.cardLine,
+                      { color: palette.text },
+                      block.style === 'h1' || block.style === 'h2' ? styles.cardHeading : null,
+                      block.style === 'quote' ? styles.italic : null,
+                    ]}
+                  >
+                    {block.text}
+                  </Text>
+                );
+              default:
+                return null;
+            }
+          })}
+
+        {lines.length > PREVIEW_LINES ? (
+          <Text style={[styles.cardMeta, { color: palette.dim }]}>…</Text>
+        ) : null}
+        {hiddenTicked > 0 ? (
+          <Text style={[styles.cardMeta, { color: palette.dim }]}>
+            + {hiddenTicked} ticked {hiddenTicked === 1 ? 'item' : 'items'}
+          </Text>
+        ) : null}
+
+        {note.dueOn || labelNames.length > 0 || note.checklist ? (
+          <View style={styles.cardFoot}>
+            {note.dueOn ? (
+              <View style={[styles.chip, { backgroundColor: fill }]}>
+                <Text
+                  numberOfLines={1}
+                  // Overdue is carried by weight, not a warning colour: the chip sits
+                  // on the note's own shade, and ochre on a yellow card is unreadable.
+                  style={[styles.chipText, { color: palette.text, fontWeight: overdue ? '700' : '500' }]}
+                >
+                  {note.notify ? '🔔 ' : '🕒 '}
+                  {describeDate(note.dueOn)}
+                </Text>
+              </View>
+            ) : null}
+            {note.checklist && !note.content.checkedLast ? (
+              <View style={[styles.chip, { backgroundColor: fill }]}>
+                <Text style={[styles.chipText, { color: palette.text }]}>
+                  ☑ {note.checklist.done}/{note.checklist.total}
+                </Text>
+              </View>
+            ) : null}
+            {labelNames.map((name) => (
+              <View key={name} style={[styles.chip, { backgroundColor: fill }]}>
+                <Text numberOfLines={1} style={[styles.chipText, { color: palette.text }]}>
+                  {name}
+                </Text>
+              </View>
+            ))}
           </View>
-        ) : (
-          <View />
-        )}
-
-        {/* Ticking a note off is common enough to deserve a target on the card,
-            rather than a trip into the note to find it. */}
-        <Pressable
-          onPress={onToggle}
-          hitSlop={10}
-          style={[
-            styles.tick,
-            {
-              borderColor: note.done ? palette.success : palette.dim,
-              backgroundColor: note.done ? palette.success : 'transparent',
-            },
-          ]}
-        >
-          {note.done ? <Text style={[styles.tickMark, { color: palette.onAccent }]}>✓</Text> : null}
-        </Pressable>
-      </View>
-    </Pressable>
-  );
-}
-
-function NoteEditor({
-  note,
-  scheme,
-  onClose,
-}: {
-  note: Note;
-  scheme: Scheme;
-  onClose: () => void;
-}) {
-  const { mutate } = useOpenVault();
-  const palette = paletteFor(scheme);
-
-  const [body, setBody] = useState(note.body);
-  const [dueOn, setDueOn] = useState(note.dueOn ?? '');
-  const [notify, setNotify] = useState(note.notify);
-  const [pinned, setPinned] = useState(note.pinned);
-  const [colour, setColour] = useState<NoteColour | null>(note.colour);
-  const [done, setDone] = useState(note.done);
-
-  // The whole screen takes the note's colour, as Keep's editor does, so the note
-  // being edited looks like the card that was tapped.
-  const ground = colour ? (noteShades[scheme][colour] ?? palette.background) : palette.background;
-
-  function save() {
-    if (body.trim() === '') return;
-    mutate((v) => {
-      v.notes.updateNote(note.id, {
-        body,
-        dueOn: dueOn.trim() === '' ? null : dueOn.trim(),
-        notify,
-        pinned,
-        colour,
-      });
-      if (done !== note.done) v.notes.setDone(note.id, done);
-    });
-    onClose();
-  }
-
-  return (
-    <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: ground }]}>
-        <View style={styles.editorHead}>
-          <Pressable onPress={onClose} hitSlop={12}>
-            <Text style={[styles.barAction, { color: palette.dim }]}>Back</Text>
-          </Pressable>
-          <View style={styles.editorHeadRight}>
-            <Pressable
-              onPress={() => setPinned((current) => !current)}
-              hitSlop={10}
-              style={({ pressed }) => [
-                styles.iconButton,
-                { backgroundColor: pinned ? wash(scheme) : 'transparent' },
-                pressed ? styles.pressed : null,
-              ]}
-            >
-              <Text style={[styles.iconGlyph, { opacity: pinned ? 1 : 0.45 }]}>📌</Text>
-            </Pressable>
-            <Pressable onPress={save} hitSlop={12}>
-              <Text style={[styles.barAction, { color: palette.accent }]}>Save</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.editor} keyboardShouldPersistTaps="handled">
-          {/* No box around the text: in Keep the note *is* the page. */}
-          <TextInput
-            value={body}
-            onChangeText={setBody}
-            multiline
-            autoFocus
-            placeholder="Note"
-            placeholderTextColor={palette.textFaint}
-            style={[styles.editorBody, { color: palette.text }]}
-          />
-
-          <Text style={[styles.label, { color: palette.dim }]}>Colour</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.swatches}>
-              <Swatch
-                fill={palette.surface}
-                selected={colour === null}
-                ringColour={palette.accent}
-                borderColour={palette.border}
-                onPress={() => setColour(null)}
-                mark="⊘"
-                markColour={palette.dim}
-              />
-              {NOTE_COLOURS.map((name) => (
-                <Swatch
-                  key={name}
-                  fill={noteShades[scheme][name] ?? palette.surface}
-                  selected={colour === name}
-                  ringColour={palette.accent}
-                  borderColour="transparent"
-                  onPress={() => setColour(name)}
-                  mark={colour === name ? '✓' : ''}
-                  markColour={palette.text}
-                />
-              ))}
-            </View>
-          </ScrollView>
-
-          <Text style={[styles.label, { color: palette.dim }]}>Reminder</Text>
-          <DateField
-            value={dueOn}
-            onChange={(next) => {
-              setDueOn(next);
-              // Clearing the date makes the notification meaningless; the core
-              // enforces this too, but the switch should not sit on screen
-              // claiming otherwise.
-              if (next === '') setNotify(false);
-            }}
-            placeholder="No date"
-            palette={palette}
-          />
-
-          {dueOn.trim() !== '' ? (
-            <Toggle
-              label="Notify me on the day"
-              detail="Off means it only shows on the card."
-              value={notify}
-              onChange={setNotify}
-              palette={palette}
-              fill={wash(scheme)}
-            />
-          ) : null}
-
-          <Toggle
-            label="Done"
-            detail="Hidden from the grid until you show done notes."
-            value={done}
-            onChange={setDone}
-            palette={palette}
-            fill={wash(scheme)}
-          />
-
-          <Pressable
-            onPress={() => {
-              mutate((v) => v.notes.deleteNote(note.id));
-              onClose();
-            }}
-            style={styles.delete}
-          >
-            <Text style={{ color: palette.danger, fontWeight: '600' }}>Delete note</Text>
-          </Pressable>
-        </ScrollView>
-      </View>
-    </Screen>
-  );
-}
-
-function Swatch({
-  fill,
-  selected,
-  ringColour,
-  borderColour,
-  onPress,
-  mark,
-  markColour,
-}: {
-  fill: string;
-  selected: boolean;
-  ringColour: string;
-  borderColour: string;
-  onPress: () => void;
-  mark: string;
-  markColour: string;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={4}
-      style={({ pressed }) => [
-        styles.swatch,
-        {
-          backgroundColor: fill,
-          borderColor: selected ? ringColour : borderColour,
-          borderWidth: selected ? 2 : 1,
-        },
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      {mark ? <Text style={[styles.swatchMark, { color: markColour }]}>{mark}</Text> : null}
-    </Pressable>
-  );
-}
-
-function Toggle({
-  label,
-  detail,
-  value,
-  onChange,
-  palette,
-  fill,
-}: {
-  label: string;
-  detail: string;
-  value: boolean;
-  onChange: (next: boolean) => void;
-  palette: Palette;
-  fill: string;
-}) {
-  return (
-    <Pressable
-      onPress={() => onChange(!value)}
-      style={({ pressed }) => [
-        styles.toggle,
-        { backgroundColor: fill },
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      <View style={styles.toggleText}>
-        <Text style={{ color: palette.text, fontWeight: '600' }}>{label}</Text>
-        <Text style={{ color: palette.dim, fontSize: typeScale.xs, marginTop: 2 }}>{detail}</Text>
-      </View>
-      <View style={[styles.switch, { backgroundColor: value ? palette.accent : palette.key }]}>
-        <View style={[styles.knob, value ? styles.knobOn : styles.knobOff]} />
+        ) : null}
       </View>
     </Pressable>
   );
@@ -543,20 +514,24 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     marginHorizontal: spacing.lg,
-    paddingLeft: spacing.xl,
-    paddingRight: spacing.sm,
-    height: 52,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.xs,
+    height: 50,
     borderRadius: radii.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  barTitle: { flex: 1, fontSize: typeScale.md },
-  barAction: { fontSize: typeScale.md, fontWeight: '600' },
-  barChip: { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radii.pill },
-  barChipText: { fontSize: typeScale.sm, fontWeight: '600' },
+  barGlyph: { fontSize: 20, fontWeight: '600' },
+  search: { flex: 1, fontSize: typeScale.md, paddingVertical: 8 },
+  layoutButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
 
-  body: { paddingHorizontal: spacing.md, paddingTop: spacing.lg, paddingBottom: 48 },
+  filtersScroll: { flexGrow: 0, marginTop: spacing.md },
+  filters: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  filter: { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radii.pill, borderWidth: 1 },
+  filterText: { fontSize: typeScale.sm, fontWeight: '600' },
+
+  body: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: 120 },
 
   take: {
     flexDirection: 'row',
@@ -564,17 +539,18 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
     marginBottom: spacing.lg,
     paddingLeft: spacing.lg,
-    paddingRight: spacing.sm,
-    minHeight: 50,
+    paddingRight: spacing.xs,
+    minHeight: 52,
     borderRadius: radii.md,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  takeInput: { flex: 1, fontSize: typeScale.md, paddingVertical: spacing.md },
-  takeButton: { paddingHorizontal: spacing.lg, paddingVertical: 8, borderRadius: radii.pill },
-  takeButtonText: { fontWeight: '700', fontSize: typeScale.sm },
+  takeText: { flex: 1, paddingVertical: spacing.md },
+  takePlaceholder: { fontSize: typeScale.md },
+  takeButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
+  takeGlyph: { fontSize: 19 },
 
-  empty: { alignItems: 'center', paddingTop: 90, gap: spacing.md },
-  emptyIcon: { fontSize: 72, opacity: 0.35 },
+  empty: { alignItems: 'center', paddingTop: 80, gap: spacing.md },
+  emptyIcon: { fontSize: 64, opacity: 0.35 },
   emptyText: { fontSize: typeScale.md },
 
   section: {
@@ -589,95 +565,34 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', gap: spacing.sm },
   column: { flex: 1, gap: spacing.sm },
 
-  card: {
-    borderRadius: radii.md,
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
+  card: { borderRadius: radii.md, borderWidth: 1, overflow: 'hidden' },
+  cardInner: { padding: spacing.md, gap: 4 },
   cardDone: { opacity: 0.62 },
-  cardBody: { fontSize: typeScale.base, lineHeight: 21 },
+  cardTitle: { fontSize: typeScale.md, fontWeight: '600', lineHeight: 22, marginBottom: 2 },
+  cardLine: { fontSize: typeScale.base, lineHeight: 20, flexShrink: 1 },
+  cardHeading: { fontWeight: '700' },
+  italic: { fontStyle: 'italic' },
+  cardCheck: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
+  cardBox: { fontSize: typeScale.base, lineHeight: 20 },
+  cardMeta: { fontSize: typeScale.sm, lineHeight: 20 },
+  cardDivider: { height: StyleSheet.hairlineWidth * 2, opacity: 0.4, marginVertical: 4 },
   struck: { textDecorationLine: 'line-through' },
-  cardFoot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  chip: {
-    flexShrink: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-  },
+  cardFoot: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
+  chip: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radii.pill, maxWidth: '100%' },
   chipText: { fontSize: typeScale.xs, fontWeight: '500' },
-  tick: {
-    width: 20,
-    height: 20,
-    borderRadius: radii.pill,
-    borderWidth: 1.5,
+
+  fab: {
+    position: 'absolute',
+    right: spacing.xl,
+    bottom: 40,
+    width: 58,
+    height: 58,
+    borderRadius: radii.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tickMark: { fontWeight: '900', fontSize: 11 },
+  fabGlyph: { fontSize: 28, fontWeight: '500' },
 
   // Press feedback: the card answers the finger before anything else happens.
   pressed: { transform: [{ scale: 0.97 }] },
-
-  editorHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.sm,
-  },
-  editorHeadRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconGlyph: { fontSize: 18 },
-
-  editor: { paddingHorizontal: spacing.xl, paddingBottom: 48, gap: spacing.md },
-  editorBody: {
-    fontSize: typeScale.lg,
-    lineHeight: 28,
-    minHeight: 160,
-    textAlignVertical: 'top',
-    paddingVertical: spacing.sm,
-  },
-  label: {
-    fontSize: typeScale.xs,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: spacing.sm,
-  },
-  swatches: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.xs },
-  swatch: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  swatchMark: { fontSize: 15, fontWeight: '800' },
-
-  toggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: radii.md,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  toggleText: { flexShrink: 1 },
-  switch: { width: 48, height: 28, borderRadius: radii.pill, padding: 3, justifyContent: 'center' },
-  knob: { width: 22, height: 22, borderRadius: radii.pill, backgroundColor: '#fff' },
-  knobOn: { alignSelf: 'flex-end' },
-  knobOff: { alignSelf: 'flex-start' },
-  delete: { alignItems: 'center', paddingVertical: spacing.xl },
 });

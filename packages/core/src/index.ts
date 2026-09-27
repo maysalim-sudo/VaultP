@@ -38,5 +38,6 @@ export * from './crypto/sha256.js';
 export * from './documents/repository.js';
 export * from './backup.js';
 export * from './notes/repository.js';
+export * from './notes/content.js';
 export * from './search.js';
 export * from './design/tokens.js';

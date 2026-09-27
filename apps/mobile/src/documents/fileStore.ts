@@ -69,8 +69,17 @@ export async function importFile(
   sourceUri: string,
 ): Promise<ImportedFile> {
   const source = new File(sourceUri);
-  const plaintext = await source.bytes();
+  return importBytes(keys, await source.bytes());
+}
 
+/**
+ * Encrypt bytes that never existed as a file — a screenshot pasted from the
+ * clipboard — into the vault, without writing a plaintext copy first.
+ */
+export async function importBytes(
+  keys: VaultKeys,
+  plaintext: Uint8Array,
+): Promise<ImportedFile> {
   const id = uuidv7();
   const fileKey = await deriveFileKey(androidCryptoProvider, keys.files, id);
   const sealed = await androidCryptoProvider.encrypt(fileKey, plaintext, aadFor(id));

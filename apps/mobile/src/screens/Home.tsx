@@ -30,6 +30,7 @@ import {
   money,
   monthKey,
   monthTotal,
+  noteHeadline,
   pendingReminders,
   radii,
   spacing,
@@ -301,7 +302,7 @@ export function Home({
                 key={`note-${note.id}`}
                 glyph="📝"
                 colour={palette.warning}
-                title={note.body}
+                title={noteHeadline(note)}
                 detail={note.dueOn ? describeDate(note.dueOn) : ''}
                 detailColour={palette.warning}
                 palette={palette}

@@ -8,6 +8,7 @@
     "@react-native-ml-kit/text-recognition": "^2.0.0",
     "@vaultp/core": "*",
     "expo": "~57.0.20",
+    "expo-clipboard": "~57.0.2",
     "expo-file-system": "~57.0.6",
     "expo-image-picker": "~57.0.16",
     "expo-local-authentication": "~57.0.2",
