@@ -11,7 +11,7 @@ subscription. Every feature works with the network off, forever.
 ## Badges
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-390%20passing-brightgreen.svg)](#-getting-started)
+[![Tests](https://img.shields.io/badge/tests-449%20passing-brightgreen.svg)](#-getting-started)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-blue.svg)](#-tech-stack)
 
@@ -51,9 +51,22 @@ subscription. Every feature works with the network off, forever.
   devices as ciphertext, text read **on-device** on both so search finds a document by
   what is written inside it, and expiry warnings that respect each document's own lead
   time.
-- 📝 **Notes with separate switches** — A due date and an interruption are different
-  wants, so they are different toggles.
-- 🔎 **One search across everything** — Expenses, debts, documents and notes.
+- 📝 **Private notes, Keep-style** — The heart of the app. A note is a title and a
+  list of blocks: paragraphs, headings, quotes, bulleted and numbered lists,
+  checklists (ticked items can drop to the bottom), dividers, **tables** that grow by
+  rows and columns, and **images** — from the gallery, the camera or a pasted
+  screenshot, each encrypted like a document scan. Colours, pins, labels, archive,
+  and a due date and a reminder kept as separate switches.
+- 📁 **Notes arranged by hand** — Hold a note to act on it: let go quickly for its
+  options, or keep holding while a line traces the card's border and it lifts off to
+  be dragged — between notes to reorder, or onto a folder, label, Archive or Done.
+  Folders hold notes one each; labels tag across them. Moving a note writes that one
+  note, so two devices reordering offline never fight.
+- 🔎 **One search across everything** — Expenses, debts, documents and notes —
+  including the words inside checklists, table cells and image captions.
+- 🌿 **A calm palette** — Money coming back in sage, money going out and dates
+  drawing near in ochre, never alarm red. Light and dark themes follow the system,
+  from one set of design tokens both apps share.
 - 🔄 **Sync without a service** — Point both devices at any folder something else keeps
   in step (Syncthing, a shared drive, a USB stick). No account, no API key, nothing
   that expires. The folder receives **ciphertext only**.
@@ -77,7 +90,10 @@ from the shared core, so they agree by construction rather than by discipline.
 
 | | Phone | Desktop |
 |---|---|---|
-| Expenses, debts, recurring rules, notes, budgets, search, backup | ✅ | ✅ |
+| Expenses, debts, recurring rules, budgets, search, backup | ✅ | ✅ |
+| Rich notes: checklists, tables, images, headings, colours, labels, archive | ✅ | ✅ |
+| Note folders and drag-to-arrange | ✅ *(hold, trace, drag)* | ✅ *(drag, or hold; right-click for options)* |
+| Paste a screenshot into a note | ✅ | ✅ *(Ctrl+V or drop a file)* |
 | Dashboard, forecast, foreign-currency allowance | ✅ | ✅ |
 | Sync to a folder (Syncthing, a shared drive, a stick) | ✅ | ✅ |
 | Sync to Google Drive | ✅ *(inherits the connection)* | ✅ *(signs in)* |
@@ -90,6 +106,13 @@ from the shared core, so they agree by construction rather than by discipline.
 > it alone before it is ever written, so sync copies the ciphertext across verbatim —
 > it never holds a file key, and the folder never holds anything readable. Deleting a
 > document takes the bytes off both devices and out of the folder.
+
+> **Notes stay readable to an older build.** A note's blocks are stored as structured
+> data, and a plain-text rendering is kept beside them — `☐` / `☑` for checklist
+> items, `|` between table cells. That copy is what search reads, what a reminder
+> quotes, and what a device still on an older version shows, so upgrading one device
+> first never leaves the other looking at garbage. A block type an older build does not
+> know is kept verbatim and written back untouched.
 
 > **OCR runs on the machine, on both.** The phone uses Android's on-device model, the
 > desktop runs Tesseract compiled to WebAssembly in its own process. The language data
@@ -112,7 +135,8 @@ from the shared core, so they agree by construction rather than by discipline.
 | **Ordering** | Hybrid Logical Clocks, per-field last-write-wins merge |
 | **Identity** | UUIDv7, plus deterministic ids for idempotent cross-device creation |
 | **Crypto** | AES-256-GCM, PBKDF2, HKDF (portable SHA-256 implementation) |
-| **Tests** | Vitest — 363 core, 27 desktop |
+| **Tests** | Vitest — 422 core, 27 desktop |
+| **Design** | Shared tokens (colour roles, type, spacing, note shades) consumed by both apps |
 
 ### 📱 Mobile app
 
@@ -124,6 +148,7 @@ from the shared core, so they agree by construction rather than by discipline.
 | **Secrets** | `expo-secure-store` + `expo-local-authentication` (Android Keystore, fingerprint) |
 | **OCR** | `@react-native-ml-kit/text-recognition`, on-device |
 | **Sync I/O** | `expo-file-system` over a Storage Access Framework folder |
+| **Notes** | `expo-image-picker`, `expo-clipboard` for pasted screenshots; gestures on React Native's own `PanResponder` and `Animated` |
 | **Target** | Android, `minSdk 24` / `targetSdk 36`, `arm64-v8a` |
 
 ### 🖥 Desktop app
@@ -169,7 +194,7 @@ npm install
 npm test
 ```
 
-> **390 tests** should pass (363 core + 27 desktop). One test is skipped unless you
+> **449 tests** should pass (422 core + 27 desktop). One test is skipped unless you
 > opt in — see *Environment variables* below.
 
 ```bash
@@ -335,7 +360,8 @@ VaultP/
 │           ├── expenses/      Repository, recurrence, forecast, allowance
 │           ├── debts/         Ledger, interest, repository
 │           ├── documents/     Repository, expiry
-│           ├── notes/         Repository
+│           ├── notes/         Blocks, plain-text rendering, folders, labels, order
+│           ├── design/        Tokens both apps draw from
 │           ├── crypto/        AES-GCM, HKDF, PBKDF2, keyfiles
 │           └── sync/          Segments, backends, sync engine
 │
@@ -343,6 +369,7 @@ VaultP/
 │   ├── mobile/                React Native (Android)
 │   │   ├── src/
 │   │   │   ├── screens/       Home, entry, debts, documents, notes, sync
+│   │   │   ├── notes/         Block editor, hold-and-drag cards, images, folders
 │   │   │   ├── components/    Sidebar, amount pad, date field, theme
 │   │   │   ├── vault/         Key handling, unlock, database
 │   │   │   ├── sync/          SAF folder backend
@@ -353,7 +380,7 @@ VaultP/
 │       ├── src/
 │       │   ├── main/          Vault, database, folder backend, IPC
 │       │   ├── preload/       The narrow bridge
-│       │   └── renderer/      React UI
+│       │   └── renderer/      React UI (notes/ holds the block editor)
 │       ├── scripts/           Native ABI swap
 │       └── test-fixtures/     A vault written by a real Android build
 │

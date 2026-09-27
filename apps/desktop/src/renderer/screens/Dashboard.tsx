@@ -171,7 +171,7 @@ export function Dashboard() {
             ))}
             {data.overdueNotes.map((note) => (
               <li key={note.id}>
-                <span>{note.body}</span>
+                <span>{note.title || note.body.split('\n')[0]}</span>
                 <span className="right warn">due {note.dueOn}</span>
               </li>
             ))}

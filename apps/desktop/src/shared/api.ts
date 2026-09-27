@@ -13,6 +13,8 @@
  * re-parsing what was already parsed once.
  */
 
+import type { NoteColour, NoteContent } from '@vaultp/core';
+
 export interface MoneyDto {
   /** Already formatted for display, decimal point, correct number of places. */
   readonly text: string;
@@ -102,13 +104,26 @@ export interface ExpenseQueryDto {
   readonly limit?: number;
 }
 
+/**
+ * A note as the window sees it. `content` is the note's blocks exactly as core
+ * holds them — plain data, edited in the window with core's own block helpers.
+ */
 export interface NoteDto {
   readonly id: string;
+  readonly title: string;
+  readonly content: NoteContent;
+  /** Plain-text rendering, for one-line mentions such as the dashboard. */
   readonly body: string;
   readonly dueOn: string | null;
   readonly remind: boolean;
   readonly done: boolean;
   readonly pinned: boolean;
+  readonly archived: boolean;
+  readonly colour: NoteColour | null;
+  readonly folderId: string | null;
+  readonly labels: readonly TagDto[];
+  readonly checklist: { readonly done: number; readonly total: number } | null;
+  readonly updatedAt: string | null;
 }
 
 export interface TagDto {
@@ -117,11 +132,38 @@ export interface TagDto {
   readonly colour: string | null;
 }
 
-export interface NoteFormDto {
-  readonly body: string;
+export interface NoteFolderDto {
+  readonly id: string;
+  readonly name: string;
+}
+
+/** Which notes a list shows. `search` looks through everything, whatever the view. */
+export interface NotesQueryDto {
+  readonly view: 'all' | 'folder' | 'label' | 'archive' | 'done';
+  readonly id?: string;
+  readonly search?: string;
+}
+
+export interface NoteInputDto {
+  readonly title: string;
+  readonly content: NoteContent;
+  readonly colour: NoteColour | null;
+  readonly pinned: boolean;
+  readonly archived: boolean;
+  /** Empty for no date. */
   readonly dueOn: string;
   readonly remind: boolean;
-  readonly pinned: boolean;
+  readonly folderId: string | null;
+  readonly labelIds: readonly string[];
+}
+
+/** Only the fields present are changed. */
+export type NotePatchDto = Partial<NoteInputDto>;
+
+export interface NoteImageDto {
+  readonly fileId: string;
+  readonly width: number | null;
+  readonly height: number | null;
 }
 
 export interface SearchResultDto {
@@ -416,11 +458,36 @@ export interface VaultpApi {
   settleExpense(id: string, charged: string): Promise<{ id: string }>;
   exportExpensesCsv(): Promise<string | undefined>;
 
-  listNotes(includeDone: boolean): Promise<NoteDto[]>;
-  addNote(form: NoteFormDto): Promise<{ id: string }>;
-  updateNote(id: string, form: NoteFormDto): Promise<void>;
+  listNotes(query: NotesQueryDto): Promise<NoteDto[]>;
+  getNote(id: string): Promise<NoteDto | null>;
+  addNote(input: NoteInputDto): Promise<{ id: string }>;
+  saveNote(id: string, patch: NotePatchDto): Promise<void>;
   setNoteDone(id: string, done: boolean): Promise<void>;
   deleteNote(id: string): Promise<void>;
+  duplicateNote(id: string): Promise<{ id: string }>;
+  /** Put a note between two others; null for either end. */
+  placeNote(id: string, after: string | null, before: string | null, pinned?: boolean): Promise<void>;
+  listNoteLabels(): Promise<TagDto[]>;
+  ensureNoteLabel(name: string): Promise<TagDto>;
+  setNoteLabel(noteId: string, tagId: string, on: boolean): Promise<void>;
+  listNoteFolders(): Promise<NoteFolderDto[]>;
+  addNoteFolder(name: string): Promise<NoteFolderDto>;
+  renameNoteFolder(id: string, name: string): Promise<void>;
+  deleteNoteFolder(id: string): Promise<void>;
+  moveNoteToFolder(noteId: string, folderId: string | null): Promise<void>;
+  /** Opens a file dialog and encrypts the chosen image into the vault. */
+  noteImageFromFile(): Promise<NoteImageDto | undefined>;
+  /** Encrypts a pasted or dropped image into the vault. */
+  noteImageFromBytes(bytes: Uint8Array, mime: string, width: number | null, height: number | null): Promise<NoteImageDto>;
+  /** What the clipboard holds, for "Paste as a new note". */
+  noteClipboard(): Promise<{ hasImage: boolean; text: string }>;
+  /** Encrypts the image on the clipboard into the vault. */
+  noteImageFromClipboard(): Promise<NoteImageDto | undefined>;
+  /** The decrypted image as a data URL, held only in the window's memory. */
+  noteImage(fileId: string): Promise<string>;
+  releaseNoteImages(fileIds: readonly string[]): Promise<void>;
+  notesLayout(): Promise<'grid' | 'list'>;
+  setNotesLayout(layout: 'grid' | 'list'): Promise<void>;
 
   search(term: string): Promise<SearchResultDto[]>;
 

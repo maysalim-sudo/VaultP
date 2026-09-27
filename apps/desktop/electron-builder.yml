@@ -42,7 +42,10 @@ win:
       arch: [x64]
     - target: portable
       arch: [x64]
-  icon: build/icon.png
+  # A ready-made .ico, so packaging never has to convert the PNG. The converter
+  # electron-builder ships runs in WebAssembly and fails outright on a machine
+  # short of committable memory, which is no reason for a build to fail.
+  icon: build/icon.ico
 
 nsis:
   # Not a one-click installer: this app holds someone's documents and debts, and

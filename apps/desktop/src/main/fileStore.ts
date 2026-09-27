@@ -66,8 +66,18 @@ export async function importFile(
   keys: VaultKeys,
   sourcePath: string,
 ): Promise<ImportedFile> {
-  const plaintext = new Uint8Array(await readFile(sourcePath));
+  return importBytes(root, keys, new Uint8Array(await readFile(sourcePath)));
+}
 
+/**
+ * Encrypt bytes already in memory — a pasted screenshot — without ever writing
+ * a plaintext copy.
+ */
+export async function importBytes(
+  root: string,
+  keys: VaultKeys,
+  plaintext: Uint8Array,
+): Promise<ImportedFile> {
   const id = uuidv7();
   const fileKey = await deriveFileKey(webCryptoProvider, keys.files, id);
   const sealed = await webCryptoProvider.encrypt(fileKey, plaintext, aadFor(id));

@@ -140,7 +140,7 @@ export function registerOverviewHandlers(requireVault: () => DesktopVault): void
         expiryDate: document.expiryDate,
       })),
 
-      overdueNotes: vault.notes.overdue(today).map(toNoteDto),
+      overdueNotes: vault.notes.overdue(today).map((note) => toNoteDto(note)),
 
       openBalances: vault.debts
         .listPeople()

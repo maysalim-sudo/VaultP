@@ -14,6 +14,7 @@
 import {
   darkTheme,
   lightTheme,
+  noteShades,
   numericFeatures,
   radii,
   spacing,
@@ -57,6 +58,12 @@ function applyTheme(theme: Theme): void {
   for (const [name, value] of Object.entries(spacing)) set(`--space-${name}`, `${value}px`);
   for (const [name, value] of Object.entries(radii)) set(`--radius-${name}`, `${value}px`);
   set('--numeric', numericFeatures);
+
+  // Note card shades, by the names notes store: each theme has its own cut, so a
+  // yellow note reads on both a light and a dark window.
+  const shades = noteShades[theme === darkTheme ? 'dark' : 'light'];
+  for (const [name, value] of Object.entries(shades)) set(`--note-${name}`, value);
+  set('--wash', theme === darkTheme ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)');
 
   // Lets the browser render native form controls and scrollbars for the theme.
   root.style.colorScheme = theme === darkTheme ? 'dark' : 'light';
