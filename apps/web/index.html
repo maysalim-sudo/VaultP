@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VaultP — private notes and money, sealed on your own devices</title>
+  <meta name="description" content="A private notebook with checklists, tables and images that also keeps your expenses, debts and documents straight. Encrypted on your phone and computer. No account, no server, no trackers. Open source.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0b0e12">
+  <meta name="referrer" content="no-referrer">
+  <meta property="og:title" content="VaultP">
+  <meta property="og:description" content="Private notes and money, sealed on your own devices. No account, no server, no trackers.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="./" aria-label="VaultP home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#191c20"/><rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#282b30"/><path d="M9 22 16 9l7 13" fill="none" stroke="#7ea0b8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        VaultP
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="#notes">Notes</a>
+        <a href="#money">Money</a>
+        <a href="#security">Security</a>
+        <a href="#sync">Sync</a>
+        <a class="keep" href="https://github.com/salimmay/vaultp">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero: the app itself, dark and exact. -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
+        <div>
+          <span class="eyebrow rise"><b>●</b> Open source · Android and Windows</span>
+          <h1 id="hero-title" class="rise rise-2">Your notes and money, <em>sealed on your own devices.</em></h1>
+          <p class="lede rise rise-3">A private notebook — checklists, tables, pasted screenshots — that also keeps your spending, debts and papers straight. Encrypted on your phone and your computer. No account. No server. Nobody else's cloud.</p>
+          <div class="ctas rise rise-4">
+            <a class="btn btn-primary" href="#download">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>
+              Get VaultP
+            </a>
+            <a class="btn btn-secondary" href="https://github.com/salimmay/vaultp">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4m8-8 4 4-4 4M14 5l-4 14"/></svg>
+              Read the code
+            </a>
+          </div>
+          <p class="cta-note rise rise-4">Free, MIT-licensed, and it works with the network off.</p>
+        </div>
+
+        <div class="device rise rise-3" role="img" aria-label="The VaultP phone app: this month's spending of 1 240,500 dinars, one person who owes you, one you owe, and a grid of coloured notes.">
+          <div class="screen">
+            <div class="screen-top"><span>September</span><span>● ● ●</span></div>
+            <div class="ledger">
+              <small>Spent this month</small>
+              <div class="big num">1 240,500<span>DT</span></div>
+              <div class="bar"><i></i></div>
+              <div class="row"><span class="owed">Sami owes you</span><span class="num owed">85,000</span></div>
+              <div class="row"><span class="owing">You owe Ines</span><span class="num owing">40,250</span></div>
+            </div>
+            <div class="mini-notes">
+              <div class="mini m-butter lifted">
+                <b>Passport renewal</b>
+                <span class="done">☑ Photos</span><br>☐ Timbre fiscal<br>☐ Appointment
+                <svg class="trace" aria-hidden="true"><rect x="1" y="1" rx="11" ry="11" pathLength="100"/></svg>
+              </div>
+              <div class="mini m-sea"><b>Trip</b>▦ Table · 4 × 3<br>🖼 1 image</div>
+              <div class="mini m-lilac"><b>Ideas</b>• Desk lamp<br>• Shelf</div>
+              <div class="mini m-mist"><b>Wi-Fi</b>Box 2nd floor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="strip">
+      <ul class="wrap">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>No account to create</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>No server to trust</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>No trackers — in the app or on this page</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>Works offline, forever</li>
+      </ul>
+    </div>
+
+    <!-- Notes: paper, where it began. -->
+    <section id="notes" class="paper" aria-labelledby="notes-title">
+      <div class="wrap">
+        <span class="kicker">Notes</span>
+        <h2 id="notes-title">It started as a private note.</h2>
+        <p class="section-lede"><span class="story">Everything else grew around it.</span> A notebook in the manner of Google Keep, that lives only on your devices: write a line, tick a list, drop in a table or a screenshot, and put it in a folder by dragging it there.</p>
+
+        <div class="note-board" aria-label="Example notes">
+          <article class="note n-butter">
+            <h3>Passport renewal</h3>
+            <ul>
+              <li class="tick"><span>☑</span>Birth certificate</li>
+              <li class="tick"><span>☑</span>Two photos</li>
+              <li><span>☐</span>Timbre fiscal — 80,000 DT</li>
+              <li><span>☐</span>Book the appointment</li>
+            </ul>
+            <div class="meta"><span class="chip">🔔 3 October</span><span class="chip">📁 Papers</span></div>
+          </article>
+
+          <article class="note n-white">
+            <div class="pic" aria-hidden="true">
+              <svg viewBox="0 0 300 150"><rect width="300" height="150" fill="#d4e4ed"/><circle cx="238" cy="42" r="18" fill="#fff8b8"/><path d="M0 150 90 70l50 42 40-30 120 68z" fill="#b4ddd3"/><path d="M0 150 70 104l60 46z" fill="#9ccabd"/></svg>
+            </div>
+            <h3>Screenshot from the bank</h3>
+            <p>Pasted straight in — encrypted the moment it lands.</p>
+            <div class="meta"><span class="chip">🏷 Receipts</span></div>
+          </article>
+
+          <article class="note n-mint">
+            <h3>Trip budget</h3>
+            <table>
+              <tr><th>Item</th><th>Who</th><th>DT</th></tr>
+              <tr><td>Train</td><td>Me</td><td class="num">42,500</td></tr>
+              <tr><td>Hotel</td><td>Sami</td><td class="num">310,000</td></tr>
+              <tr><td>Food</td><td>Split</td><td class="num">≈ 120</td></tr>
+            </table>
+          </article>
+
+          <article class="note n-lilac">
+            <h3>Ideas</h3>
+            <p>• A lamp for the desk<br>• Shelf above the printer<br>• Ask about the old frame</p>
+          </article>
+
+          <article class="note n-sea">
+            <h3>Groceries</h3>
+            <ul>
+              <li><span>☐</span>Olive oil</li>
+              <li><span>☐</span>Harissa</li>
+              <li><span>☐</span>Bread</li>
+            </ul>
+            <div class="meta"><span class="chip">+ 4 ticked items</span></div>
+          </article>
+
+          <article class="note n-mist">
+            <h3>Wi-Fi at the flat</h3>
+            <p>Router in the box on the second floor. Label on the underside.</p>
+            <div class="meta"><span class="chip">📌 Pinned</span></div>
+          </article>
+        </div>
+
+        <div class="features">
+          <div class="feature">
+            <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg>Checklists that behave</h3>
+            <p>Enter makes the next item, ticked ones can drop to the bottom, and a card shows how far along you are.</p>
+          </div>
+          <div class="feature">
+            <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M9 5v14"/></svg>Tables and images</h3>
+            <p>Grow a table by rows and columns. Add a photo, pick from the gallery, or paste a screenshot — each one encrypted on its own key.</p>
+          </div>
+          <div class="feature">
+            <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>Hold, trace, drag</h3>
+            <p>Hold a note and a line traces its border; at the end it lifts. Drop it between notes to reorder, or on a folder to file it.</p>
+          </div>
+          <div class="feature">
+            <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>Search inside everything</h3>
+            <p>Titles, checklist items, table cells, image captions — and the text read out of your scanned documents.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Money: back in the vault. -->
+    <section id="money" class="money" aria-labelledby="money-title">
+      <div class="wrap">
+        <span class="kicker">Money</span>
+        <h2 id="money-title">Money, without the alarm.</h2>
+        <p class="section-lede">Built for the dinar's three decimal places, and for being honest about what is known. What came back is sage, what is going out is ochre, and nothing flashes red at you.</p>
+
+        <div class="states">
+          <div class="state">
+            <div class="label">Settled — what the bank debited</div>
+            <div class="fig num">54,320 DT</div>
+            <p>A fact. Shown plainly.</p>
+          </div>
+          <div class="state">
+            <div class="label">Estimated from a past rate</div>
+            <div class="fig est num">≈ 36,900 DT</div>
+            <p>Marked with ≈ until the statement lands. Never mistaken for a fact.</p>
+          </div>
+          <div class="state">
+            <div class="label">Charged in euros, not yet valued</div>
+            <span class="pill">Awaiting statement</span>
+            <p>No value yet — and never shown as zero.</p>
+          </div>
+        </div>
+
+        <div class="debts">
+          <div class="debt"><span>Sami <em class="owed">owes you</em></span><strong class="num owed">85,000 DT</strong></div>
+          <div class="debt"><span>You <em class="owing">owe Ines</em></span><strong class="num owing">40,250 DT</strong></div>
+        </div>
+
+        <div class="features money-features">
+          <div class="feature"><h3>Subscriptions that log themselves</h3><p>Or just remind you — a due charge is one tap from recorded.</p></div>
+          <div class="feature"><h3>Debts as ledgers</h3><p>Loans, partial payments and interest, with corrections visible rather than erased.</p></div>
+          <div class="feature"><h3>Papers that warn you in time</h3><p>Scans kept encrypted, with expiry warnings on each document's own lead time.</p></div>
+          <div class="feature"><h3>A foreign-spending ceiling</h3><p>Tracked against the year, with the day it is projected to run out.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security: read like a document, not sold like a feature. -->
+    <section id="security" class="ledger-section" aria-labelledby="security-title">
+      <div class="wrap">
+        <span class="kicker">$ cat SECURITY.md</span>
+        <h2 id="security-title">What we protect, and what we don't.</h2>
+        <p class="section-lede">A privacy app should tell you its limits as clearly as its strengths. Here are both, taken from the security document in the repository.</p>
+
+        <div class="doc">
+          <div class="doc-head"><span>vaultp / SECURITY.md</span><span>MIT</span></div>
+          <div class="doc-body">
+            <div class="doc-col">
+              <h3>// protected</h3>
+              <ul>
+                <li><span class="mk-ok">✓</span><span>Database encrypted with SQLCipher<small>AES-256, on the phone and the desktop</small></span></li>
+                <li><span class="mk-ok">✓</span><span>Every file on a key of its own<small>AES-256-GCM, bound to that file's id</small></span></li>
+                <li><span class="mk-ok">✓</span><span>Sync carries ciphertext only<small>each segment bound to its device and sequence</small></span></li>
+                <li><span class="mk-ok">✓</span><span>Passphrase never stored or sent<small>PBKDF2-SHA512, 210,000 iterations</small></span></li>
+                <li><span class="mk-ok">✓</span><span>No account, no server, no analytics<small>there is nothing to breach but your own device</small></span></li>
+              </ul>
+            </div>
+            <div class="doc-col">
+              <h3>// known and accepted</h3>
+              <ul>
+                <li><span class="mk-no">!</span><span>Lose the passphrase, lose the vault<small>no reset and no copy anywhere — that is the point</small></span></li>
+                <li><span class="mk-no">!</span><span>An exported backup is unencrypted<small>the app says so at the button</small></span></li>
+                <li><span class="mk-no">!</span><span>The device is trusted<small>malware on an unlocked device can read it</small></span></li>
+                <li><span class="mk-no">!</span><span>Sync storage sees names and sizes<small>not contents</small></span></li>
+                <li><span class="mk-no">!</span><span>Desktop builds are not code-signed<small>verify what you download</small></span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+<pre class="keys" aria-label="How the keys are derived"><b>passphrase</b>  ─ PBKDF2-SHA512 ×210,000 ─▶  <i>wrapping key</i>
+                                           │ unwraps
+<b>data key</b> (random, never derived)  ◀───────┘
+    │ HKDF
+    ├─▶ <i>database</i>     SQLCipher, AES-256
+    ├─▶ <i>files</i>        AES-256-GCM, one key per file
+    ├─▶ <i>sync</i>         AES-256-GCM, per segment
+    └─▶ <i>credentials</i>  your Drive sign-in, if you use it</pre>
+
+        <p class="caveat">! Not independently audited. Written carefully and tested across both platforms — weigh that against what you store.</p>
+        <p class="doc-link"><a class="btn btn-secondary" href="https://github.com/salimmay/vaultp/blob/master/SECURITY.md">Read the full security document</a></p>
+      </div>
+    </section>
+
+    <!-- Sync -->
+    <section id="sync" class="sync" aria-labelledby="sync-title">
+      <div class="wrap">
+        <span class="kicker">Sync</span>
+        <h2 id="sync-title">Your phone and your computer, in step — through storage you choose.</h2>
+        <p class="section-lede">There is no VaultP server to sync through. Point both devices at somewhere you already trust; it only ever receives sealed bytes.</p>
+        <div class="cards">
+          <div class="card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>
+            <h3>A folder</h3>
+            <p>Syncthing, a shared drive, a USB stick — anything that keeps a folder the same in two places.</p>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></svg>
+            <h3>Your own Google Drive</h3>
+            <p>Through your own Google project, scoped to the one folder the app creates. Google stores ciphertext.</p>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <h3>Or not at all</h3>
+            <p>One device, fully offline, forever. Nothing about the app assumes a network.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section id="download" class="download" aria-labelledby="download-title">
+      <div class="wrap">
+        <h2 id="download-title">Keep your own vault.</h2>
+        <p class="section-lede">Android and Windows. Free and open source.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="https://github.com/salimmay/vaultp/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+            Download for Android
+          </a>
+          <a class="btn btn-secondary" href="https://github.com/salimmay/vaultp/releases/latest">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/salimmay/vaultp">Build it yourself</a>
+        </div>
+        <p class="verify">Google Play listing coming soon. Desktop builds are not code-signed — Windows will ask before the first run.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>VaultP · MIT licence · Made to be kept, not sold</span>
+      <nav aria-label="Footer">
+        <a href="privacy.html">Privacy</a>
+        <a href="https://github.com/salimmay/vaultp/blob/master/SECURITY.md">Security</a>
+        <a href="https://github.com/salimmay/vaultp/blob/master/LICENSE">Licence</a>
+        <a href="https://github.com/salimmay/vaultp">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
