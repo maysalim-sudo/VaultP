@@ -64,6 +64,44 @@ describe('categories', () => {
   });
 });
 
+describe('a category typed in as "Other"', () => {
+  it('is saved with the others, after them', () => {
+    const { repo } = newRepo();
+    repo.addCategory({ name: 'Food', sortOrder: 1 });
+    repo.addCategory({ name: 'Transport', sortOrder: 2 });
+
+    const pets = repo.ensureCategory({ name: '  Pets ', icon: '🐾' });
+
+    expect(pets).toMatchObject({ name: 'Pets', icon: '🐾' });
+    expect(repo.listCategories().map((c) => c.name)).toEqual(['Food', 'Transport', 'Pets']);
+  });
+
+  it('reuses an existing category instead of making a twin', () => {
+    const { repo } = newRepo();
+    const food = repo.addCategory({ name: 'Food' });
+
+    expect(repo.ensureCategory({ name: 'food' }).id).toBe(food.id);
+    expect(repo.listCategories()).toHaveLength(1);
+  });
+
+  it('brings back an archived one of the same name', () => {
+    const { repo } = newRepo();
+    const gym = repo.addCategory({ name: 'Gym' });
+    repo.archiveCategory(gym.id);
+
+    const again = repo.ensureCategory({ name: 'Gym' });
+
+    expect(again.id).toBe(gym.id);
+    expect(again.archived).toBe(false);
+    expect(repo.listCategories().map((c) => c.id)).toEqual([gym.id]);
+  });
+
+  it('refuses a blank name', () => {
+    const { repo } = newRepo();
+    expect(() => repo.ensureCategory({ name: '  ' })).toThrow(ExpenseValidationError);
+  });
+});
+
 describe('adding expenses', () => {
   let ctx: ReturnType<typeof newRepo>;
 

@@ -49,6 +49,12 @@ export function registerVaultDataHandlers(requireVault: () => DesktopVault): voi
     return { id: created.id };
   });
 
+  /** "Other…" in the expense form: the category with this name, made if new. */
+  ipcMain.handle('categories:ensure', (_event, name: string, icon: string | null) => {
+    const category = requireVault().expenses.ensureCategory({ name, ...(icon ? { icon } : {}) });
+    return { id: category.id, name: category.name };
+  });
+
   ipcMain.handle('categories:archive', (_event, id: string) => {
     // Archived, never deleted: past expenses must keep a readable category.
     requireVault().expenses.archiveCategory(id);

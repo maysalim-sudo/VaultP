@@ -171,6 +171,32 @@ export class ExpenseRepository {
     return this.getCategory(id)!;
   }
 
+  /**
+   * The category with this name, created if there is none — what "Other…" in
+   * an expense form does with what was typed.
+   *
+   * Matched without regard to case, so "food" typed in a hurry picks the
+   * existing "Food" instead of starting a twin that splits the month's spending
+   * in two. An archived match is brought back rather than duplicated. A new
+   * one goes after the existing categories, not into the middle of them.
+   */
+  ensureCategory(input: { name: string; icon?: string }): Category {
+    const name = input.name.trim();
+    if (name === '') throw new ExpenseValidationError('A category needs a name.');
+
+    const existing = this.listCategories(true).find(
+      (category) => category.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (existing) {
+      if (existing.archived) this.store.commit('category', existing.id, { archived: false });
+      return this.getCategory(existing.id)!;
+    }
+
+    const last = this.listCategories(true).reduce((max, category) => Math.max(max, category.sortOrder), 0);
+    const icon = input.icon?.trim();
+    return this.addCategory({ name, sortOrder: last + 1, ...(icon ? { icon } : {}) });
+  }
+
   /** Archive rather than delete: past expenses must keep a readable category. */
   archiveCategory(id: string): void {
     this.store.commit('category', id, { archived: true });

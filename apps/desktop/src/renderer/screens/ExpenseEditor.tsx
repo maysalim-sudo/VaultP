@@ -54,6 +54,8 @@ export function ExpenseEditor({
 }) {
   const [form, setForm] = useState<ExpenseFormDto>(() => formOf(expense, today));
   const { busy, error, run } = useRunner();
+  const [adding, setAdding] = useState(false);
+  const [created, setCreated] = useState<{ id: string; name: string } | null>(null);
 
   const set = <K extends keyof ExpenseFormDto>(key: K, value: ExpenseFormDto[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -136,14 +138,23 @@ export function ExpenseEditor({
         <Field label="Category">
           <select
             value={form.categoryId ?? ''}
-            onChange={(event) => set('categoryId', event.target.value || null)}
+            onChange={(event) => {
+              if (event.target.value === OTHER) setAdding(true);
+              else set('categoryId', event.target.value || null);
+            }}
           >
             <option value="">Uncategorised</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
+                {category.icon ? `${category.icon}  ` : ''}
                 {category.name}
               </option>
             ))}
+            {/* Just made, and the list has not caught up yet. */}
+            {created && !categories.some((c) => c.id === created.id) ? (
+              <option value={created.id}>{created.name}</option>
+            ) : null}
+            <option value={OTHER}>Other…</option>
           </select>
         </Field>
       </div>
@@ -164,6 +175,96 @@ export function ExpenseEditor({
         />
       </Field>
 
+      {error ? <p className="error">{error}</p> : null}
+
+      {adding ? (
+        <NewCategory
+          categories={categories}
+          onClose={() => setAdding(false)}
+          onCreated={(category) => {
+            setCreated(category);
+            set('categoryId', category.id);
+            setAdding(false);
+          }}
+        />
+      ) : null}
+    </Modal>
+  );
+}
+
+/** The dropdown value that means "make a new one" rather than a category id. */
+const OTHER = '__other__';
+
+const ICONS = ['🛒', '🍽', '🚕', '🏠', '💊', '🎓', '🎁', '🐾', '✈️', '🔧', '👕', '📱'] as const;
+
+/**
+ * A small dialog for a category of your own. Saved with the others and chosen
+ * at once; a name that already exists picks that one rather than a twin.
+ */
+function NewCategory({
+  categories,
+  onClose,
+  onCreated,
+}: {
+  categories: readonly CategoryDto[];
+  onClose: () => void;
+  onCreated: (category: { id: string; name: string }) => void;
+}) {
+  const [name, setName] = useState('');
+  const [icon, setIcon] = useState<string | null>(null);
+  const { busy, error, run } = useRunner();
+
+  const trimmed = name.trim();
+  const existing = categories.find((c) => trimmed !== '' && c.name.toLowerCase() === trimmed.toLowerCase());
+
+  const save = () =>
+    void run(async () => {
+      if (trimmed === '') return;
+      onCreated(await api().ensureCategory(trimmed, icon));
+    });
+
+  return (
+    <Modal
+      title="New category"
+      onClose={onClose}
+      footer={
+        <>
+          <span className="spacer" />
+          <button className="secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button disabled={busy || trimmed === ''} onClick={save}>
+            {existing ? 'Use it' : 'Add'}
+          </button>
+        </>
+      }
+    >
+      <Field label="Name">
+        <input
+          autoFocus
+          value={name}
+          maxLength={40}
+          placeholder="Pets, Gifts, Pharmacy…"
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') save();
+          }}
+        />
+      </Field>
+      {existing ? <p className="muted small">You already have “{existing.name}” — that one will be picked.</p> : null}
+      <Field label="Icon (optional)">
+        <div className="row tags">
+          {ICONS.map((glyph) => (
+            <button
+              key={glyph}
+              className={`tag ${icon === glyph ? 'on' : ''}`}
+              onClick={() => setIcon(icon === glyph ? null : glyph)}
+            >
+              {glyph}
+            </button>
+          ))}
+        </div>
+      </Field>
       {error ? <p className="error">{error}</p> : null}
     </Modal>
   );

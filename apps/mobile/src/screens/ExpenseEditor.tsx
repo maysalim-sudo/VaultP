@@ -31,6 +31,7 @@ import {
 } from '@vaultp/core';
 
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
+import { CategoryChips } from '../components/CategoryChips.js';
 import { DateField, describeDate } from '../components/DateField.js';
 import {
   type Draft,
@@ -196,34 +197,12 @@ export function ExpenseEditor({
               </Pressable>
             ) : null}
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.chipRow}
-              contentContainerStyle={styles.chips}
-            >
-              {categories.map((category) => {
-                const selected = category.id === categoryId;
-                return (
-                  <Pressable
-                    key={category.id}
-                    onPress={() => setCategoryId(selected ? null : category.id)}
-                    style={[
-                      styles.chip,
-                      { borderColor: palette.border, backgroundColor: palette.surface },
-                      selected
-                        ? { backgroundColor: category.color ?? palette.accent, borderColor: 'transparent' }
-                        : null,
-                    ]}
-                  >
-                    <Text style={{ color: selected ? '#fff' : palette.text, fontWeight: '500' }}>
-                      {category.icon ? `${category.icon}  ` : ''}
-                      {category.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            <CategoryChips
+              categories={categories}
+              selectedId={categoryId}
+              onSelect={setCategoryId}
+              palette={palette}
+            />
 
             <AmountPad
               draft={activeDraft}
@@ -289,9 +268,6 @@ const styles = StyleSheet.create({
   currencyChip: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
   currencyText: { fontWeight: '600' },
 
-  chipRow: { flexGrow: 0, flexShrink: 0 },
-  chips: { gap: 8, paddingVertical: 14, paddingRight: 20, alignItems: 'center' },
-  chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1 },
 
   deleteLink: { alignItems: 'center', paddingVertical: 16 },
   confirmRow: { paddingTop: 12, gap: 10 },

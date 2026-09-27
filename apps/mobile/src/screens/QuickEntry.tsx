@@ -40,6 +40,7 @@ import {
 } from '@vaultp/core';
 
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
+import { CategoryChips } from '../components/CategoryChips.js';
 import {
   EMPTY_DRAFT,
   type Draft,
@@ -158,39 +159,12 @@ export function QuickEntry() {
         ))}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipRow}
-        contentContainerStyle={styles.chips}
-      >
-        {categories.map((category) => {
-          const selected = category.id === categoryId;
-          return (
-            <Pressable
-              key={category.id}
-              onPress={() => setCategoryId(selected ? null : category.id)}
-              style={[
-                styles.chip,
-                { borderColor: palette.border, backgroundColor: palette.surface },
-                selected
-                  ? {
-                      backgroundColor: category.color ?? palette.accent,
-                      borderColor: 'transparent',
-                    }
-                  : null,
-              ]}
-            >
-              <Text
-                style={[styles.chipText, { color: selected ? '#fff' : palette.text }]}
-              >
-                {category.icon ? `${category.icon}  ` : ''}
-                {category.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <CategoryChips
+        categories={categories}
+        selectedId={categoryId}
+        onSelect={setCategoryId}
+        palette={palette}
+      />
 
       <AmountPad draft={draft} exponent={exponent} onChange={setDraft} palette={palette} />
 
@@ -274,11 +248,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   currencyText: { fontWeight: '600', fontSize: 13 },
-
-  chipRow: { flexGrow: 0, flexShrink: 0 },
-  chips: { gap: 8, paddingVertical: 12, paddingRight: 20, alignItems: 'center' },
-  chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1 },
-  chipText: { fontSize: 14, fontWeight: '500' },
 
   save: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   saveText: { fontSize: 17, fontWeight: '700' },

@@ -492,6 +492,8 @@ export interface VaultpApi {
   search(term: string): Promise<SearchResultDto[]>;
 
   addCategory(form: CategoryFormDto): Promise<{ id: string }>;
+  /** Find a category by name, or create it — never a second one of the same name. */
+  ensureCategory(name: string, icon: string | null): Promise<{ id: string; name: string }>;
   archiveCategory(id: string): Promise<void>;
 
   /** Writes the whole vault, unencrypted, wherever the user chooses. */

@@ -76,6 +76,7 @@ const api: VaultpApi = {
   search: (term) => ipcRenderer.invoke('search:everything', term),
 
   addCategory: (form) => ipcRenderer.invoke('categories:add', form),
+  ensureCategory: (name, icon) => ipcRenderer.invoke('categories:ensure', name, icon),
   archiveCategory: (id) => ipcRenderer.invoke('categories:archive', id),
 
   exportBackup: () => ipcRenderer.invoke('backup:export'),
