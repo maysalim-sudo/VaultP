@@ -22,6 +22,7 @@ export type EntityName =
   | 'debt_entry'
   | 'document'
   | 'note'
+  | 'folder'
   | 'tag'
   | 'tagging'
   | 'file'

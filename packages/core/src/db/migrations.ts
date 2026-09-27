@@ -321,6 +321,33 @@ const MIGRATIONS: readonly Migration[] = [
       promoteParked(db, 'note', ['title', 'content', 'archived']);
     },
   },
+  {
+    version: 8,
+    name: 'note-folders',
+    up(db) {
+      // A folder holds notes; a note is in one folder or none. Labels stay as
+      // they were — several per note — for the cross-cutting "travel", "2026".
+      //
+      // `position` is the order you dragged notes into: a fraction, so moving
+      // one note between two others writes one row rather than renumbering the
+      // list, and two devices reordering offline cannot collide on a number.
+      db.exec(`
+        CREATE TABLE folder (
+          id         TEXT PRIMARY KEY,
+          name       TEXT,
+          colour     TEXT,
+          sort_order REAL,
+          created_at TEXT,
+          updated_at TEXT,
+          ${ENTITY_INTERNALS}
+        );
+        ALTER TABLE note ADD COLUMN folder_id TEXT;
+        ALTER TABLE note ADD COLUMN position REAL;
+        CREATE INDEX note_folder ON note(folder_id);
+      `);
+      promoteParked(db, 'note', ['folder_id', 'position']);
+    },
+  },
 ];
 
 /**

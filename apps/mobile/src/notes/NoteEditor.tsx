@@ -31,6 +31,7 @@ import {
   convertBlock,
   dividerBlock,
   displayOrder,
+  fromPlainText,
   imageBlock,
   isContentEmpty,
   isTextual,
@@ -56,6 +57,8 @@ import { DateField } from '../components/DateField.js';
 import { paletteFor } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { BlockView } from './BlockView.js';
+import { FolderPicker } from './FolderPicker.js';
+import { SheetRow, Swatch } from './sheet.js';
 import {
   ImageImportError,
   addImage,
@@ -70,9 +73,25 @@ type Textual = TextBlock | ListBlock | CheckBlock;
 
 export type EditorStart =
   | { kind: 'existing'; note: Note }
-  | { kind: 'new'; with?: 'text' | 'checklist' | ImageSource };
+  | {
+      kind: 'new';
+      with?: 'text' | 'checklist' | ImageSource;
+      /** The folder being viewed, so a note started there is filed there. */
+      folderId?: string | null;
+      /** Pasted text to start from. */
+      text?: string;
+    };
 
-type Sheet = null | 'add' | 'format' | 'colour' | 'more' | 'labels' | 'reminder' | { block: string };
+type Sheet =
+  | null
+  | 'add'
+  | 'format'
+  | 'colour'
+  | 'more'
+  | 'labels'
+  | 'reminder'
+  | 'folder'
+  | { block: string };
 
 export function wash(scheme: Scheme): string {
   return scheme === 'dark' ? 'rgba(255, 255, 255, 0.10)' : 'rgba(0, 0, 0, 0.06)';
@@ -94,8 +113,12 @@ export function NoteEditor({
   const [title, setTitle] = useState(existing?.title ?? '');
   const [blocks, setBlocks] = useState<Block[]>(() => {
     if (existing) return existing.content.blocks.length > 0 ? [...existing.content.blocks] : [textBlock()];
+    if (start.kind === 'new' && start.text) return [...fromPlainText(start.text).blocks, textBlock()];
     return [start.kind === 'new' && start.with === 'checklist' ? checkBlock() : textBlock()];
   });
+  const [folderId, setFolderId] = useState<string | null>(
+    existing ? existing.folderId : start.kind === 'new' ? (start.folderId ?? null) : null,
+  );
   const [checkedLast, setCheckedLast] = useState(existing?.content.checkedLast ?? false);
   const [colour, setColour] = useState<NoteColour | null>(existing?.colour ?? null);
   const [pinned, setPinned] = useState(existing?.pinned ?? false);
@@ -119,12 +142,13 @@ export function NoteEditor({
   const inputs = useRef(new Map<string, TextInput>());
   const savedId = useRef<string | null>(existing?.id ?? null);
   const addedFiles = useRef<string[]>([]);
-  const dirty = useRef(false);
+  // A note started from pasted text has something in it before any typing.
+  const dirty = useRef(start.kind === 'new' && Boolean(start.text));
   const closed = useRef(false);
 
   // The latest state, for the save that runs from a timer or on the way out.
-  const latest = useRef({ title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds });
-  latest.current = { title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds };
+  const latest = useRef({ title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds, folderId });
+  latest.current = { title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds, folderId };
 
   const ground = colour ? (noteShades[scheme][colour] ?? palette.background) : palette.background;
   const fill = wash(scheme);
@@ -137,6 +161,10 @@ export function NoteEditor({
     const empty = s.title.trim() === '' && isContentEmpty(content);
     const due = s.dueOn.trim() === '' ? null : s.dueOn.trim();
 
+    // An emptied note is only dealt with on the way out; until then it stays
+    // "unsaved", so the final pass knows to discard it.
+    if (empty && !final) return;
+
     mutate((v) => {
       if (savedId.current === null) {
         if (empty) return;
@@ -145,6 +173,7 @@ export function NoteEditor({
           content,
           colour: s.colour,
           pinned: s.pinned,
+          folderId: s.folderId,
           ...(due ? { dueOn: due, notify: s.notify } : {}),
         });
         savedId.current = created.id;
@@ -172,25 +201,28 @@ export function NoteEditor({
       });
       removeReleased(released);
       if (note.done !== s.done) v.notes.setDone(id, s.done);
+      if (note.folderId !== s.folderId) v.notes.moveToFolder(id, s.folderId);
 
       const current = new Set(v.notes.labelsFor(id).map((label) => label.id));
       for (const labelId of s.labelIds) if (!current.has(labelId)) v.notes.addLabel(id, labelId);
       for (const labelId of current) if (!s.labelIds.has(labelId)) v.notes.removeLabel(id, labelId);
     });
 
-    if (final) {
-      // Images added while editing and then removed (or a note discarded) are
-      // referenced by nothing; let them go now rather than leave orphans.
-      mutate((v) => removeReleased(v.notes.releaseUnused(addedFiles.current)));
-    }
     dirty.current = false;
-    setEditedAt(new Date().toISOString());
+    if (!final) setEditedAt(new Date().toISOString());
   }
 
   function close() {
     if (closed.current) return;
     closed.current = true;
-    persist(true);
+    // Opening a note and backing out writes nothing: every save is an entry in
+    // the history and a change to sync.
+    if (dirty.current) persist(true);
+    // Images added while editing and then removed (or a note discarded) are
+    // referenced by nothing; let them go now rather than leave orphans.
+    if (addedFiles.current.length > 0) {
+      mutate((v) => removeReleased(v.notes.releaseUnused(addedFiles.current)));
+    }
     onClose();
   }
 
@@ -199,7 +231,7 @@ export function NoteEditor({
     if (!dirty.current) return;
     const timer = setTimeout(() => persist(false), 700);
     return () => clearTimeout(timer);
-  }, [title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds]);
+  }, [title, blocks, checkedLast, colour, pinned, archived, dueOn, notify, done, labelIds, folderId]);
 
   function touch() {
     dirty.current = true;
@@ -389,6 +421,7 @@ export function NoteEditor({
   }, [ordered, checkedLast]);
 
   const labels = vault.notes.listLabels();
+  const folders = vault.notes.listFolders();
 
   return (
     <Modal visible animationType="slide" onRequestClose={close}>
@@ -766,8 +799,35 @@ export function NoteEditor({
                 />
               ) : null}
 
+              {sheet === 'folder' ? (
+                <FolderPicker
+                  folders={folders}
+                  current={folderId}
+                  palette={palette}
+                  onPick={(id) => {
+                    touch();
+                    setFolderId(id);
+                    setSheet(null);
+                  }}
+                  onCreate={(name) => {
+                    const folder = mutate((v) => v.notes.addFolder(name));
+                    if (!folder) return;
+                    touch();
+                    setFolderId(folder.id);
+                    setSheet(null);
+                  }}
+                />
+              ) : null}
+
               {sheet === 'more' ? (
                 <>
+                  <SheetRow
+                    glyph="📁"
+                    label="Move to folder"
+                    trailing={folders.find((f) => f.id === folderId)?.name ?? ''}
+                    palette={palette}
+                    onPress={() => setSheet('folder')}
+                  />
                   <SheetRow glyph="🏷" label="Labels" palette={palette} onPress={() => setSheet('labels')} />
                   <SheetRow
                     glyph="↧"
@@ -909,37 +969,6 @@ function IconButton({
   );
 }
 
-function SheetRow({
-  glyph,
-  label,
-  onPress,
-  palette,
-  disabled,
-  danger,
-}: {
-  glyph: string;
-  label: string;
-  onPress: () => void;
-  palette: ReturnType<typeof paletteFor>;
-  disabled?: boolean;
-  danger?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [styles.sheetRow, pressed ? { backgroundColor: palette.key } : null]}
-    >
-      <Text style={[styles.sheetGlyph, { color: danger ? palette.danger : palette.text, opacity: disabled ? 0.4 : 1 }]}>
-        {glyph}
-      </Text>
-      <Text style={{ color: danger ? palette.danger : palette.text, fontSize: typeScale.md, opacity: disabled ? 0.4 : 1 }}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function BlockActions({
   palette,
   onUp,
@@ -957,37 +986,6 @@ function BlockActions({
       <SheetRow glyph="↓" label="Move down" palette={palette} onPress={onDown} />
       <SheetRow glyph="🗑" label="Remove this block" palette={palette} danger onPress={onDelete} />
     </>
-  );
-}
-
-function Swatch({
-  fill,
-  selected,
-  ring,
-  border,
-  mark,
-  markColour,
-  onPress,
-}: {
-  fill: string;
-  selected: boolean;
-  ring: string;
-  border: string;
-  mark: string;
-  markColour: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.swatch,
-        { backgroundColor: fill, borderColor: selected ? ring : border, borderWidth: selected ? 2 : 1 },
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      {mark ? <Text style={[styles.swatchMark, { color: markColour }]}>{mark}</Text> : null}
-    </Pressable>
   );
 }
 

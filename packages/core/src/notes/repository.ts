@@ -73,7 +73,48 @@ export interface Note {
   readonly colour: NoteColour | null;
   /** Null when the note has no checklist items. */
   readonly checklist: ChecklistProgress | null;
+  /** The folder it is filed in, or null for none. */
+  readonly folderId: string | null;
+  /** Where it was dragged to; null if never moved by hand. */
+  readonly position: number | null;
+  readonly createdAt: string | null;
   readonly updatedAt: string | null;
+}
+
+export interface NoteFolder {
+  readonly id: string;
+  readonly name: string;
+  readonly colour: string | null;
+  readonly sortOrder: number;
+}
+
+interface FolderRow {
+  id: string;
+  name: string | null;
+  colour: string | null;
+  sort_order: number | null;
+}
+
+/** The gap left between neighbours when a note or folder is placed at an end. */
+const POSITION_STEP = 1000;
+
+/**
+ * A note's place in the arranged order. Never-dragged notes sort by age, newest
+ * first — the negated creation time puts newer ones at smaller keys.
+ */
+function arrangedKey(note: Pick<Note, 'position' | 'createdAt'>): number {
+  if (note.position !== null) return note.position;
+  const created = note.createdAt ? Date.parse(note.createdAt) : NaN;
+  return Number.isNaN(created) ? 0 : -created;
+}
+
+function toFolder(row: FolderRow): NoteFolder {
+  return {
+    id: row.id,
+    name: row.name ?? '',
+    colour: row.colour,
+    sortOrder: row.sort_order ?? 0,
+  };
 }
 
 /** The result of an edit that may have removed images from the note. */
@@ -105,6 +146,9 @@ interface NoteRow {
   pinned: number | null;
   archived: number | null;
   colour: string | null;
+  folder_id: string | null;
+  position: number | null;
+  created_at: string | null;
   updated_at: string | null;
 }
 
@@ -163,6 +207,7 @@ export class NoteRepository {
       notify?: boolean;
       pinned?: boolean;
       colour?: NoteColour | null;
+      folderId?: string | null;
       id?: string;
     },
   ): Note {
@@ -179,6 +224,7 @@ export class NoteRepository {
       pinned: input.pinned ?? false,
       archived: false,
       colour: input.colour ?? null,
+      folder_id: input.folderId ?? null,
     });
     return this.getNote(id)!;
   }
@@ -243,6 +289,7 @@ export class NoteRepository {
         blocks: original.content.blocks.map((block) => ({ ...block, id: uuidv7() })),
       },
       colour: original.colour,
+      folderId: original.folderId,
     });
     for (const label of this.labelsFor(id)) this.addLabel(copy.id, label.id);
     return this.getNote(copy.id)!;
@@ -399,6 +446,113 @@ export class NoteRepository {
     );
   }
 
+  /**
+   * Open notes in the order you arranged them: pinned first, then by where you
+   * dragged each one.
+   *
+   * Separate from `listOpen`, which stays urgency-ordered for the places that
+   * ask "what needs me" — a list you arranged by hand is a different question.
+   * A note never dragged sits by age, newest on top, as it always has.
+   */
+  listArranged(folderId?: string | null): Note[] {
+    const open = this.listOpen().filter(
+      (note) => folderId === undefined || note.folderId === folderId,
+    );
+    return open.sort(
+      (a, b) => Number(b.pinned) - Number(a.pinned) || arrangedKey(a) - arrangedKey(b),
+    );
+  }
+
+  /**
+   * Put a note between two others, as a drag and drop leaves it.
+   *
+   * Only the moved note is written: its position becomes the midpoint of its new
+   * neighbours'. Pass null for "at the top" or "at the bottom".
+   */
+  placeNote(id: string, after: string | null, before: string | null, pinned?: boolean): Note {
+    const keyOf = (otherId: string | null) => {
+      const other = otherId ? this.getNote(otherId) : undefined;
+      return other ? arrangedKey(other) : null;
+    };
+    const low = keyOf(after);
+    const high = keyOf(before);
+
+    const position =
+      low !== null && high !== null
+        ? (low + high) / 2
+        : low !== null
+          ? low + POSITION_STEP
+          : high !== null
+            ? high - POSITION_STEP
+            : 0;
+
+    const fields: Record<string, Json> = { position };
+    if (pinned !== undefined) fields.pinned = pinned;
+    this.store.commit('note', id, fields);
+    return this.getNote(id)!;
+  }
+
+  // ---------------------------------------------------------------- folders
+
+  addFolder(name: string, id: string = uuidv7()): NoteFolder {
+    const trimmed = name.trim();
+    if (trimmed === '') throw new NoteValidationError('A folder needs a name.');
+    const last = this.listFolders().at(-1);
+    this.store.commit('folder', id, {
+      name: trimmed,
+      colour: null,
+      sort_order: (last?.sortOrder ?? 0) + POSITION_STEP,
+    });
+    return this.getFolder(id)!;
+  }
+
+  renameFolder(id: string, name: string): NoteFolder {
+    const trimmed = name.trim();
+    if (trimmed === '') throw new NoteValidationError('A folder needs a name.');
+    this.store.commit('folder', id, { name: trimmed });
+    return this.getFolder(id)!;
+  }
+
+  /**
+   * Delete a folder. Its notes are kept and simply become unfiled: deleting a
+   * container is not a request to delete what was in it.
+   */
+  deleteFolder(id: string): void {
+    for (const note of this.notesInFolder(id)) this.store.commit('note', note, { folder_id: null });
+    this.store.remove('folder', id);
+  }
+
+  getFolder(id: string): NoteFolder | undefined {
+    const row = this.store.database.get<FolderRow>(
+      'SELECT * FROM folder WHERE id = ? AND deleted_at IS NULL',
+      [id],
+    );
+    return row ? toFolder(row) : undefined;
+  }
+
+  listFolders(): NoteFolder[] {
+    return this.store.database
+      .all<FolderRow>(
+        `SELECT * FROM folder WHERE deleted_at IS NULL ORDER BY sort_order ASC, name COLLATE NOCASE`,
+      )
+      .map(toFolder);
+  }
+
+  /** File a note, or unfile it with null. */
+  moveToFolder(noteId: string, folderId: string | null): Note {
+    if (folderId !== null && !this.getFolder(folderId)) {
+      throw new NoteValidationError('That folder no longer exists.');
+    }
+    this.store.commit('note', noteId, { folder_id: folderId });
+    return this.getNote(noteId)!;
+  }
+
+  private notesInFolder(folderId: string): string[] {
+    return this.store.database
+      .all<{ id: string }>(`SELECT id FROM note WHERE folder_id = ? AND deleted_at IS NULL`, [folderId])
+      .map((row) => row.id);
+  }
+
   /** Notes put away with archive, newest first. */
   listArchived(): Note[] {
     return this.store.database
@@ -489,6 +643,9 @@ function toNote(row: NoteRow): Note {
     archived: row.archived === 1,
     colour: isNoteColour(row.colour) ? row.colour : null,
     checklist: checklistProgress(content),
+    folderId: row.folder_id,
+    position: row.position,
+    createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }

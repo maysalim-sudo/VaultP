@@ -128,8 +128,14 @@ export const ENTITIES: Partial<Record<EntityName, EntityDef>> = {
       'pinned',
       'archived',
       'colour',
+      'folder_id',
+      'position',
       ...COMMON,
     ],
+  },
+  folder: {
+    table: 'folder',
+    columns: ['name', 'colour', 'sort_order', ...COMMON],
   },
   tag: {
     table: 'tag',
