@@ -21,6 +21,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Directory } from 'expo-file-system';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 import {
   DriveBackend,
@@ -43,7 +44,7 @@ import { Screen } from '../components/Screen.js';
 import { loadKeyfile } from '../vault/keys.js';
 import { PhoneFolderBackend } from '../sync/folderBackend.js';
 import { PairScanner } from '../sync/PairScanner.js';
-import { forgetPairing, loadPairing, pairFromCode } from '../sync/pairing.js';
+import { forgetPairing, loadPairing, pairFromCode, unlockComputer } from '../sync/pairing.js';
 import { useOpenVault, useVault } from '../vault/VaultContext.js';
 
 const FOLDER_SETTING = 'sync_folder_uri';
@@ -67,11 +68,33 @@ export function Sync({ onClose }: { onClose?: () => void }) {
   const [scanning, setScanning] = useState(false);
   const [checking, setChecking] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [unlocked, setUnlocked] = useState<string | null>(null);
   void version;
 
   useEffect(() => {
     void loadPairing().then((stored) => setPairing(stored ?? null));
   }, []);
+
+  /**
+   * Fingerprint (or the phone's own lock) before a vault key is sent anywhere.
+   * A phone with no lock at all falls back to an explicit yes.
+   */
+  async function confirmItIsYou(question: string): Promise<boolean> {
+    const [hardware, enrolled] = await Promise.all([
+      LocalAuthentication.hasHardwareAsync(),
+      LocalAuthentication.isEnrolledAsync(),
+    ]);
+    if (hardware && enrolled) {
+      const result = await LocalAuthentication.authenticateAsync({ promptMessage: question, cancelLabel: 'Cancel' });
+      return result.success;
+    }
+    return new Promise((resolve) => {
+      Alert.alert(question, 'This sends your vault’s key to that computer so it can open your vault.', [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Unlock it', onPress: () => resolve(true) },
+      ]);
+    });
+  }
 
   /**
    * A code was scanned: check the computer answers, make sure it is not holding
@@ -82,6 +105,27 @@ export function Sync({ onClose }: { onClose?: () => void }) {
     setScanError(null);
     try {
       const paired = await pairFromCode(code);
+
+      // The computer is asking to be unlocked: hand it the key, once the person
+      // holding this phone has proved it is them.
+      if (paired.handoffKey) {
+        if (!(await confirmItIsYou(`Unlock VaultP on ${paired.pairing.name}?`))) {
+          setScanError('Not confirmed, so nothing was sent. Scan again to retry.');
+          return;
+        }
+        try {
+          await unlockComputer(vault, paired.backend, paired.handoffKey);
+        } catch (caught: unknown) {
+          // A computer that refused the key is not one to keep syncing with.
+          if (!pairing) await forgetPairing();
+          throw caught;
+        }
+        setPairing(paired.pairing);
+        setScanning(false);
+        setUnlocked(paired.pairing.name);
+        setReport((await syncComputer()) ?? null);
+        return;
+      }
 
       // Two vaults with different keys cannot be merged — each would see the
       // other's data as noise. Better to say so now than to "sync" and find
@@ -251,6 +295,11 @@ export function Sync({ onClose }: { onClose?: () => void }) {
                           : 'Not synced yet this session'}
                   </Text>
                 </View>
+                {unlocked ? (
+                  <Text style={[styles.paragraph, { color: palette.positive, fontWeight: '600' }]}>
+                    ✓ {unlocked} is unlocked.
+                  </Text>
+                ) : null}
                 <Text style={[styles.paragraph, { color: palette.dim }]}>
                   The two keep in step by themselves whenever VaultP is open on both and they share a
                   Wi-Fi. Nothing leaves your network, and everything that crosses is already encrypted.
@@ -265,6 +314,18 @@ export function Sync({ onClose }: { onClose?: () => void }) {
                   ) : (
                     <Text style={[styles.buttonText, { color: palette.onAccent }]}>Sync now</Text>
                   )}
+                </Pressable>
+                {/* The same scanner unlocks the computer when its screen shows an
+                    unlock code: no passphrase to type there. */}
+                <Pressable
+                  onPress={() => {
+                    setScanError(null);
+                    setUnlocked(null);
+                    setScanning(true);
+                  }}
+                  style={[styles.button, { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 }]}
+                >
+                  <Text style={[styles.buttonText, { color: palette.text }]}>Scan a code to unlock the computer</Text>
                 </Pressable>
                 <Pressable
                   onPress={() =>

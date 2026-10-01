@@ -11,7 +11,7 @@ subscription. Every feature works with the network off, forever.
 ## Badges
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-477%20passing-brightgreen.svg)](#-getting-started)
+[![Tests](https://img.shields.io/badge/tests-492%20passing-brightgreen.svg)](#-getting-started)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-blue.svg)](#-tech-stack)
 
@@ -69,8 +69,13 @@ subscription. Every feature works with the network off, forever.
   from one set of design tokens both apps share.
 - 📷 **Pair by scanning a code** — The computer shows a QR code, the phone scans it,
   and from then on the two keep in step by themselves over the Wi-Fi they share. No
-  account, no folder to set up, nothing to install, and nothing leaves the house. A
-  new device joins the same way: scan, type the passphrase, done.
+  account, no folder to set up, nothing to install, and nothing leaves the house.
+- 🔓 **Unlock the computer with your phone** — No passphrase to type, or to forget:
+  the computer shows a one-time code, the phone scans it and asks for your
+  fingerprint, and hands the key across sealed so only that computer can open it. The
+  same scan sets up a brand-new computer. Passphrase fields can be shown while typing,
+  and a computer whose passphrase is truly gone can start over — its old vault is
+  moved to a backup folder, never deleted.
 - 🔄 **Sync without a service** — Or point both devices at any folder something else keeps
   in step (Syncthing, a shared drive, a USB stick). No account, no API key, nothing
   that expires. The folder receives **ciphertext only**.
@@ -147,7 +152,7 @@ from the shared core, so they agree by construction rather than by discipline.
 | **Ordering** | Hybrid Logical Clocks, per-field last-write-wins merge |
 | **Identity** | UUIDv7, plus deterministic ids for idempotent cross-device creation |
 | **Crypto** | AES-256-GCM, PBKDF2, HKDF (portable SHA-256 implementation) |
-| **Tests** | Vitest — 444 core, 33 desktop |
+| **Tests** | Vitest — 457 core, 35 desktop |
 | **Design** | Shared tokens (colour roles, type, spacing, note shades) consumed by both apps |
 
 ### 📱 Mobile app
@@ -206,7 +211,7 @@ npm install
 npm test
 ```
 
-> **477 tests** should pass (444 core + 33 desktop). One test is skipped unless you
+> **492 tests** should pass (457 core + 35 desktop). One test is skipped unless you
 > opt in — see *Environment variables* below.
 
 ```bash

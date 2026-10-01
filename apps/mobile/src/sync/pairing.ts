@@ -22,6 +22,7 @@ import {
   SyncEngine,
   fromBase64,
   parsePairing,
+  sealHandoff,
   serializeKeyfile,
   type Pairing,
   type SyncReport,
@@ -189,13 +190,47 @@ export async function computerBackend(): Promise<{ backend: PairBackend; pairing
  * Returns what the computer said about itself — notably whether it already
  * holds a vault, which decides what happens next on a phone with none.
  */
-export async function pairFromCode(code: string): Promise<{ pairing: Pairing; backend: PairBackend; hasVault: boolean }> {
-  const pairing = parsePairing(code);
-  const backend = backendFor(pairing, (addresses) => void savePairing({ ...pairing, addresses }));
+export async function pairFromCode(code: string): Promise<{
+  pairing: Pairing;
+  backend: PairBackend;
+  hasVault: boolean;
+  /** Present when the computer is asking to be unlocked. */
+  handoffKey?: string;
+}> {
+  const scanned = parsePairing(code);
+  // The unlock key in a code is for that one unlock; only the lasting part of
+  // the pairing is remembered.
+  const { handoffKey, ...lasting } = scanned;
+  const backend = backendFor(lasting, (addresses) => void savePairing({ ...lasting, addresses }));
   const hello = await backend.hello();
-  const named = { ...pairing, name: hello.name || pairing.name };
+  const named = { ...lasting, name: hello.name || lasting.name };
   await savePairing(named);
-  return { pairing: named, backend, hasVault: hello.hasVault };
+  return {
+    pairing: named,
+    backend,
+    hasVault: hello.hasVault,
+    ...(handoffKey ? { handoffKey } : {}),
+  };
+}
+
+/**
+ * Unlock the paired computer: hand it this vault's key, sealed so that only
+ * the computer showing the scanned code can open it.
+ *
+ * The caller has already asked for a fingerprint. This is the only place the
+ * data key leaves the phone, and it leaves encrypted to a key whose private
+ * half exists in that computer's memory alone.
+ */
+export async function unlockComputer(vault: OpenVault, backend: PairBackend, handoffKey: string): Promise<void> {
+  const keyfile = await loadKeyfile();
+  if (!keyfile) throw new Error('This phone has no vault to share.');
+
+  const sealed = await sealHandoff(androidCryptoProvider, handoffKey, {
+    dataKey: vault.dataKey,
+    keyfile: serializeKeyfile(keyfile),
+    slot: vault.slot,
+  });
+  await backend.handoff(sealed);
 }
 
 let running: Promise<SyncReport | undefined> | null = null;

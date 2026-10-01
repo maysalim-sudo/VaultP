@@ -17,11 +17,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   useColorScheme,
 } from 'react-native';
 
+import { PassphraseField } from '../components/PassphraseField.js';
 import { paletteFor } from '../components/theme.js';
 
 export function Unlock({
@@ -40,6 +40,7 @@ export function Unlock({
   const palette = paletteFor(useColorScheme());
   const [passphrase, setPassphrase] = useState('');
   const [showPassphrase, setShowPassphrase] = useState(!quickUnlockAvailable);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     // Prompt straight away rather than making the user tap a button to be asked
@@ -66,24 +67,15 @@ export function Unlock({
 
       {showPassphrase ? (
         <>
-          <TextInput
+          <PassphraseField
             value={passphrase}
             onChangeText={setPassphrase}
+            visible={visible}
+            onToggle={() => setVisible((current) => !current)}
             placeholder="Passphrase"
-            placeholderTextColor={palette.dim}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
+            palette={palette}
             autoFocus={!quickUnlockAvailable}
             onSubmitEditing={() => onPassphrase(passphrase)}
-            style={[
-              styles.input,
-              {
-                color: palette.text,
-                borderColor: palette.border,
-                backgroundColor: palette.surface,
-              },
-            ]}
           />
           <Pressable
             onPress={() => onPassphrase(passphrase)}
@@ -131,7 +123,6 @@ const styles = StyleSheet.create({
   busy: { alignItems: 'center', gap: 8 },
   hint: { fontSize: 13 },
   error: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
   button: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   buttonText: { fontSize: 17, fontWeight: '700' },
   link: { alignItems: 'center', paddingVertical: 10 },

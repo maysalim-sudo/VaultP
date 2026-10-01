@@ -55,6 +55,7 @@ export function App() {
           // Joining a folder also sets one, so the header learns about it.
           void api().status().then(setStatus);
         }}
+        onStatus={() => void api().status().then(setStatus)}
       />
     );
   }
@@ -168,7 +169,7 @@ function SyncBar({
 
       {pairingOpen ? (
         <PairDialog
-          joining={false}
+          mode="pair"
           onClose={() => {
             setPairingOpen(false);
             // Pairing also makes the phone the sync target; reflect it here.

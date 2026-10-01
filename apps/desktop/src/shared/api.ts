@@ -446,6 +446,11 @@ export interface VaultpApi {
   /** Create the pairing if needed and start listening; returns the QR to show. */
   startPairing(): Promise<PairingStatusDto>;
   forgetPairing(): Promise<void>;
+  /** Show a one-time code the phone can scan to unlock this computer. */
+  startHandoff(): Promise<PairingStatusDto>;
+  cancelHandoff(): Promise<void>;
+  /** Move this computer's vault into a backup folder. Returns where it went. */
+  setVaultAside(): Promise<string | undefined>;
   chooseSyncFolder(): Promise<string | undefined>;
   sync(): Promise<SyncReportDto>;
   setSyncTarget(target: SyncTarget): Promise<void>;

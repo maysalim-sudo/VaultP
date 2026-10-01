@@ -339,6 +339,25 @@ button.tag.on { background: var(--accent); color: var(--on-accent); border-color
 
 .strike { text-decoration: line-through; }
 
+/* A passphrase field with its Show/Hide beside it, joined as one control. */
+.passphrase { display: flex; }
+.passphrase input { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.passphrase .eye {
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding: 11px 14px;
+  min-width: 68px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.passphrase .eye:hover { color: var(--text); }
+button.link.forgot { align-self: flex-start; padding: 0; }
+button.link.forgot:hover { color: var(--text); }
+.path-wrap { overflow-wrap: anywhere; font-family: ui-monospace, Consolas, monospace; }
+details summary { cursor: pointer; }
+details p { margin: var(--space-sm) 0; }
+
 /* Pairing: the code beside the three things to do with it. */
 .pair { display: flex; gap: var(--space-xl); align-items: center; flex-wrap: wrap; justify-content: center; }
 .qr { border-radius: var(--radius-md); flex: none; }

@@ -24,6 +24,7 @@ import {
 
 import { MIN_PASSPHRASE_LENGTH, fetchKeyfileFrom } from '@vaultp/core';
 
+import { PassphraseField } from '../components/PassphraseField.js';
 import { paletteFor } from '../components/theme.js';
 import { PairScanner } from '../sync/PairScanner.js';
 import { pairFromCode } from '../sync/pairing.js';
@@ -48,6 +49,7 @@ export function Setup({
   const [passphrase, setPassphrase] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   const [scanning, setScanning] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -111,32 +113,24 @@ export function Setup({
             'your data back if this one is lost.'}
       </Text>
 
-      <TextInput
+      {/* One switch for both fields: seeing only one of the two would not help
+          anyone find where they differ. */}
+      <PassphraseField
         value={passphrase}
         onChangeText={setPassphrase}
+        visible={visible}
+        onToggle={() => setVisible((current) => !current)}
         placeholder={`At least ${MIN_PASSPHRASE_LENGTH} characters`}
-        placeholderTextColor={palette.dim}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={[
-          styles.input,
-          { color: palette.text, borderColor: palette.border, backgroundColor: palette.surface },
-        ]}
+        palette={palette}
       />
 
-      <TextInput
+      <PassphraseField
         value={confirmation}
         onChangeText={setConfirmation}
+        visible={visible}
+        onToggle={() => setVisible((current) => !current)}
         placeholder="Type it again"
-        placeholderTextColor={palette.dim}
-        secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={[
-          styles.input,
-          { color: palette.text, borderColor: palette.border, backgroundColor: palette.surface },
-        ]}
+        palette={palette}
       />
 
       {passphrase.length > 0 && !longEnough ? (
@@ -254,6 +248,7 @@ function JoinVault({
   onBack: () => void;
 }) {
   const [passphrase, setPassphrase] = useState('');
+  const [visible, setVisible] = useState(false);
   const ready = passphrase.length > 0 && !busy;
 
   return (
@@ -267,20 +262,15 @@ function JoinVault({
         phone and never sent anywhere.
       </Text>
 
-      <TextInput
+      <PassphraseField
         value={passphrase}
         onChangeText={setPassphrase}
+        visible={visible}
+        onToggle={() => setVisible((current) => !current)}
         placeholder="Your passphrase"
-        placeholderTextColor={palette.dim}
-        secureTextEntry
+        palette={palette}
         autoFocus
-        autoCapitalize="none"
-        autoCorrect={false}
         onSubmitEditing={() => ready && onJoin(passphrase)}
-        style={[
-          styles.input,
-          { color: palette.text, borderColor: palette.border, backgroundColor: palette.surface },
-        ]}
       />
 
       {error ? <Text style={[styles.error, { color: palette.danger }]}>{error}</Text> : null}

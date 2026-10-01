@@ -27,6 +27,8 @@ import {
   driveBackendFor,
   hasVault,
   joinFromFolder,
+  openFromHandoff,
+  setVaultAside,
   syncWith,
   syncWithFolder,
   syncWithHub,
@@ -34,6 +36,8 @@ import {
   type DesktopVault,
 } from './vault.js';
 import {
+  beginHandoff,
+  cancelHandoff,
   ensurePairing,
   forgetPairing,
   hubDirectory,
@@ -266,6 +270,50 @@ ipcMain.handle('pairing:start', async () => {
 ipcMain.handle('pairing:forget', async () => {
   await forgetPairing(dataRoot());
   if (syncTarget === 'pair') syncTarget = 'folder';
+});
+
+/**
+ * Unlock with the phone.
+ *
+ * Shows a one-time code; the phone scans it, asks for a fingerprint, and hands
+ * the vault key over sealed to a key only this process holds. No passphrase is
+ * typed anywhere. Works on a computer that has the vault, and on one that has
+ * nothing yet — which then fills itself by sync.
+ */
+ipcMain.handle('handoff:start', async () => {
+  await ensurePairing(dataRoot(), scheduleHubSync);
+  beginHandoff(async (handoff) => {
+    try {
+      vault = await openFromHandoff(handoff);
+    } catch (caught: unknown) {
+      return caught instanceof Error ? caught.message : 'The computer could not open the vault with that key.';
+    }
+    syncTarget = 'pair';
+    scheduleHubSync();
+    notifyChanged();
+    return null;
+  });
+  return pairingStatus(dataRoot());
+});
+
+ipcMain.handle('handoff:cancel', () => {
+  cancelHandoff();
+});
+
+/**
+ * Start over on this computer, when its passphrase is gone for good.
+ *
+ * Only from the locked window: an open vault has its database held open, and
+ * someone who can open it does not need to start over.
+ */
+ipcMain.handle('vault:setAside', async () => {
+  if (vault) throw new Error('The vault is open. This is for when it cannot be opened.');
+  cancelHandoff();
+  // The pairing belonged to the old vault's hub; a fresh one is made on demand.
+  await forgetPairing(dataRoot());
+  syncFolder = undefined;
+  syncTarget = 'folder';
+  return setVaultAside();
 });
 
 /**

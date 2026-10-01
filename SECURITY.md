@@ -58,8 +58,21 @@ discussion, but they will not be treated as vulnerabilities.
   protection. Anyone who photographs the pairing code while it is on screen can
   talk to that computer's sync store until it is unpaired; they still cannot
   read the vault without the passphrase.
-- **Losing the passphrase loses the vault.** There is no recovery path, no reset,
-  and no copy held anywhere. That is the feature.
+- **An unlocked phone can unlock a computer.** "Unlock with my phone" sends the
+  vault's data key from the phone to the computer, so no passphrase need be
+  typed there. The key is sealed (X25519, then AES-256-GCM) to a key pair the
+  computer generates for that one unlock; the public half is shown in the QR
+  code and the private half never leaves the computer's memory, so neither the
+  network nor a photograph of the code yields the key. The phone asks for a
+  fingerprint before sending, and the code works once and expires after five
+  minutes. The consequence to accept: whoever holds your unlocked phone, and can
+  pass its fingerprint check, can open your vault on a computer they control.
+  That was already true of the phone itself.
+- **Losing the passphrase loses the vault — unless a device is still open.**
+  There is no reset and no copy held anywhere. A phone that still opens by
+  fingerprint can unlock or set up a computer, but if every device is locked and
+  the passphrase is gone, so is the data. That is the feature. A computer's
+  "start over" moves its vault to a backup folder rather than deleting it.
 - **The desktop executables are not code-signed.** Verify what you downloaded
   before trusting it.
 
@@ -74,6 +87,7 @@ discussion, but they will not be treated as vulnerabilities.
 | **Files** | AES-256-GCM under a key derived per file, bound to that file's id |
 | **Sync** | AES-256-GCM per segment, bound to the writing device and sequence |
 | **Pairing** | HMAC-SHA256 on every request and reply, 256-bit secret exchanged by QR code, replayed requests refused |
+| **Unlock by phone** | Data key sealed with X25519 + HKDF-SHA256 + AES-256-GCM to a one-time key from the QR code |
 
 The passphrase is never stored, never logged, and never leaves the device it was
 typed on.

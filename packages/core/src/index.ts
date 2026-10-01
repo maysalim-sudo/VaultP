@@ -16,6 +16,7 @@ export * from './crypto/base64.js';
 export * from './crypto/keyfile.js';
 export * from './crypto/subkeys.js';
 export * from './crypto/webcrypto.js';
+export * from './crypto/x25519.js';
 export * from './sync/backend.js';
 export * from './sync/segments.js';
 export * from './sync/engine.js';

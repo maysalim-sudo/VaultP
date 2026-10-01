@@ -12,11 +12,23 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { PairBackend, PairingAuthError, fromBase64, webCryptoProvider } from '@vaultp/core';
+import {
+  PairBackend,
+  PairingAuthError,
+  fromBase64,
+  generateX25519KeyPair,
+  sealHandoff,
+  toBase64,
+  webCryptoProvider,
+  type Handoff,
+} from '@vaultp/core';
 
 import {
+  beginHandoff,
+  cancelHandoff,
   ensurePairing,
   forgetPairing,
+  handoffPublicKey,
   hubDirectory,
   hubHasVault,
   isPaired,
@@ -95,6 +107,46 @@ describe('the pairing server', () => {
     // Re-pair, so afterEach has something to tear down.
     await ensurePairing(root, () => undefined);
     await expect(phone.list('')).rejects.toBeTruthy();
+  });
+
+  it('receives a vault key the phone seals to the code on screen', async () => {
+    const dataKey = webCryptoProvider.randomBytes(32);
+    let received: Handoff | undefined;
+    beginHandoff((handoff) => {
+      received = handoff;
+      return Promise.resolve(null);
+    });
+
+    const phone = await client();
+    await phone.handoff(
+      await sealHandoff(webCryptoProvider, handoffPublicKey()!, { dataKey, keyfile: '{"id":"k"}', slot: 'primary' }),
+    );
+
+    expect(received?.dataKey).toEqual(dataKey);
+    expect(received?.keyfile).toBe('{"id":"k"}');
+    // One use: the same code does not unlock twice.
+    expect(handoffPublicKey()).toBeUndefined();
+  });
+
+  it('refuses a key when no code is on screen, and passes on why a key was not accepted', async () => {
+    const phone = await client();
+    const stale = await sealHandoff(
+      webCryptoProvider,
+      toBase64(generateX25519KeyPair(webCryptoProvider).publicKey),
+      { dataKey: webCryptoProvider.randomBytes(32), keyfile: '{}', slot: 'primary' },
+    );
+    await expect(phone.handoff(stale)).rejects.toThrow(/expired/);
+
+    beginHandoff(() => Promise.resolve('This computer already holds a different vault.'));
+    await expect(phone.handoff(stale)).rejects.toThrow(/different code/);
+
+    const right = await sealHandoff(webCryptoProvider, handoffPublicKey()!, {
+      dataKey: webCryptoProvider.randomBytes(32),
+      keyfile: '{}',
+      slot: 'primary',
+    });
+    await expect(phone.handoff(right)).rejects.toThrow('This computer already holds a different vault.');
+    cancelHandoff();
   });
 
   it('keeps the same pairing across a restart', async () => {

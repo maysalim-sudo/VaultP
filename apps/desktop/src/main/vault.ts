@@ -8,8 +8,8 @@
  */
 
 import { app } from 'electron';
-import { join } from 'node:path';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
+import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 
 import {
   DebtRepository,
@@ -89,10 +89,12 @@ async function deviceId(): Promise<string> {
 /**
  * Create this device's vault.
  *
- * Note what is NOT here: any way to copy a data key from the phone. The second
- * device is set up by restoring a backup or syncing, both of which need the
- * passphrase. A key that could travel by any other route would be a key that
- * could leak by that route.
+ * A second device shares this vault in one of two ways. Either it is given the
+ * keyfile and the passphrase unwraps it — the key itself never moves — or an
+ * already-open phone hands the key over directly (`openFromHandoff`), sealed to
+ * a one-time key this computer generated and after a fingerprint on the phone.
+ * There is no third route, and nothing that sends a key in a form the network
+ * or a bystander could use.
  */
 export async function createDesktopVault(passphrase: string): Promise<DesktopVault> {
   const created = await createVault(webCryptoProvider, { passphrase });
@@ -114,6 +116,84 @@ export async function unlockDesktopVault(passphrase: string): Promise<DesktopVau
 
   const opened = await unlockVault(webCryptoProvider, parseKeyfile(serialized), passphrase);
   return openWith(opened.dataKey, opened.slot);
+}
+
+export class DifferentVaultError extends Error {
+  constructor() {
+    super(
+      'This computer already holds a different vault, so the phone’s key does not open it. ' +
+        'To use the phone’s vault here, choose “Forgot the passphrase?” on the computer and start over.',
+    );
+    this.name = 'DifferentVaultError';
+  }
+}
+
+/**
+ * Open the vault with a key handed over by the phone.
+ *
+ * Two cases. This computer has no vault: it adopts the phone's keyfile and
+ * starts empty, to be filled by sync. Or it has one: then it must be the same
+ * vault — the same keyfile id — or the phone's key is simply the wrong key,
+ * and saying so beats opening a database that turns out to be noise.
+ *
+ * Adopting the keyfile matters beyond this unlock: it is what lets the
+ * passphrase open this computer too, if it is ever remembered.
+ */
+export async function openFromHandoff(handoff: {
+  dataKey: Uint8Array;
+  keyfile: string;
+  slot: SlotId;
+}): Promise<DesktopVault> {
+  const theirs = parseKeyfile(handoff.keyfile);
+  const existing = await readText(KEYFILE_NAME);
+
+  if (existing) {
+    if (parseKeyfile(existing).id !== theirs.id) throw new DifferentVaultError();
+  } else {
+    await writeText(KEYFILE_NAME, serializeKeyfile(theirs));
+  }
+  return openWith(handoff.dataKey, handoff.slot);
+}
+
+/** Everything that makes up this computer's copy of a vault. */
+const VAULT_ENTRIES = [
+  KEYFILE_NAME,
+  DATABASE_NAME,
+  `${DATABASE_NAME}-wal`,
+  `${DATABASE_NAME}-shm`,
+  DECOY_DATABASE_NAME,
+  `${DECOY_DATABASE_NAME}-wal`,
+  `${DECOY_DATABASE_NAME}-shm`,
+  DEVICE_NAME,
+  'vault-files',
+];
+
+/**
+ * Start over on this computer: set its vault aside, so it can take another.
+ *
+ * Moved, never deleted. A vault whose passphrase is forgotten cannot be opened
+ * today, but passphrases come back to people, and a deleted vault does not.
+ * The folder sits beside the app's data, named for the moment it was made.
+ *
+ * Returns where it went, or undefined if there was nothing to move.
+ */
+export async function setVaultAside(): Promise<string | undefined> {
+  const root = dataDirectory();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const backup = join(dirname(root), `${basename(root)}-old-vault-${stamp}`);
+
+  let moved = 0;
+  for (const entry of VAULT_ENTRIES) {
+    try {
+      await access(join(root, entry));
+    } catch {
+      continue;
+    }
+    await mkdir(backup, { recursive: true });
+    await rename(join(root, entry), join(backup, entry));
+    moved += 1;
+  }
+  return moved > 0 ? backup : undefined;
 }
 
 async function openWith(dataKey: Uint8Array, slot: SlotId): Promise<DesktopVault> {

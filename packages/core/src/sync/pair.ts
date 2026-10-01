@@ -21,8 +21,11 @@
  * network at all, and keeps platform code out of core.
  */
 
-import { fromBase64, toBase64, utf8ToBytes } from '../crypto/base64.js';
+import { bytesToUtf8, fromBase64, toBase64, utf8ToBytes } from '../crypto/base64.js';
 import { hmacSha256, toHex } from '../crypto/sha256.js';
+import type { SlotId } from '../crypto/keyfile.js';
+import { type CryptoProvider, DecryptionError } from '../crypto/types.js';
+import { X25519_KEY_LENGTH, type X25519KeyPair, openSealed, sealTo } from '../crypto/x25519.js';
 import { ObjectNotFoundError, type RemoteObject, type StorageBackend } from './backend.js';
 import { KEYFILE_KEY } from './segments.js';
 
@@ -38,6 +41,11 @@ export interface Pairing {
   readonly secret: string;
   /** The computer's name, for "Paired with …". */
   readonly name: string;
+  /**
+   * Present when the computer is asking to be unlocked: a one-time public key
+   * the phone seals the vault key to. Base64. See `handoff` below.
+   */
+  readonly handoffKey?: string;
 }
 
 export class PairingFormatError extends Error {
@@ -67,6 +75,7 @@ export function encodePairing(pairing: Pairing): string {
     `a=${pairing.addresses.map(encodeURIComponent).join(',')}`,
     `s=${toUrlSafe(pairing.secret)}`,
     `n=${encodeURIComponent(pairing.name)}`,
+    ...(pairing.handoffKey ? [`k=${toUrlSafe(pairing.handoffKey)}`] : []),
   ].join('&');
   return `${PAIRING_SCHEME}?${query}`;
 }
@@ -99,7 +108,73 @@ export function parsePairing(text: string): Pairing {
   }
   if (addresses.length === 0 || secretBytes.length !== PAIRING_SECRET_LENGTH) throw new PairingFormatError();
 
-  return { addresses, secret, name: decodeURIComponent(fields.get('n') ?? 'Computer') };
+  const name = decodeURIComponent(fields.get('n') ?? 'Computer');
+  const k = fields.get('k');
+  if (!k) return { addresses, secret, name };
+
+  const handoffKey = fromUrlSafe(k);
+  try {
+    if (fromBase64(handoffKey).length !== X25519_KEY_LENGTH) throw new PairingFormatError();
+  } catch {
+    throw new PairingFormatError();
+  }
+  return { addresses, secret, name, handoffKey };
+}
+
+// ------------------------------------------------------------------- handoff
+//
+// Unlocking a computer from the phone. The phone is open (a fingerprint did
+// that); the computer is not, and may not even have the vault yet. The phone
+// hands over the data key and the keyfile, sealed to a public key the computer
+// made for this one unlock and showed in its QR code.
+//
+// This is the one place a data key travels. It goes sealed to a key whose
+// private half never leaves the computer's memory, so neither the network nor a
+// photograph of the code yields it — and the phone asks for a fingerprint
+// before sending.
+
+const HANDOFF_CONTEXT = 'vaultp/handoff/v1';
+
+export interface Handoff {
+  readonly dataKey: Uint8Array;
+  /** The phone's keyfile, so the computer can also be opened by passphrase. */
+  readonly keyfile: string;
+  /** Which of the keyfile's vaults the phone has open, so the same one opens here. */
+  readonly slot: SlotId;
+}
+
+export async function sealHandoff(
+  provider: CryptoProvider,
+  handoffKey: string,
+  handoff: Handoff,
+): Promise<Uint8Array> {
+  const body = JSON.stringify({
+    v: 1,
+    dataKey: toBase64(handoff.dataKey),
+    keyfile: handoff.keyfile,
+    slot: handoff.slot,
+  });
+  return sealTo(provider, fromBase64(handoffKey), utf8ToBytes(body), HANDOFF_CONTEXT);
+}
+
+export async function openHandoff(
+  provider: CryptoProvider,
+  recipient: X25519KeyPair,
+  sealed: Uint8Array,
+): Promise<Handoff> {
+  const parsed = JSON.parse(bytesToUtf8(await openSealed(provider, recipient, sealed, HANDOFF_CONTEXT))) as {
+    dataKey?: unknown;
+    keyfile?: unknown;
+    slot?: unknown;
+  };
+  if (typeof parsed.dataKey !== 'string' || typeof parsed.keyfile !== 'string') {
+    throw new DecryptionError('The phone sent something this computer does not understand.');
+  }
+  return {
+    dataKey: fromBase64(parsed.dataKey),
+    keyfile: parsed.keyfile,
+    slot: parsed.slot === 'decoy' ? 'decoy' : 'primary',
+  };
 }
 
 // ------------------------------------------------------------------ envelope
@@ -118,7 +193,8 @@ type Request =
   | { op: 'list'; prefix: string }
   | { op: 'get'; key: string }
   | { op: 'put'; key: string; data: string }
-  | { op: 'delete'; key: string };
+  | { op: 'delete'; key: string }
+  | { op: 'handoff'; data: string };
 
 type Reply =
   | { ok: true; name?: string; hasVault?: boolean; objects?: RemoteObject[]; data?: string }
@@ -189,6 +265,11 @@ export interface PairServerOptions {
   readonly name: string;
   /** Told after anything was written or removed, so the host can sync itself. */
   readonly onChange?: () => void;
+  /**
+   * The phone is handing over a sealed vault key. Resolves to null when it was
+   * accepted, or to the reason it was not, which the phone shows.
+   */
+  readonly onHandoff?: (sealed: Uint8Array) => Promise<string | null>;
 }
 
 /** How many request nonces to remember; a repeat within these is a replay. */
@@ -241,6 +322,14 @@ async function answer(options: PairServerOptions, request: Request): Promise<Rep
         await backend.delete(request.key);
         options.onChange?.();
         return { ok: true };
+      case 'handoff': {
+        if (typeof request.data !== 'string') return { ok: false, error: 'bad_request' };
+        if (!options.onHandoff) {
+          return { ok: false, error: 'failed', message: 'The computer is not waiting to be unlocked. Show the code again.' };
+        }
+        const refusal = await options.onHandoff(fromBase64(request.data));
+        return refusal === null ? { ok: true } : { ok: false, error: 'failed', message: refusal };
+      }
       default:
         return { ok: false, error: 'bad_request' };
     }
@@ -282,6 +371,11 @@ export class PairBackend implements StorageBackend {
   async hello(): Promise<{ name: string; hasVault: boolean }> {
     const reply = await this.call({ op: 'hello' });
     return { name: reply.name ?? 'Computer', hasVault: reply.hasVault === true };
+  }
+
+  /** Hand a sealed vault key to the computer. Throws with its reason if refused. */
+  async handoff(sealed: Uint8Array): Promise<void> {
+    await this.call({ op: 'handoff', data: toBase64(sealed) });
   }
 
   async list(prefix: string): Promise<RemoteObject[]> {

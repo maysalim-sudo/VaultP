@@ -34,7 +34,12 @@ import {
   createPairServer,
   encodePairing,
   fromBase64,
+  generateX25519KeyPair,
+  openHandoff,
   toBase64,
+  webCryptoProvider,
+  type Handoff,
+  type X25519KeyPair,
 } from '@vaultp/core';
 
 import type { PairingStatusDto } from '../shared/api.js';
@@ -57,6 +62,67 @@ let server: Server | undefined;
 let port: number | undefined;
 let state: PairingState | undefined;
 let lastPhoneActivity: string | null = null;
+
+/**
+ * An unlock in progress: the key pair made for it, and what to do with the
+ * vault key when the phone delivers it. In memory only, and only while the
+ * code is on screen.
+ */
+interface PendingHandoff {
+  readonly keyPair: X25519KeyPair;
+  readonly expiresAt: number;
+  readonly accept: (handoff: Handoff) => Promise<string | null>;
+}
+let pendingHandoff: PendingHandoff | undefined;
+
+/** Long enough to find the phone and scan; short enough that a stale code is dead. */
+const HANDOFF_LIFETIME_MS = 5 * 60 * 1000;
+
+/**
+ * Start waiting for the phone to hand over the vault key.
+ *
+ * A fresh key pair every time: the private half exists only here, only until
+ * the phone answers or the code is dismissed. `accept` opens the vault and
+ * returns null, or returns the reason it could not — which the phone shows.
+ */
+export function beginHandoff(accept: (handoff: Handoff) => Promise<string | null>): void {
+  pendingHandoff = {
+    keyPair: generateX25519KeyPair(webCryptoProvider),
+    expiresAt: Date.now() + HANDOFF_LIFETIME_MS,
+    accept,
+  };
+}
+
+export function cancelHandoff(): void {
+  pendingHandoff = undefined;
+}
+
+/** The public half of the unlock in progress — what the QR code carries. */
+export function handoffPublicKey(): string | undefined {
+  return pendingHandoff && Date.now() <= pendingHandoff.expiresAt
+    ? toBase64(pendingHandoff.keyPair.publicKey)
+    : undefined;
+}
+
+async function receiveHandoff(sealed: Uint8Array): Promise<string | null> {
+  const pending = pendingHandoff;
+  if (!pending || Date.now() > pending.expiresAt) {
+    pendingHandoff = undefined;
+    return 'The code on the computer has expired. Close it and show a new one.';
+  }
+
+  let handoff: Handoff;
+  try {
+    handoff = await openHandoff(webCryptoProvider, pending.keyPair, sealed);
+  } catch {
+    return 'That was sealed for a different code. Scan the one on screen now.';
+  }
+
+  const refusal = await pending.accept(handoff);
+  // One use: whether it worked or not, this key pair is finished.
+  if (refusal === null) pendingHandoff = undefined;
+  return refusal;
+}
 
 export function hubDirectory(root: string): string {
   return join(root, HUB_DIRECTORY);
@@ -140,6 +206,7 @@ export async function startPairing(root: string, onChange: () => void): Promise<
       lastPhoneActivity = new Date().toISOString();
       onChange();
     },
+    onHandoff: receiveHandoff,
   });
 
   const candidate = createServer((request: IncomingMessage, response: ServerResponse) => {
@@ -202,6 +269,7 @@ export async function forgetPairing(root: string): Promise<void> {
   port = undefined;
   state = undefined;
   lastPhoneActivity = null;
+  pendingHandoff = undefined;
   await rm(join(root, STATE_FILE), { force: true });
   await rm(hubDirectory(root), { recursive: true, force: true });
 }
@@ -230,7 +298,17 @@ export async function pairingStatus(root: string): Promise<PairingStatusDto> {
   let qr: PairingStatusDto['qr'] = null;
   if (addresses.length > 0) {
     const code = qrcode(0, 'M');
-    code.addData(encodePairing({ addresses, secret: state.secret, name: hostname() }));
+    const unlocking = pendingHandoff && Date.now() <= pendingHandoff.expiresAt ? pendingHandoff : undefined;
+    code.addData(
+      encodePairing({
+        addresses,
+        secret: state.secret,
+        name: hostname(),
+        // While an unlock is being waited for, the code also carries the public
+        // key to seal the vault key to.
+        ...(unlocking ? { handoffKey: toBase64(unlocking.keyPair.publicKey) } : {}),
+      }),
+    );
     code.make();
     const size = code.getModuleCount();
     // The matrix itself, not markup: the window draws it, so no HTML crosses

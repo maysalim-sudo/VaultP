@@ -1,14 +1,16 @@
 /**
- * Pairing with a phone: a QR code to scan, and nothing else to do.
+ * The QR code dialogs: pairing a phone, and being unlocked by one.
  *
- * Two uses of the same dialog. With a vault open here, it is "add my phone":
- * scan, and the phone joins this vault (or starts syncing with it). With no
- * vault here yet, it is "I already use VaultP on my phone": scan, the phone
- * sends its vault across, and this computer joins it with the passphrase.
+ * Two uses of the same code on screen.
  *
- * The QR code carries this computer's address on the local network and a secret
- * the two devices will sign every message with. It is drawn black on white
- * whatever the theme, because that is what a camera reads best.
+ *   pair     The vault is open here. The phone scans, and the two sync from
+ *            then on.
+ *   unlock   The vault is locked, or not here at all. The phone scans, asks for
+ *            a fingerprint, and hands the vault key across — sealed to a key
+ *            this computer made for that one unlock. No passphrase is typed.
+ *
+ * The code is drawn black on white whatever the theme, because that is what a
+ * camera reads best.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -19,7 +21,7 @@ import { api, invalidate, messageOf } from './vault.js';
 
 const QUIET_ZONE = 4;
 
-export function QrCode({ qr, pixels = 248 }: { qr: NonNullable<PairingStatusDto['qr']>; pixels?: number }) {
+export function QrCode({ qr, pixels = 256 }: { qr: NonNullable<PairingStatusDto['qr']>; pixels?: number }) {
   const total = qr.size + QUIET_ZONE * 2;
   // One path for every dark module: far fewer nodes than a rect each.
   let path = '';
@@ -36,7 +38,7 @@ export function QrCode({ qr, pixels = 248 }: { qr: NonNullable<PairingStatusDto[
       viewBox={`0 0 ${total} ${total}`}
       shapeRendering="crispEdges"
       role="img"
-      aria-label="Pairing code. Scan it with VaultP on your phone."
+      aria-label="A code to scan with VaultP on your phone."
     >
       <rect width={total} height={total} fill="#ffffff" />
       <path d={path} fill="#000000" />
@@ -45,65 +47,67 @@ export function QrCode({ qr, pixels = 248 }: { qr: NonNullable<PairingStatusDto[
 }
 
 export function PairDialog({
-  joining,
+  mode,
   onClose,
-  onJoined,
+  onUnlocked,
 }: {
-  /** No vault on this computer yet: wait for the phone's, then join it. */
-  joining: boolean;
+  mode: 'pair' | 'unlock';
   onClose: () => void;
-  onJoined?: () => void;
+  /** Unlock mode: the phone handed over the key and the vault is open. */
+  onUnlocked?: () => void;
 }) {
   const [status, setStatus] = useState<PairingStatusDto | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [passphrase, setPassphrase] = useState('');
-  const [busy, setBusy] = useState(false);
   const openedAt = useRef(new Date().toISOString());
+  const done = useRef(false);
 
   useEffect(() => {
     let live = true;
-    void api()
-      .startPairing()
+    const start = mode === 'unlock' ? api().startHandoff() : api().startPairing();
+    void start
       .then((started) => live && setStatus(started))
       .catch((caught: unknown) => live && setError(messageOf(caught)));
 
-    // The dialog cannot know when the phone scans, so it asks: has the phone
-    // talked to us yet, and (when joining) has its vault arrived?
+    // The dialog cannot know when the phone scans, so it asks.
     const timer = setInterval(() => {
       void api()
         .pairingStatus()
         .then((next) => live && setStatus(next))
         .catch(() => undefined);
-    }, 1500);
+
+      if (mode === 'unlock') {
+        void api()
+          .status()
+          .then((vault) => {
+            if (live && vault.open && !done.current) {
+              done.current = true;
+              onUnlocked?.();
+            }
+          })
+          .catch(() => undefined);
+      }
+    }, 1200);
+
     return () => {
       live = false;
       clearInterval(timer);
+      // The one-time key dies with the dialog: a code no longer on screen must
+      // not keep working.
+      if (mode === 'unlock') void api().cancelHandoff().catch(() => undefined);
     };
-  }, []);
+    // Set up once per dialog; `onUnlocked` is a fresh closure every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const phoneSeen = status?.lastPhoneActivity != null && status.lastPhoneActivity >= openedAt.current;
-  const vaultArrived = joining && status?.hubHasVault === true;
 
   // Once the phone has synced into an open vault, every screen is stale.
   useEffect(() => {
-    if (phoneSeen && !joining) invalidate();
-  }, [phoneSeen, joining, status?.lastPhoneActivity]);
-
-  const join = () => {
-    setBusy(true);
-    setError(null);
-    void api()
-      .joinPair(passphrase)
-      .then(() => {
-        setPassphrase('');
-        onJoined?.();
-      })
-      .catch((caught: unknown) => setError(messageOf(caught)))
-      .finally(() => setBusy(false));
-  };
+    if (phoneSeen && mode === 'pair') invalidate();
+  }, [phoneSeen, mode, status?.lastPhoneActivity]);
 
   return (
-    <Modal title={joining ? 'Bring your vault from your phone' : 'Pair with your phone'} onClose={onClose}>
+    <Modal title={mode === 'unlock' ? 'Unlock with your phone' : 'Pair with your phone'} onClose={onClose}>
       {status === null && !error ? <p className="muted">Getting ready…</p> : null}
 
       {status && status.qr ? (
@@ -115,10 +119,12 @@ export function PairDialog({
             </li>
             <li>
               On the phone, open VaultP → <strong>Backup &amp; sync</strong> →{' '}
-              <strong>Sync with my computer</strong> → <strong>Scan the code</strong>
-              {joining ? '' : ' (on a new phone, choose “I already use VaultP on my computer” instead)'}.
+              <strong>Sync with my computer</strong> → <strong>Scan the code</strong>.
             </li>
-            <li>Point it at this code.</li>
+            <li>
+              Point it at this code
+              {mode === 'unlock' ? ', then confirm with your fingerprint.' : '.'}
+            </li>
           </ol>
         </div>
       ) : null}
@@ -132,49 +138,38 @@ export function PairDialog({
 
       {status?.qr ? (
         <p className={`pair-state ${phoneSeen ? 'ok' : ''}`}>
-          {vaultArrived
-            ? '✓ Your phone’s vault has arrived. Enter its passphrase to open it here.'
+          {mode === 'unlock'
+            ? 'Waiting for your phone… this code works once, for five minutes.'
             : phoneSeen
-              ? joining
-                ? '✓ Phone connected — receiving your vault…'
-                : '✓ Phone connected. The two will keep in step from now on.'
+              ? '✓ Phone connected. The two will keep in step from now on.'
               : 'Waiting for the phone…'}
         </p>
-      ) : null}
-
-      {vaultArrived ? (
-        <div className="row">
-          <input
-            type="password"
-            autoFocus
-            value={passphrase}
-            placeholder="The passphrase you use on the phone"
-            onChange={(event) => setPassphrase(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && passphrase.length > 0 && !busy) join();
-            }}
-          />
-          <button disabled={busy || passphrase.length === 0} onClick={join}>
-            {busy ? 'Opening…' : 'Open vault'}
-          </button>
-        </div>
       ) : null}
 
       {error ? <p className="error">{error}</p> : null}
 
       <p className="muted small">
+        {mode === 'unlock'
+          ? 'Your phone sends the key encrypted so that only this computer, showing this code right now, can open it. '
+          : ''}
         Windows may ask to allow VaultP on your network the first time — choose <strong>Allow</strong>, or the phone
-        cannot reach it. Everything that crosses is already encrypted, and nothing leaves your Wi-Fi.
+        cannot reach it. Nothing leaves your Wi-Fi.
         {status?.addresses.length ? ` Listening on ${status.addresses.join(', ')}.` : ''}
       </p>
 
-      {!joining && status?.paired ? (
+      {mode === 'pair' && status?.paired ? (
         <div className="row">
           <span className="spacer" />
           <button
             className="danger"
             onClick={() => {
-              if (!window.confirm('Unpair? The phone will stop syncing with this computer until you pair again. Nothing in your vault is deleted.')) return;
+              if (
+                !window.confirm(
+                  'Unpair? The phone will stop syncing with this computer until you pair again. Nothing in your vault is deleted.',
+                )
+              ) {
+                return;
+              }
               void api()
                 .forgetPairing()
                 .then(() => {

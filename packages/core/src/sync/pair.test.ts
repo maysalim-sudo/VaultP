@@ -21,8 +21,12 @@ import {
   PairingFormatError,
   createPairServer,
   encodePairing,
+  openHandoff,
   parsePairing,
+  sealHandoff,
 } from './pair.js';
+import { DecryptionError } from '../crypto/types.js';
+import { generateX25519KeyPair } from '../crypto/x25519.js';
 import { KEYFILE_KEY } from './segments.js';
 
 const OPLOG_KEY = provider.randomBytes(32);
@@ -136,6 +140,82 @@ describe('who may speak to it', () => {
 
     wire.tamper = (reply) => reply.replace(/"p":"/, '"p":" ');
     await expect(client.get('files/a.enc')).rejects.toBeInstanceOf(PairingAuthError);
+  });
+});
+
+describe('unlocking the computer from the phone', () => {
+  const dataKey = provider.randomBytes(32);
+  const keyfile = '{"the":"phone keyfile"}';
+
+  it('carries the unlock key in the code, beside the pairing', () => {
+    const computer = generateX25519KeyPair(provider);
+    const pairing = {
+      addresses: ['192.168.1.20:47821'],
+      secret: toBase64(provider.randomBytes(PAIRING_SECRET_LENGTH)),
+      name: 'Study PC',
+      handoffKey: toBase64(computer.publicKey),
+    };
+    expect(parsePairing(encodePairing(pairing))).toEqual(pairing);
+  });
+
+  it('delivers the vault key to the computer that showed the code', async () => {
+    const computer = generateX25519KeyPair(provider);
+    const secret = provider.randomBytes(PAIRING_SECRET_LENGTH);
+    let received: Awaited<ReturnType<typeof openHandoff>> | null = null;
+
+    const server = createPairServer({
+      backend: new MemoryBackend(),
+      secret,
+      name: 'Study PC',
+      onHandoff: async (sealed) => {
+        received = await openHandoff(provider, computer, sealed);
+        return null;
+      },
+    });
+    const wire: string[] = [];
+    const phone = new PairBackend({
+      secret,
+      randomBytes: (n) => provider.randomBytes(n),
+      send: async (request) => {
+        wire.push(request);
+        return (await server(request)) ?? '';
+      },
+    });
+
+    await phone.handoff(await sealHandoff(provider, toBase64(computer.publicKey), { dataKey, keyfile, slot: 'primary' }));
+
+    expect(received!.dataKey).toEqual(dataKey);
+    expect(received!.keyfile).toBe(keyfile);
+    // The key is nowhere on the wire in a form anyone listening could use.
+    expect(wire.join('')).not.toContain(toBase64(dataKey));
+  });
+
+  it('is useless to someone who photographed the code and recorded the network', async () => {
+    const computer = generateX25519KeyPair(provider);
+    const sealed = await sealHandoff(provider, toBase64(computer.publicKey), { dataKey, keyfile, slot: 'primary' });
+
+    // They hold the public key and the sealed bytes — and no private key.
+    const eavesdropper = { privateKey: provider.randomBytes(32), publicKey: computer.publicKey };
+    await expect(openHandoff(provider, eavesdropper, sealed)).rejects.toBeInstanceOf(DecryptionError);
+  });
+
+  it('tells the phone why, when the computer refuses', async () => {
+    const { client } = pair();
+    await expect(client.handoff(new Uint8Array([1, 2, 3]))).rejects.toThrow(/not waiting to be unlocked/);
+
+    const secret = provider.randomBytes(PAIRING_SECRET_LENGTH);
+    const server = createPairServer({
+      backend: new MemoryBackend(),
+      secret,
+      name: 'PC',
+      onHandoff: () => Promise.resolve('This computer holds a different vault.'),
+    });
+    const phone = new PairBackend({
+      secret,
+      randomBytes: (n) => provider.randomBytes(n),
+      send: async (request) => (await server(request)) ?? '',
+    });
+    await expect(phone.handoff(new Uint8Array([1]))).rejects.toThrow('This computer holds a different vault.');
   });
 });
 
