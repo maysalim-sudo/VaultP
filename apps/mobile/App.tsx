@@ -7,7 +7,7 @@ import { Unlock } from './src/screens/Unlock.js';
 import { VaultProvider, useVault } from './src/vault/VaultContext.js';
 
 function VaultGate() {
-  const { state, busy, error, create, unlockPassphrase, unlockBiometric } = useVault();
+  const { state, busy, error, create, join, unlockPassphrase, unlockBiometric } = useVault();
 
   switch (state.status) {
     case 'checking':
@@ -21,6 +21,7 @@ function VaultGate() {
       return (
         <Setup
           onCreate={create}
+          onJoin={join}
           busy={busy}
           error={error}
           protectingExistingData={state.protectingExistingData}

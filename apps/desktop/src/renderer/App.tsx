@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 
 import type { SyncTarget, VaultStatus } from '../shared/api.js';
 import { Lock } from './Lock.js';
+import { PairDialog } from './Pairing.js';
 import { Sidebar, type ScreenId } from './Sidebar.js';
 import { Dashboard } from './screens/Dashboard.js';
 import { Debts } from './screens/Debts.js';
@@ -89,10 +90,13 @@ function SyncBar({
 }) {
   const { busy, error, run } = useRunner();
   const drive = useVaultQuery(() => api().driveStatus());
+  const pairing = useVaultQuery(() => api().pairingStatus());
   const [report, setReport] = useState<string | null>(null);
+  const [pairingOpen, setPairingOpen] = useState(false);
 
   const driveReady = drive.data?.connected === true;
-  const ready = target === 'drive' ? driveReady : folder !== undefined;
+  const paired = pairing.data?.paired === true;
+  const ready = target === 'drive' ? driveReady : target === 'pair' ? paired : folder !== undefined;
 
   return (
     <div className="syncbar">
@@ -106,9 +110,16 @@ function SyncBar({
           })
         }
       >
+        <option value="pair">Sync with my phone</option>
         <option value="folder">Sync to a folder</option>
         <option value="drive">Sync to Google Drive</option>
       </select>
+
+      {target === 'pair' ? (
+        <button className="secondary" onClick={() => setPairingOpen(true)}>
+          {paired ? 'Pairing code' : 'Pair a phone'}
+        </button>
+      ) : null}
 
       {target === 'folder' ? (
         <button
@@ -147,8 +158,27 @@ function SyncBar({
             : 'Connect an account in Settings'}
         </span>
       ) : null}
+      {target === 'pair' ? (
+        <span className="muted small">
+          {paired ? 'Paired — syncs by itself while both are on the same Wi-Fi' : 'Scan a code with the phone to pair'}
+        </span>
+      ) : null}
       {report ? <span className="muted small">{report}</span> : null}
       {error ? <span className="error small">{error}</span> : null}
+
+      {pairingOpen ? (
+        <PairDialog
+          joining={false}
+          onClose={() => {
+            setPairingOpen(false);
+            // Pairing also makes the phone the sync target; reflect it here.
+            void api()
+              .status()
+              .then((next) => onTarget(next.syncTarget));
+            invalidate();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

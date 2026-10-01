@@ -42,6 +42,7 @@
       <p>Only what you choose to send, and only encrypted:</p>
       <table>
         <tr><th>If you…</th><th>Then</th></tr>
+        <tr><td>Pair your phone and computer</td><td>The two exchange encrypted data directly over your own Wi-Fi. Nothing goes to the internet or to any server. Other devices on the same network can see that the two are talking, but cannot read or alter what is sent.</td></tr>
         <tr><td>Sync through a folder</td><td>Encrypted segments and files are written to the folder you picked. Whatever keeps that folder in step (Syncthing, a shared drive) carries them. They cannot be read without your passphrase.</td></tr>
         <tr><td>Sync through Google Drive</td><td>The same encrypted data is stored in a folder in <em>your</em> Google Drive, through a Google project <em>you</em> set up. The app can only see files it created. Google can see the files' names and sizes, not their contents. Google's own privacy policy applies to your Google account.</td></tr>
         <tr><td>Export a backup</td><td>A full, <strong>unencrypted</strong> copy of your vault is saved wherever you choose. Its protection is up to where you keep it; the app warns you at the button.</td></tr>
@@ -52,7 +53,8 @@
       <h2>Permissions the Android app asks for</h2>
       <table>
         <tr><th>Permission</th><th>Used for</th></tr>
-        <tr><td>Camera</td><td>Taking a photo for a note or a document, only when you tap to do so.</td></tr>
+        <tr><td>Camera</td><td>Taking a photo for a note or a document, and scanning the pairing code on your computer — only when you tap to do so.</td></tr>
+        <tr><td>Local network</td><td>Reaching your paired computer on your own Wi-Fi.</td></tr>
         <tr><td>Photos</td><td>Picking an image from your gallery, only when you tap to do so.</td></tr>
         <tr><td>Notifications</td><td>Reminders you set on notes, documents and recurring charges.</td></tr>
         <tr><td>Fingerprint</td><td>Unlocking the vault. Your fingerprint is handled by Android and never seen by the app.</td></tr>

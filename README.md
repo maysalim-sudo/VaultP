@@ -11,7 +11,7 @@ subscription. Every feature works with the network off, forever.
 ## Badges
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-449%20passing-brightgreen.svg)](#-getting-started)
+[![Tests](https://img.shields.io/badge/tests-477%20passing-brightgreen.svg)](#-getting-started)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-blue.svg)](#-tech-stack)
 
@@ -67,7 +67,11 @@ subscription. Every feature works with the network off, forever.
 - 🌿 **A calm palette** — Money coming back in sage, money going out and dates
   drawing near in ochre, never alarm red. Light and dark themes follow the system,
   from one set of design tokens both apps share.
-- 🔄 **Sync without a service** — Point both devices at any folder something else keeps
+- 📷 **Pair by scanning a code** — The computer shows a QR code, the phone scans it,
+  and from then on the two keep in step by themselves over the Wi-Fi they share. No
+  account, no folder to set up, nothing to install, and nothing leaves the house. A
+  new device joins the same way: scan, type the passphrase, done.
+- 🔄 **Sync without a service** — Or point both devices at any folder something else keeps
   in step (Syncthing, a shared drive, a USB stick). No account, no API key, nothing
   that expires. The folder receives **ciphertext only**.
 - ☁️ **Or your own Google Drive** — The same four operations against Drive instead,
@@ -95,6 +99,7 @@ from the shared core, so they agree by construction rather than by discipline.
 | Note folders and drag-to-arrange | ✅ *(hold, trace, drag)* | ✅ *(drag, or hold; right-click for options)* |
 | Paste a screenshot into a note | ✅ | ✅ *(Ctrl+V or drop a file)* |
 | Dashboard, forecast, foreign-currency allowance | ✅ | ✅ |
+| Pair by QR code and sync directly over Wi-Fi | ✅ *(scans)* | ✅ *(shows the code, hosts the exchange)* |
 | Sync to a folder (Syncthing, a shared drive, a stick) | ✅ | ✅ |
 | Sync to Google Drive | ✅ *(inherits the connection)* | ✅ *(signs in)* |
 | Document records, tags, expiry reminders | ✅ | ✅ |
@@ -106,6 +111,13 @@ from the shared core, so they agree by construction rather than by discipline.
 > it alone before it is ever written, so sync copies the ciphertext across verbatim —
 > it never holds a file key, and the folder never holds anything readable. Deleting a
 > document takes the bytes off both devices and out of the folder.
+
+> **Pairing is the sync folder with a wire in it.** The computer keeps a small store of
+> the same encrypted objects a sync folder would hold and answers four questions about
+> it — list, get, put, delete — over HTTP on the local network. The phone asks them. So
+> nothing about how changes merge is new; only the transport is. Every message is signed
+> with a secret that travelled in the QR code and never over the network, and the phone
+> finds the computer again by itself if the router hands it a new address.
 
 > **Notes stay readable to an older build.** A note's blocks are stored as structured
 > data, and a plain-text rendering is kept beside them — `☐` / `☑` for checklist
@@ -135,7 +147,7 @@ from the shared core, so they agree by construction rather than by discipline.
 | **Ordering** | Hybrid Logical Clocks, per-field last-write-wins merge |
 | **Identity** | UUIDv7, plus deterministic ids for idempotent cross-device creation |
 | **Crypto** | AES-256-GCM, PBKDF2, HKDF (portable SHA-256 implementation) |
-| **Tests** | Vitest — 422 core, 27 desktop |
+| **Tests** | Vitest — 444 core, 33 desktop |
 | **Design** | Shared tokens (colour roles, type, spacing, note shades) consumed by both apps |
 
 ### 📱 Mobile app
@@ -194,7 +206,7 @@ npm install
 npm test
 ```
 
-> **449 tests** should pass (422 core + 27 desktop). One test is skipped unless you
+> **477 tests** should pass (444 core + 33 desktop). One test is skipped unless you
 > opt in — see *Environment variables* below.
 
 ```bash

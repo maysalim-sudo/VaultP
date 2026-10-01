@@ -21,6 +21,7 @@ export * from './sync/segments.js';
 export * from './sync/engine.js';
 export * from './sync/files.js';
 export * from './sync/drive.js';
+export * from './sync/pair.js';
 export * from './expenses/rates.js';
 export * from './expenses/repository.js';
 export * from './expenses/scheduler.js';

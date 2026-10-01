@@ -201,9 +201,15 @@ export function BackupScreen({ onClose }: { onClose?: () => void }) {
             carries them between them.
           </Text>
 
-          <Pressable onPress={() => setShowingSync(true)} style={styles.syncLink}>
-            <Text style={[styles.syncText, { color: palette.accent }]}>Sync with another device →</Text>
-          </Pressable>
+          <Text style={[styles.section, { color: palette.dim }]}>Your other device</Text>
+          <ActionCard
+            title="Sync with my computer"
+            detail="Scan a code once; they keep in step by themselves"
+            glyph="⇄"
+            busy={false}
+            palette={palette}
+            onPress={() => setShowingSync(true)}
+          />
         </ScrollView>
 
         {showingSync ? <Sync onClose={() => setShowingSync(false)} /> : null}
@@ -296,6 +302,11 @@ const styles = StyleSheet.create({
 
   result: { fontSize: typeScale.sm, fontWeight: '600', lineHeight: 19 },
   fine: { fontSize: typeScale.xs, lineHeight: 18, marginTop: spacing.sm },
-  syncLink: { paddingVertical: spacing.sm },
-  syncText: { fontSize: typeScale.base, fontWeight: '600' },
+  section: {
+    fontSize: typeScale.xs,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: spacing.lg,
+  },
 });

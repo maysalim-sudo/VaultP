@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,9 +25,12 @@ import { Directory } from 'expo-file-system';
 import {
   DriveBackend,
   SyncEngine,
+  fetchKeyfileFrom,
+  parseKeyfile,
   readSetting,
   serializeKeyfile,
   writeSetting,
+  type Pairing,
   type SyncReport,
 } from '@vaultp/core';
 
@@ -38,7 +42,9 @@ import { paletteFor } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { loadKeyfile } from '../vault/keys.js';
 import { PhoneFolderBackend } from '../sync/folderBackend.js';
-import { useOpenVault } from '../vault/VaultContext.js';
+import { PairScanner } from '../sync/PairScanner.js';
+import { forgetPairing, loadPairing, pairFromCode } from '../sync/pairing.js';
+import { useOpenVault, useVault } from '../vault/VaultContext.js';
 
 const FOLDER_SETTING = 'sync_folder_uri';
 
@@ -46,6 +52,7 @@ const isString = (value: unknown): value is string => typeof value === 'string';
 
 export function Sync({ onClose }: { onClose?: () => void }) {
   const { vault, version, mutate } = useOpenVault();
+  const { computerSync, syncComputer } = useVault();
   const palette = paletteFor(useColorScheme());
 
   const [folder, setFolder] = useState<string>(() =>
@@ -54,9 +61,57 @@ export function Sync({ onClose }: { onClose?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState<SyncReport | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [target, setTarget] = useState<'folder' | 'drive'>('folder');
+  const [target, setTarget] = useState<'computer' | 'folder' | 'drive'>('computer');
   const [drive, setDrive] = useState<DriveConnection | null>(null);
+  const [pairing, setPairing] = useState<Pairing | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
   void version;
+
+  useEffect(() => {
+    void loadPairing().then((stored) => setPairing(stored ?? null));
+  }, []);
+
+  /**
+   * A code was scanned: check the computer answers, make sure it is not holding
+   * some other vault, then sync for the first time.
+   */
+  async function scanned(code: string) {
+    setChecking(true);
+    setScanError(null);
+    try {
+      const paired = await pairFromCode(code);
+
+      // Two vaults with different keys cannot be merged — each would see the
+      // other's data as noise. Better to say so now than to "sync" and find
+      // nothing arrives.
+      if (paired.hasVault) {
+        const [theirs, ours] = await Promise.all([fetchKeyfileFrom(paired.backend), loadKeyfile()]);
+        if (theirs && ours && parseKeyfile(theirs).id !== ours.id) {
+          await forgetPairing();
+          setScanError(
+            `${paired.pairing.name} already holds a different vault, so the two cannot be merged. ` +
+              'To use this phone’s vault there, export a backup on the computer first if you need it, then set the computer up again with “I already use VaultP on my phone”.',
+          );
+          return;
+        }
+      }
+
+      setPairing(paired.pairing);
+      setScanning(false);
+      setReport((await syncComputer()) ?? null);
+    } catch (caught: unknown) {
+      setScanError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  async function syncWithPaired() {
+    setError(null);
+    setReport((await syncComputer()) ?? null);
+  }
 
   // The connection is whatever the desktop stored and sync carried here, so it
   // is re-read whenever the vault changes rather than held from first render.
@@ -154,19 +209,8 @@ export function Sync({ onClose }: { onClose?: () => void }) {
         </View>
 
         <ScrollView contentContainerStyle={styles.body}>
-          <Text style={[styles.paragraph, { color: palette.dim }]}>
-            Choose a folder this phone and your computer can both reach — one kept
-            in step by Syncthing, a shared drive, or anything similar. There is no
-            account and nothing to sign in to.
-          </Text>
-
-          <Text style={[styles.paragraph, { color: palette.dim }]}>
-            Everything written there is already encrypted. Whatever moves the files
-            sees ciphertext and filenames, nothing else.
-          </Text>
-
           <View style={styles.targets}>
-            {(['folder', 'drive'] as const).map((option) => (
+            {(['computer', 'folder', 'drive'] as const).map((option) => (
               <Pressable
                 key={option}
                 onPress={() => setTarget(option)}
@@ -184,11 +228,92 @@ export function Sync({ onClose }: { onClose?: () => void }) {
                     { color: target === option ? '#fff' : palette.text },
                   ]}
                 >
-                  {option === 'folder' ? 'A folder' : 'Google Drive'}
+                  {option === 'computer' ? 'My computer' : option === 'folder' ? 'A folder' : 'Drive'}
                 </Text>
               </Pressable>
             ))}
           </View>
+
+          {target === 'computer' ? (
+            pairing ? (
+              <>
+                <View style={[styles.result, { borderColor: palette.border }]}>
+                  <Text style={{ color: palette.text, fontWeight: '700', fontSize: 16 }}>
+                    Paired with {pairing.name}
+                  </Text>
+                  <Text style={[styles.small, { color: computerSync.error ? palette.warning : palette.dim }]}>
+                    {computerSync.running
+                      ? 'Syncing…'
+                      : computerSync.error
+                        ? computerSync.error
+                        : computerSync.lastAt
+                          ? `In step as of ${new Date(computerSync.lastAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+                          : 'Not synced yet this session'}
+                  </Text>
+                </View>
+                <Text style={[styles.paragraph, { color: palette.dim }]}>
+                  The two keep in step by themselves whenever VaultP is open on both and they share a
+                  Wi-Fi. Nothing leaves your network, and everything that crosses is already encrypted.
+                </Text>
+                <Pressable
+                  onPress={() => void syncWithPaired()}
+                  disabled={computerSync.running}
+                  style={[styles.button, { backgroundColor: palette.accent }]}
+                >
+                  {computerSync.running ? (
+                    <ActivityIndicator color={palette.onAccent} />
+                  ) : (
+                    <Text style={[styles.buttonText, { color: palette.onAccent }]}>Sync now</Text>
+                  )}
+                </Pressable>
+                <Pressable
+                  onPress={() =>
+                    Alert.alert(
+                      'Unpair?',
+                      `This phone will stop syncing with ${pairing.name} until you scan its code again. Nothing in your vault is deleted.`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Unpair',
+                          style: 'destructive',
+                          onPress: () => void forgetPairing().then(() => setPairing(null)),
+                        },
+                      ],
+                    )
+                  }
+                  style={styles.link}
+                >
+                  <Text style={{ color: palette.dim, fontWeight: '600' }}>Unpair</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={[styles.lead, { color: palette.text }]}>Pair with your computer</Text>
+                <Text style={[styles.paragraph, { color: palette.dim }]}>
+                  Open VaultP on the computer, choose <Text style={styles.strong}>Pair a phone</Text>,
+                  and scan the code it shows. That is the whole setup — no account, no folder, nothing
+                  to install. Both devices need to be on the same Wi-Fi.
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setScanError(null);
+                    setScanning(true);
+                  }}
+                  style={[styles.button, { backgroundColor: palette.accent }]}
+                >
+                  <Text style={[styles.buttonText, { color: palette.onAccent }]}>Scan the code</Text>
+                </Pressable>
+              </>
+            )
+          ) : null}
+
+          {target === 'computer' ? null : (
+            <Text style={[styles.paragraph, { color: palette.dim }]}>
+              {target === 'folder'
+                ? 'Choose a folder this phone and your computer can both reach — one kept in step by Syncthing, a shared drive, or anything similar. Everything written there is already encrypted.'
+                : 'Sync through your own Google Drive. Google stores the same encrypted data a folder would.'}
+            </Text>
+          )}
 
           {target === 'folder' ? (
             <>
@@ -214,29 +339,31 @@ export function Sync({ onClose }: { onClose?: () => void }) {
                 </Text>
               ) : null}
             </>
-          ) : (
+          ) : target === 'drive' ? (
             <Text style={[styles.paragraph, { color: palette.dim }]}>
               {drive?.connected
                 ? `Backing up to a Drive folder named ${drive.folderName}.`
                 : 'Not connected. Connect Google Drive on the desktop, then sync once ' +
-                  'through a folder so this phone receives it — the connection travels ' +
+                  'with the computer so this phone receives it — the connection travels ' +
                   'inside the vault, encrypted like everything else.'}
             </Text>
-          )}
+          ) : null}
 
-          <Pressable
-            onPress={() => void sync()}
-            disabled={busy || !ready}
-            style={[styles.button, { backgroundColor: ready ? palette.accent : palette.key }]}
-          >
-            {busy ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={[styles.buttonText, { color: ready ? '#fff' : palette.dim }]}>
-                Sync now
-              </Text>
-            )}
-          </Pressable>
+          {target === 'computer' ? null : (
+            <Pressable
+              onPress={() => void sync()}
+              disabled={busy || !ready}
+              style={[styles.button, { backgroundColor: ready ? palette.accent : palette.key }]}
+            >
+              {busy ? (
+                <ActivityIndicator color={palette.onAccent} />
+              ) : (
+                <Text style={[styles.buttonText, { color: ready ? palette.onAccent : palette.dim }]}>
+                  Sync now
+                </Text>
+              )}
+            </Pressable>
+          )}
 
           {report ? (
             <View style={[styles.result, { borderColor: palette.border }]}>
@@ -257,12 +384,23 @@ export function Sync({ onClose }: { onClose?: () => void }) {
             <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>
           ) : null}
 
-          <Text style={[styles.paragraph, { color: palette.dim }]}>
-            On the computer, choose the same folder and enter this passphrase. The
-            first sync leaves a key file there so the other device can join —
-            it holds only wrapped keys, and is useless without the passphrase.
-          </Text>
+          {target === 'folder' ? (
+            <Text style={[styles.paragraph, { color: palette.dim }]}>
+              On the computer, choose the same folder and enter this passphrase. The
+              first sync leaves a key file there so the other device can join —
+              it holds only wrapped keys, and is useless without the passphrase.
+            </Text>
+          ) : null}
         </ScrollView>
+
+        {scanning ? (
+          <PairScanner
+            working={checking}
+            error={scanError}
+            onCancel={() => setScanning(false)}
+            onCode={(code) => void scanned(code)}
+          />
+        ) : null}
       </View>
     </Screen>
   );
@@ -289,6 +427,9 @@ const styles = StyleSheet.create({
   target: { flex: 1, borderRadius: 14, borderWidth: 1, paddingVertical: 14, alignItems: 'center' },
   buttonText: { fontWeight: '700', fontSize: 16 },
   result: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 4 },
+  lead: { fontSize: 20, fontWeight: '700', marginTop: 4 },
+  strong: { fontWeight: '700' },
+  link: { alignItems: 'center', paddingVertical: 8 },
   small: { fontSize: 12 },
   error: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
 });

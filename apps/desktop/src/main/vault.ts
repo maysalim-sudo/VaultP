@@ -182,6 +182,26 @@ export function syncWithFolder(vault: DesktopVault, folder: string): Promise<Syn
   return syncWith(vault, new FolderBackend(folder));
 }
 
+/**
+ * Sync against the pairing hub, leaving this vault's keyfile there first.
+ *
+ * The keyfile is what lets a newly paired phone join with the passphrase alone.
+ * It holds only wrapped keys, and the hub is on this computer's own disk.
+ */
+export async function syncWithHub(vault: DesktopVault, hub: string): Promise<SyncReport> {
+  const engine = new SyncEngine({
+    store: vault.store,
+    backend: new FolderBackend(hub),
+    provider: webCryptoProvider,
+    oplogKey: vault.keys.oplog,
+    files: desktopFileStore(dataDirectory()),
+  });
+
+  const keyfile = await readText(KEYFILE_NAME);
+  if (keyfile) await engine.publishKeyfile(keyfile);
+  return engine.sync();
+}
+
 /** The Drive backend for this vault, or undefined when no account is connected. */
 export async function driveBackendFor(
   vault: DesktopVault,

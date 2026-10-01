@@ -29,9 +29,18 @@ import {
   joinFromFolder,
   syncWith,
   syncWithFolder,
+  syncWithHub,
   unlockDesktopVault,
   type DesktopVault,
 } from './vault.js';
+import {
+  ensurePairing,
+  forgetPairing,
+  hubDirectory,
+  isPaired,
+  pairingStatus,
+  startPairing,
+} from './pairing.js';
 import { connect, connection, forget } from './driveAuth.js';
 import type { SyncTarget } from '../shared/api.js';
 
@@ -108,6 +117,12 @@ ipcMain.handle('vault:create', async (_event, passphrase: string) => {
 
 ipcMain.handle('vault:unlock', async (_event, passphrase: string) => {
   vault = await unlockDesktopVault(passphrase);
+  // With a phone paired, that is where sync goes — and whatever the phone left
+  // while this window was locked is pulled in straight away.
+  if (isPaired()) {
+    syncTarget = 'pair';
+    scheduleHubSync();
+  }
   return { slot: vault.slot, deviceId: vault.deviceId };
 });
 
@@ -180,12 +195,96 @@ ipcMain.handle('vault:sync', async () => {
     return syncWith(current, backend);
   }
 
+  if (syncTarget === 'pair') {
+    if (!isPaired()) throw new Error('No phone is paired with this computer.');
+    return syncWithHub(current, hubDirectory(dataRoot()));
+  }
+
   if (!syncFolder) throw new Error('Choose a sync folder first.');
   return syncWithFolder(current, syncFolder);
 });
 
 ipcMain.handle('vault:setSyncTarget', (_event, target: SyncTarget) => {
   syncTarget = target;
+});
+
+// ------------------------------------------------------------------ pairing
+//
+// A paired phone syncs straight to this computer over the local network. The
+// hub it talks to is a folder here; this vault syncs with that folder whenever
+// the phone delivers something, on a slow timer, and on request — so nobody has
+// to press Sync on both devices.
+
+const dataRoot = () => app.getPath('userData');
+let hubSyncTimer: ReturnType<typeof setTimeout> | undefined;
+let hubSyncRunning = false;
+
+function notifyChanged(): void {
+  for (const window of BrowserWindow.getAllWindows()) window.webContents.send('vault:changed');
+}
+
+async function syncHubNow(): Promise<void> {
+  if (!vault || !isPaired() || hubSyncRunning) return;
+  hubSyncRunning = true;
+  try {
+    const report = await syncWithHub(vault, hubDirectory(dataRoot()));
+    if (report.appliedEvents > 0 || report.downloadedFiles > 0) notifyChanged();
+  } catch {
+    // A failed background sync is retried by the next one; the manual Sync
+    // button is where an error is worth showing.
+  } finally {
+    hubSyncRunning = false;
+  }
+}
+
+/** Soon, but not once per object while the phone is mid-upload. */
+function scheduleHubSync(): void {
+  if (hubSyncTimer) clearTimeout(hubSyncTimer);
+  hubSyncTimer = setTimeout(() => void syncHubNow(), 1500);
+}
+
+// This computer's own changes reach the hub without being asked.
+setInterval(() => void syncHubNow(), 20_000).unref();
+
+app.whenReady().then(() => {
+  // Serve the hub from launch if a phone is paired, locked window or not.
+  void startPairing(dataRoot(), scheduleHubSync).catch(() => undefined);
+});
+
+ipcMain.handle('pairing:status', () => pairingStatus(dataRoot()));
+
+ipcMain.handle('pairing:start', async () => {
+  await ensurePairing(dataRoot(), scheduleHubSync);
+  if (vault) {
+    // Pairing is a statement of intent: sync goes to the phone from now on.
+    syncTarget = 'pair';
+    await syncWithHub(vault, hubDirectory(dataRoot()));
+  }
+  return pairingStatus(dataRoot());
+});
+
+ipcMain.handle('pairing:forget', async () => {
+  await forgetPairing(dataRoot());
+  if (syncTarget === 'pair') syncTarget = 'folder';
+});
+
+/**
+ * Join the vault the phone left in the hub.
+ *
+ * The same join as from a sync folder — the keyfile is fetched and unwrapped
+ * with the passphrase — only the folder is the hub, filled by the phone a moment
+ * ago over the network rather than by Syncthing.
+ */
+ipcMain.handle('vault:joinPair', async (_event, passphrase: string) => {
+  const hub = hubDirectory(dataRoot());
+  const joined = await joinFromFolder(hub, passphrase);
+  if (!joined) {
+    throw new Error('The phone has not sent its vault yet. Scan the code with the phone and wait for it to finish.');
+  }
+  vault = joined;
+  syncTarget = 'pair';
+  await syncWithHub(vault, hub);
+  return { slot: vault.slot, deviceId: vault.deviceId };
 });
 
 ipcMain.handle('drive:status', () => {

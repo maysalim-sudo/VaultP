@@ -22,17 +22,22 @@ import {
   useColorScheme,
 } from 'react-native';
 
-import { MIN_PASSPHRASE_LENGTH } from '@vaultp/core';
+import { MIN_PASSPHRASE_LENGTH, fetchKeyfileFrom } from '@vaultp/core';
 
 import { paletteFor } from '../components/theme.js';
+import { PairScanner } from '../sync/PairScanner.js';
+import { pairFromCode } from '../sync/pairing.js';
 
 export function Setup({
   onCreate,
+  onJoin,
   busy,
   error,
   protectingExistingData,
 }: {
   onCreate: (passphrase: string) => void;
+  /** Join the vault on a paired computer: its keyfile, and the passphrase typed. */
+  onJoin: (serializedKeyfile: string, passphrase: string) => void;
   busy: boolean;
   error: string | null;
   /** True when a vault already holds data and is only now getting a passphrase. */
@@ -44,9 +49,48 @@ export function Setup({
   const [confirmation, setConfirmation] = useState('');
   const [acknowledged, setAcknowledged] = useState(false);
 
+  const [scanning, setScanning] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [found, setFound] = useState<{ keyfile: string; computer: string } | null>(null);
+
   const longEnough = passphrase.length >= MIN_PASSPHRASE_LENGTH;
   const matches = passphrase.length > 0 && passphrase === confirmation;
   const ready = longEnough && matches && acknowledged && !busy;
+
+  async function scanned(code: string) {
+    setChecking(true);
+    setScanError(null);
+    try {
+      const { backend, pairing, hasVault } = await pairFromCode(code);
+      const keyfile = hasVault ? await fetchKeyfileFrom(backend) : undefined;
+      if (!keyfile) {
+        setScanError(
+          `${pairing.name} has no vault yet. Create one here instead, then pair from the Sync screen and it will be sent across.`,
+        );
+        return;
+      }
+      setFound({ keyfile, computer: pairing.name });
+      setScanning(false);
+    } catch (caught: unknown) {
+      setScanError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  if (found) {
+    return (
+      <JoinVault
+        computer={found.computer}
+        busy={busy}
+        error={error}
+        palette={palette}
+        onJoin={(typed) => onJoin(found.keyfile, typed)}
+        onBack={() => setFound(null)}
+      />
+    );
+  }
 
   return (
     <ScrollView
@@ -161,6 +205,109 @@ export function Setup({
           backup expensive to attack.
         </Text>
       ) : null}
+
+      {/* The other way in: the vault already exists, on the computer. Not offered
+          when this phone holds older data waiting for a passphrase — joining
+          another vault would strand it. */}
+      {!protectingExistingData && !busy ? (
+        <Pressable onPress={() => setScanning(true)} style={styles.joinLink}>
+          <Text style={[styles.joinText, { color: palette.accent }]}>
+            I already use VaultP on my computer
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {scanning ? (
+        <PairScanner
+          working={checking}
+          error={scanError}
+          onCancel={() => {
+            setScanning(false);
+            setScanError(null);
+          }}
+          onCode={(code) => void scanned(code)}
+        />
+      ) : null}
+    </ScrollView>
+  );
+}
+
+/**
+ * The vault is on the computer; this phone needs only its passphrase.
+ *
+ * One field, not two: the passphrase already exists and is being recalled, not
+ * invented, so there is nothing to confirm — a wrong one simply does not open.
+ */
+function JoinVault({
+  computer,
+  busy,
+  error,
+  palette,
+  onJoin,
+  onBack,
+}: {
+  computer: string;
+  busy: boolean;
+  error: string | null;
+  palette: ReturnType<typeof paletteFor>;
+  onJoin: (passphrase: string) => void;
+  onBack: () => void;
+}) {
+  const [passphrase, setPassphrase] = useState('');
+  const ready = passphrase.length > 0 && !busy;
+
+  return (
+    <ScrollView
+      contentContainerStyle={[styles.screen, { backgroundColor: palette.background }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={[styles.title, { color: palette.text }]}>Open your vault</Text>
+      <Text style={[styles.body, { color: palette.dim }]}>
+        Found your vault on {computer}. Enter the passphrase you use there — it is checked on this
+        phone and never sent anywhere.
+      </Text>
+
+      <TextInput
+        value={passphrase}
+        onChangeText={setPassphrase}
+        placeholder="Your passphrase"
+        placeholderTextColor={palette.dim}
+        secureTextEntry
+        autoFocus
+        autoCapitalize="none"
+        autoCorrect={false}
+        onSubmitEditing={() => ready && onJoin(passphrase)}
+        style={[
+          styles.input,
+          { color: palette.text, borderColor: palette.border, backgroundColor: palette.surface },
+        ]}
+      />
+
+      {error ? <Text style={[styles.error, { color: palette.danger }]}>{error}</Text> : null}
+
+      <Pressable
+        onPress={() => onJoin(passphrase)}
+        disabled={!ready}
+        style={[styles.button, { backgroundColor: ready ? palette.accent : palette.key }]}
+      >
+        {busy ? (
+          <ActivityIndicator color={palette.onAccent} />
+        ) : (
+          <Text style={[styles.buttonText, { color: ready ? palette.onAccent : palette.dim }]}>
+            Open vault
+          </Text>
+        )}
+      </Pressable>
+
+      {busy ? (
+        <Text style={[styles.hint, { color: palette.dim, textAlign: 'center' }]}>
+          Opening, then bringing everything across from the computer. Keep both on the same Wi-Fi.
+        </Text>
+      ) : (
+        <Pressable onPress={onBack} style={styles.joinLink}>
+          <Text style={[styles.joinText, { color: palette.dim }]}>Back</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -193,6 +340,8 @@ const styles = StyleSheet.create({
   tick: { color: '#fff', fontWeight: '900', fontSize: 13 },
   acknowledgeText: { flexShrink: 1, fontSize: 13, lineHeight: 19 },
 
+  joinLink: { alignItems: 'center', paddingVertical: 14 },
+  joinText: { fontSize: 15, fontWeight: '600' },
   button: { borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 6 },
   buttonText: { fontSize: 17, fontWeight: '700' },
 });

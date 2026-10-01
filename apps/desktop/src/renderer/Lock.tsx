@@ -9,10 +9,12 @@
 import { useState } from 'react';
 
 import type { VaultStatus } from '../shared/api.js';
+import { PairDialog } from './Pairing.js';
 import { api, useRunner } from './vault.js';
 
 export function Lock({ status, onOpen }: { status: VaultStatus; onOpen: () => void }) {
   const [passphrase, setPassphrase] = useState('');
+  const [pairing, setPairing] = useState(false);
   const { busy, error, run } = useRunner();
 
   const open = (action: (passphrase: string) => Promise<unknown>) => () =>
@@ -60,6 +62,11 @@ export function Lock({ status, onOpen }: { status: VaultStatus; onOpen: () => vo
 
           {status.exists ? null : (
             <>
+              {/* Needs no passphrase typed first: the code is scanned, the vault
+                  arrives, and only then is the passphrase asked for. */}
+              <button className="secondary" disabled={busy} onClick={() => setPairing(true)}>
+                I already use VaultP on my phone
+              </button>
               <button
                 className="secondary"
                 disabled={busy || passphrase.length === 0}
@@ -81,10 +88,21 @@ export function Lock({ status, onOpen }: { status: VaultStatus; onOpen: () => vo
         {status.exists ? null : (
           <p className="muted small">
             A fresh vault gives this computer its own key and will never merge with the
-            phone. To share one vault, sync once from the phone, then join from that same
-            folder using the phone&apos;s passphrase.
+            phone. To share the vault already on your phone, choose “I already use VaultP
+            on my phone” and scan the code it shows.
           </p>
         )}
+
+        {pairing ? (
+          <PairDialog
+            joining
+            onClose={() => setPairing(false)}
+            onJoined={() => {
+              setPairing(false);
+              onOpen();
+            }}
+          />
+        ) : null}
       </div>
     </main>
   );

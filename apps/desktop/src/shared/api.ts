@@ -33,8 +33,21 @@ export interface DriveStatusDto {
   readonly connectedAt: string | null;
 }
 
-/** Where a sync goes. A folder on this machine, or the connected Drive account. */
-export type SyncTarget = 'folder' | 'drive';
+/** Where a sync goes: the paired phone, a folder on this machine, or Drive. */
+export type SyncTarget = 'pair' | 'folder' | 'drive';
+
+export interface PairingStatusDto {
+  /** A pairing exists and this computer is listening for the phone. */
+  readonly paired: boolean;
+  /** `host:port` this computer can be reached at; empty when it has no network. */
+  readonly addresses: readonly string[];
+  /** The pairing code as a QR matrix: rows of '1' (dark) and '0'. */
+  readonly qr: { readonly size: number; readonly rows: readonly string[] } | null;
+  /** The phone has left a vault here that this computer could join. */
+  readonly hubHasVault: boolean;
+  /** When the phone last talked to this computer, this session. */
+  readonly lastPhoneActivity: string | null;
+}
 
 export interface VaultStatus {
   readonly exists: boolean;
@@ -427,6 +440,12 @@ export interface VaultpApi {
   unlock(passphrase: string): Promise<unknown>;
   adopt(passphrase: string): Promise<unknown>;
   joinFolder(passphrase: string): Promise<unknown>;
+  /** Join the vault a paired phone has sent to this computer. */
+  joinPair(passphrase: string): Promise<unknown>;
+  pairingStatus(): Promise<PairingStatusDto>;
+  /** Create the pairing if needed and start listening; returns the QR to show. */
+  startPairing(): Promise<PairingStatusDto>;
+  forgetPairing(): Promise<void>;
   chooseSyncFolder(): Promise<string | undefined>;
   sync(): Promise<SyncReportDto>;
   setSyncTarget(target: SyncTarget): Promise<void>;

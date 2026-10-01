@@ -48,6 +48,16 @@ discussion, but they will not be treated as vulnerabilities.
 - **The sync folder's contents are visible as metadata.** Whoever runs that
   storage sees object names and sizes — how many devices, roughly how much
   activity, and how many files exist. Contents are ciphertext.
+- **Pairing talks plain HTTP on the local network.** A paired phone and computer
+  exchange sync objects directly over the Wi-Fi they share. The objects are the
+  same ciphertext a sync folder holds, and every request and reply carries an
+  HMAC under a secret that only ever travelled in the QR code — so someone on
+  the same network can see that the two devices are talking, and how much, and
+  can neither read nor forge any of it. TLS was left out deliberately: with no
+  way to verify a certificate on a home network, it would add ceremony and no
+  protection. Anyone who photographs the pairing code while it is on screen can
+  talk to that computer's sync store until it is unpaired; they still cannot
+  read the vault without the passphrase.
 - **Losing the passphrase loses the vault.** There is no recovery path, no reset,
   and no copy held anywhere. That is the feature.
 - **The desktop executables are not code-signed.** Verify what you downloaded
@@ -63,6 +73,7 @@ discussion, but they will not be treated as vulnerabilities.
 | **Database** | SQLCipher (AES-256) |
 | **Files** | AES-256-GCM under a key derived per file, bound to that file's id |
 | **Sync** | AES-256-GCM per segment, bound to the writing device and sequence |
+| **Pairing** | HMAC-SHA256 on every request and reply, 256-bit secret exchanged by QR code, replayed requests refused |
 
 The passphrase is never stored, never logged, and never leaves the device it was
 typed on.
