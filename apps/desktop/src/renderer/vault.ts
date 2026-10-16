@@ -105,7 +105,9 @@ export function useVaultQuery<T>(load: () => Promise<T>, enabled = true): Query<
 /** Electron wraps the original message; the useful part is after the colon. */
 export function messageOf(caught: unknown): string {
   const message = caught instanceof Error ? caught.message : String(caught);
-  return message.replace(/^Error invoking remote method '[^']+': /, '');
+  // The class name after it ("Error: ", "SchemaTooNewError: ") is for a log,
+  // not for the person reading the message.
+  return message.replace(/^Error invoking remote method '[^']+': (\w*Error: )?/, '');
 }
 
 export interface Runner {

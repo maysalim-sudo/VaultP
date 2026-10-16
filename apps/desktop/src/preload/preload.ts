@@ -31,10 +31,25 @@ const api: VaultpApi = {
   forgetPairing: () => ipcRenderer.invoke('pairing:forget'),
   startHandoff: () => ipcRenderer.invoke('handoff:start'),
   cancelHandoff: () => ipcRenderer.invoke('handoff:cancel'),
+  networkAccess: () => ipcRenderer.invoke('pairing:networkAccess'),
+  allowNetworkAccess: () => ipcRenderer.invoke('pairing:allowNetworkAccess'),
   setVaultAside: () => ipcRenderer.invoke('vault:setAside'),
   chooseSyncFolder: () => ipcRenderer.invoke('vault:chooseSyncFolder'),
   sync: () => ipcRenderer.invoke('vault:sync'),
   setSyncTarget: (target) => ipcRenderer.invoke('vault:setSyncTarget', target),
+
+  onUpdateStatus: (listener) => {
+    const relay = (_event: unknown, status: Parameters<typeof listener>[0]) => listener(status);
+    ipcRenderer.on('updates:changed', relay);
+    // Settings is opened and closed many times; each visit unsubscribes.
+    return () => {
+      ipcRenderer.off('updates:changed', relay);
+    };
+  },
+  updateStatus: () => ipcRenderer.invoke('updates:status'),
+  setUpdateChecks: (enabled) => ipcRenderer.invoke('updates:setEnabled', enabled),
+  checkForUpdates: () => ipcRenderer.invoke('updates:check'),
+  installUpdate: () => ipcRenderer.invoke('updates:install'),
 
   driveStatus: () => ipcRenderer.invoke('drive:status'),
   connectDrive: (input) => ipcRenderer.invoke('drive:connect', input),

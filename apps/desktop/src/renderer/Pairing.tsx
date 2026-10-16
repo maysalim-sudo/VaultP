@@ -15,7 +15,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { PairingStatusDto } from '../shared/api.js';
+import type { NetworkAccessDto, PairingStatusDto } from '../shared/api.js';
 import { Modal } from './Modal.js';
 import { api, invalidate, messageOf } from './vault.js';
 
@@ -99,6 +99,39 @@ export function PairDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
+  const [access, setAccess] = useState<NetworkAccessDto | null>(null);
+  const [allowing, setAllowing] = useState(false);
+
+  // Asked once per dialog: it takes Windows a second or two to answer, and the
+  // answer only changes when someone changes it — usually with the button below.
+  useEffect(() => {
+    let live = true;
+    void api()
+      .networkAccess()
+      .then((found) => live && setAccess(found))
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  async function allow() {
+    setAllowing(true);
+    try {
+      const after = await api().allowNetworkAccess();
+      setAccess(after);
+      if (after.state === 'blocked') {
+        setError('Windows did not add the rule — the permission prompt may have been declined. Try again, or allow VaultP in Windows Security → Firewall.');
+      } else {
+        setError(null);
+      }
+    } catch (caught: unknown) {
+      setError(messageOf(caught));
+    } finally {
+      setAllowing(false);
+    }
+  }
+
   const phoneSeen = status?.lastPhoneActivity != null && status.lastPhoneActivity >= openedAt.current;
 
   // Once the phone has synced into an open vault, every screen is stale.
@@ -148,12 +181,28 @@ export function PairDialog({
 
       {error ? <p className="error">{error}</p> : null}
 
+      {access?.state === 'blocked' && !phoneSeen ? (
+        <div className="notice">
+          <p>
+            <strong>Windows will turn your phone away.</strong>{' '}
+            {access.publicNetwork
+              ? 'This Wi-Fi is marked as a public network, where Windows refuses incoming connections.'
+              : 'Windows Firewall has no rule letting VaultP accept a connection.'}{' '}
+            Allow it once and the phone can connect — only VaultP, only its sync ports, only from your local
+            network.
+          </p>
+          <button disabled={allowing} onClick={() => void allow()}>
+            {allowing ? 'Waiting for Windows…' : 'Let my phone connect'}
+          </button>
+          <p className="muted small">Windows will ask for permission to change its firewall.</p>
+        </div>
+      ) : null}
+
       <p className="muted small">
         {mode === 'unlock'
           ? 'Your phone sends the key encrypted so that only this computer, showing this code right now, can open it. '
           : ''}
-        Windows may ask to allow VaultP on your network the first time — choose <strong>Allow</strong>, or the phone
-        cannot reach it. Nothing leaves your Wi-Fi.
+        Nothing leaves your Wi-Fi.
         {status?.addresses.length ? ` Listening on ${status.addresses.join(', ')}.` : ''}
       </p>
 

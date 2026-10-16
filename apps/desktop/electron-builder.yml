@@ -58,5 +58,17 @@ nsis:
   createDesktopShortcut: true
   shortcutName: VaultP
 
+  # A stable name, so the website can link to "the latest installer" without
+  # being edited for every release.
+  artifactName: VaultP-Setup.exe
+
 portable:
-  artifactName: VaultP-${version}-portable.exe
+  artifactName: VaultP-portable.exe
+
+# Where installed copies look for updates (see src/main/updates.ts). The release
+# workflow publishes here; packaging on a laptop only writes the files.
+publish:
+  provider: github
+  owner: salimmay
+  repo: VaultP
+  releaseType: release

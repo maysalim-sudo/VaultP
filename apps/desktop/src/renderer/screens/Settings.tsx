@@ -1,8 +1,8 @@
 /** Categories, budgets, and getting the vault in and out. */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import type { CategoryFormDto } from '../../shared/api.js';
+import type { CategoryFormDto, UpdateStatusDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 import { DriveSettings } from './Drive.js';
@@ -60,6 +60,8 @@ export function Settings() {
 
       <DriveSettings />
 
+      <UpdateSettings />
+
       <h3>Backup</h3>
       <div className="row">
         <button
@@ -102,6 +104,98 @@ export function Settings() {
       </p>
     </>
   );
+}
+
+/**
+ * Updates: one switch, and what it costs in privacy said beside it.
+ *
+ * The state is pushed from the main process as it changes, so a download that
+ * finishes while this screen is open turns into a Restart button by itself.
+ */
+function UpdateSettings() {
+  const [status, setStatus] = useState<UpdateStatusDto | null>(null);
+  const { busy, error, run } = useRunner();
+
+  useEffect(() => {
+    let live = true;
+    void api()
+      .updateStatus()
+      .then((current) => live && setStatus(current));
+    const unsubscribe = api().onUpdateStatus((next) => setStatus(next));
+    return () => {
+      live = false;
+      unsubscribe();
+    };
+  }, []);
+
+  if (!status) return null;
+
+  return (
+    <>
+      <h3>Updates</h3>
+      <p className="small">
+        Version {status.currentVersion}
+        {status.state === 'unsupported' ? null : <> · {describe(status)}</>}
+      </p>
+
+      {status.state === 'unsupported' ? (
+        <p className="muted small">{status.detail}</p>
+      ) : (
+        <>
+          <label className="row check">
+            <input
+              type="checkbox"
+              checked={status.enabled}
+              disabled={busy}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                void run(async () => setStatus(await api().setUpdateChecks(enabled)));
+              }}
+            />
+            <span>Check for updates automatically</span>
+          </label>
+          <div className="row">
+            {status.state === 'ready' ? (
+              <button disabled={busy} onClick={() => void run(() => api().installUpdate())}>
+                Restart to update
+              </button>
+            ) : (
+              <button
+                className="secondary"
+                disabled={busy || status.state === 'checking' || status.state === 'downloading'}
+                onClick={() => void run(async () => setStatus(await api().checkForUpdates()))}
+              >
+                Check now
+              </button>
+            )}
+          </div>
+          <p className="muted small">
+            Checking asks GitHub, where VaultP is published, whether a newer version exists. GitHub
+            sees this computer's address and that it runs VaultP — nothing from the vault. With the
+            box unticked, nothing is sent unless you press Check now.
+          </p>
+        </>
+      )}
+      {error ? <p className="error">{error}</p> : null}
+    </>
+  );
+}
+
+function describe(status: UpdateStatusDto): string {
+  switch (status.state) {
+    case 'checking':
+      return 'checking…';
+    case 'downloading':
+      return `downloading ${status.nextVersion ?? 'an update'}…`;
+    case 'ready':
+      return `${status.nextVersion ?? 'an update'} is ready — it installs when VaultP closes`;
+    case 'current':
+      return 'up to date';
+    case 'error':
+      return status.detail ?? 'the last check failed';
+    default:
+      return status.enabled ? 'checks automatically' : 'automatic checks are off';
+  }
 }
 
 function CategoryForm({ onClose }: { onClose: () => void }) {

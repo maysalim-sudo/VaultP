@@ -43,8 +43,12 @@ const SWEEP_TIMEOUT_MS = 700;
 
 export class ComputerUnreachableError extends Error {
   constructor(name: string) {
+    // The usual cause, once both are on the same Wi-Fi, is Windows refusing the
+    // connection — so the message says where the fix is.
     super(
-      `Could not reach ${name}. Make sure VaultP is open on it and both devices are on the same Wi-Fi.`,
+      `Could not reach ${name}. Make sure VaultP is open on it and both devices are on the same Wi-Fi. ` +
+        `If they are, Windows is probably blocking the phone: on the computer, open the code again and ` +
+        `press “Let my phone connect”.`,
     );
     this.name = 'ComputerUnreachableError';
   }
@@ -90,6 +94,16 @@ async function post(address: string, body: string, timeoutMs: number): Promise<s
   }
 }
 
+/**
+ * Is VaultP listening here? An unsigned request is refused with 403, which is
+ * exactly the answer that says so; anything else, including silence, is no.
+ */
+async function knock(address: string, timeoutMs: number): Promise<void> {
+  await post(address, '{}', timeoutMs).catch((caught: unknown) => {
+    if (!(caught instanceof PairingAuthError)) throw caught;
+  });
+}
+
 /** Every other host on the same /24 as a known address, same port. */
 function neighbours(address: string): string[] {
   const match = /^(\d+\.\d+\.\d+)\.(\d+):(\d+)$/.exec(address);
@@ -125,12 +139,24 @@ function backendFor(pairing: Pairing, onAddress: (addresses: string[]) => void):
         }
       }
 
-      for (const address of known) {
+      // Knock on every advertised address at once rather than one after another:
+      // a computer with a virtual network adapter advertises addresses the phone
+      // can never reach, and waiting out each in turn is what made a failed
+      // connection take a minute. The knock is unsigned, so the real request is
+      // still sent exactly once — to whichever address answered first.
+      const answering = await Promise.any(
+        known.map(async (address) => {
+          await knock(address, CONNECT_TIMEOUT_MS);
+          return address;
+        }),
+      ).catch(() => null);
+
+      if (answering) {
         try {
-          // Quick to give up on an address that is not there, but never so quick
-          // that a large upload is cut off: the allowance grows with the body.
-          const reply = await post(address, body, CONNECT_TIMEOUT_MS + Math.ceil(body.length / 100));
-          working = address;
+          // Never so quick that a large upload is cut off: the allowance grows
+          // with the body.
+          const reply = await post(answering, body, CONNECT_TIMEOUT_MS + Math.ceil(body.length / 100));
+          working = answering;
           return reply;
         } catch (caught) {
           if (caught instanceof PairingAuthError) throw caught;
@@ -146,10 +172,7 @@ function backendFor(pairing: Pairing, onAddress: (addresses: string[]) => void):
           const batch = hosts.slice(index, index + 32);
           const found = await Promise.any(
             batch.map(async (address) => {
-              await post(address, '{}', SWEEP_TIMEOUT_MS).catch((caught: unknown) => {
-                // A 403 to an unsigned knock is exactly what VaultP answers.
-                if (!(caught instanceof PairingAuthError)) throw caught;
-              });
+              await knock(address, SWEEP_TIMEOUT_MS);
               return address;
             }),
           ).catch(() => null);

@@ -49,6 +49,30 @@ export interface PairingStatusDto {
   readonly lastPhoneActivity: string | null;
 }
 
+/** Whether Windows Firewall would let the phone in. */
+export interface NetworkAccessDto {
+  /** `unknown` off Windows, or when Windows would not say. */
+  readonly state: 'allowed' | 'blocked' | 'unknown';
+  /** Windows treats a network marked Public as untrusted, and refuses by default. */
+  readonly publicNetwork: boolean;
+}
+
+/**
+ * Where updating stands.
+ *
+ * `unsupported` is a build that cannot update itself — the portable .exe, or a
+ * development run — and says why in `detail`.
+ */
+export interface UpdateStatusDto {
+  readonly enabled: boolean;
+  readonly state: 'idle' | 'checking' | 'downloading' | 'ready' | 'current' | 'error' | 'unsupported';
+  readonly currentVersion: string;
+  /** The version being downloaded or ready to install. */
+  readonly nextVersion: string | null;
+  readonly detail: string | null;
+  readonly checkedAt: string | null;
+}
+
 export interface VaultStatus {
   readonly exists: boolean;
   readonly open: boolean;
@@ -449,11 +473,23 @@ export interface VaultpApi {
   /** Show a one-time code the phone can scan to unlock this computer. */
   startHandoff(): Promise<PairingStatusDto>;
   cancelHandoff(): Promise<void>;
+  /** Whether Windows Firewall would let the phone reach this computer. */
+  networkAccess(): Promise<NetworkAccessDto>;
+  /** Ask Windows, with its administrator prompt, to let the phone in. */
+  allowNetworkAccess(): Promise<NetworkAccessDto>;
   /** Move this computer's vault into a backup folder. Returns where it went. */
   setVaultAside(): Promise<string | undefined>;
   chooseSyncFolder(): Promise<string | undefined>;
   sync(): Promise<SyncReportDto>;
   setSyncTarget(target: SyncTarget): Promise<void>;
+
+  /** Told whenever the update state changes, so Settings can follow along. */
+  onUpdateStatus(listener: (status: UpdateStatusDto) => void): () => void;
+  updateStatus(): Promise<UpdateStatusDto>;
+  setUpdateChecks(enabled: boolean): Promise<UpdateStatusDto>;
+  checkForUpdates(): Promise<UpdateStatusDto>;
+  /** Close and install the update that has finished downloading. */
+  installUpdate(): Promise<void>;
 
   driveStatus(): Promise<DriveStatusDto>;
   /**

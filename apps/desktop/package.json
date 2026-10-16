@@ -22,6 +22,7 @@
     "@tesseract.js-data/fra": "^1.0.0",
     "@vaultp/core": "*",
     "better-sqlite3-multiple-ciphers": "^12.2.0",
+    "electron-updater": "^6.8.9",
     "qrcode-generator": "^2.0.4",
     "tesseract.js": "^7.0.0"
   },

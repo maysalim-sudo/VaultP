@@ -11,7 +11,7 @@ subscription. Every feature works with the network off, forever.
 ## Badges
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-492%20passing-brightgreen.svg)](#-getting-started)
+[![Tests](https://img.shields.io/badge/tests-500%20passing-brightgreen.svg)](#-getting-started)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 [![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-blue.svg)](#-tech-stack)
 
@@ -152,7 +152,7 @@ from the shared core, so they agree by construction rather than by discipline.
 | **Ordering** | Hybrid Logical Clocks, per-field last-write-wins merge |
 | **Identity** | UUIDv7, plus deterministic ids for idempotent cross-device creation |
 | **Crypto** | AES-256-GCM, PBKDF2, HKDF (portable SHA-256 implementation) |
-| **Tests** | Vitest — 457 core, 35 desktop |
+| **Tests** | Vitest — 458 core, 42 desktop |
 | **Design** | Shared tokens (colour roles, type, spacing, note shades) consumed by both apps |
 
 ### 📱 Mobile app
@@ -211,7 +211,7 @@ npm install
 npm test
 ```
 
-> **492 tests** should pass (457 core + 35 desktop). One test is skipped unless you
+> **500 tests** should pass (458 core + 42 desktop). One test is skipped unless you
 > opt in — see *Environment variables* below.
 
 ```bash
@@ -293,8 +293,8 @@ Two artefacts land in `apps/desktop/release/`:
 
 | File | For |
 |---|---|
-| `VaultP Setup 0.1.0.exe` | An installer. Per-user, so it needs no administrator, and it asks where to install. |
-| `VaultP-0.1.0-portable.exe` | One self-contained executable. For a borrowed machine, or a stick carried next to the sync folder. |
+| `VaultP-Setup.exe` | An installer. Per-user, so it needs no administrator, and it asks where to install. Updates itself. |
+| `VaultP-portable.exe` | One self-contained executable. For a borrowed machine, or a stick carried next to the sync folder. Does not update itself. |
 
 Both open the same vault, kept in `%APPDATA%\@vaultp\desktop`.
 
@@ -360,6 +360,61 @@ VAULTP_SYNC_FOLDER=/path/to/synced/folder \
 VAULTP_SYNC_PASSPHRASE='the vault passphrase' \
 npm test --workspace @vaultp/desktop
 ```
+
+### 8. Publish a release
+
+Releases are built by GitHub Actions ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+when a version tag is pushed. Nothing is published unless the typecheck and the
+tests pass first.
+
+```bash
+node scripts/set-version.mjs 0.2.0   # every package, app.json, and Android's versionCode
+# write the "## 0.2.0" entry in CHANGELOG.md, then commit
+git tag v0.2.0
+git push origin master v0.2.0
+```
+
+The release ends up holding:
+
+| File | For |
+|---|---|
+| `VaultP-Setup.exe` | The Windows installer. Installed copies update themselves from here. |
+| `VaultP-portable.exe` | The portable build. It does not update itself. |
+| `latest.yml`, `*.blockmap` | What installed copies read to find and download an update. |
+| `VaultP.apk` | Android, for direct download from the website. |
+| `VaultP.aab` | Android, for uploading to the Play Console. |
+| `SHA256SUMS.txt` | Checksums of all of the above. |
+
+The website's download buttons link to `releases/latest/download/…`, so they never
+need editing.
+
+**Android signing in CI.** Add four repository secrets (*Settings → Secrets and
+variables → Actions*):
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | The keystore, base64-encoded: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("vaultp-release.keystore"))` |
+| `ANDROID_STORE_PASSWORD` | From `keystore.properties` |
+| `ANDROID_KEY_ALIAS` | From `keystore.properties` |
+| `ANDROID_KEY_PASSWORD` | From `keystore.properties` |
+
+Without them the Android job stops rather than sign with the debug key. A
+debug-signed APK cannot update anyone's install. The job also checks the
+certificate after building.
+
+**Play Store.** Enrol in *Play App Signing* and register this keystore as the
+**upload key**. Google then holds the key installs are signed with, and a lost
+upload key can be reset. Upload `VaultP.aab` from each release.
+
+> ⚠️ An APK installed from the website and the Play Store version may not be
+> signed by the same key once Play App Signing is on. Android will not update one
+> with the other, and switching means uninstalling, which erases the vault. Pick
+> one channel for Android and point people to it.
+
+**How versions stay compatible.** Every database change is an added migration,
+and fields a build does not know are kept rather than dropped. A phone and a
+computer one version apart still sync. A build that finds a vault opened by a
+*newer* version refuses it and says to update, without changing anything.
 
 ---
 

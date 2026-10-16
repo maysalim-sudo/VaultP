@@ -46,6 +46,8 @@ import {
   startPairing,
 } from './pairing.js';
 import { connect, connection, forget } from './driveAuth.js';
+import { allowNetworkAccess, networkAccess } from './firewall.js';
+import { checkNow, installNow, setChecks, startUpdates, updateStatus } from './updates.js';
 import type { SyncTarget } from '../shared/api.js';
 
 let vault: DesktopVault | undefined;
@@ -89,7 +91,13 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+  void startUpdates();
 });
+
+ipcMain.handle('updates:status', () => updateStatus());
+ipcMain.handle('updates:setEnabled', (_event, enabled: boolean) => setChecks(enabled === true));
+ipcMain.handle('updates:check', () => checkNow());
+ipcMain.handle('updates:install', () => installNow());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
@@ -299,6 +307,9 @@ ipcMain.handle('handoff:start', async () => {
 ipcMain.handle('handoff:cancel', () => {
   cancelHandoff();
 });
+
+ipcMain.handle('pairing:networkAccess', () => networkAccess());
+ipcMain.handle('pairing:allowNetworkAccess', () => allowNetworkAccess());
 
 /**
  * Start over on this computer, when its passphrase is gone for good.

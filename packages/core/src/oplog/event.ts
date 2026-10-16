@@ -75,10 +75,13 @@ export function createEvent(input: NewEventInput): VaultEvent {
 
 export class UnsupportedSchemaError extends Error {
   constructor(version: number) {
+    // Surfaces as a sync error, so it is written for the person reading it.
+    // Nothing is lost by refusing: the event stays in storage until an updated
+    // app reads it.
     super(
-      `Event uses schema version ${version}, newer than this build supports ` +
-        `(${SCHEMA_VERSION}). Update the app before syncing, or the event would ` +
-        `be applied with fields this version does not understand.`,
+      'Another device is running a newer version of VaultP. Update VaultP here to keep ' +
+        'syncing — nothing has been lost, the changes wait until then. ' +
+        `(Event schema ${version}, this build ${SCHEMA_VERSION}.)`,
     );
     this.name = 'UnsupportedSchemaError';
   }

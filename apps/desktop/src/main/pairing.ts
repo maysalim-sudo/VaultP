@@ -48,8 +48,8 @@ import { FolderBackend } from './folderBackend.js';
 const STATE_FILE = 'pairing.json';
 const HUB_DIRECTORY = 'pair-hub';
 /** Tried first; the next few are tried if something else already holds it. */
-const PREFERRED_PORT = 47821;
-const PORT_ATTEMPTS = 12;
+export const PREFERRED_PORT = 47821;
+export const PORT_ATTEMPTS = 12;
 /** A whole encrypted photo as base64 inside one request, with room to spare. */
 const MAX_BODY_BYTES = 96 * 1024 * 1024;
 
@@ -141,20 +141,38 @@ async function loadState(root: string): Promise<PairingState | undefined> {
 }
 
 /** This computer's addresses on the networks a phone could share with it. */
-function lanAddresses(): string[] {
-  const found: string[] = [];
-  for (const list of Object.values(networkInterfaces())) {
+/**
+ * Adapters that exist only inside this computer — VirtualBox, Hyper-V and WSL,
+ * VMware, Docker — or that lead to a VPN rather than the Wi-Fi. They look like
+ * home networks (VirtualBox's is 192.168.56.x) but a phone can never reach them.
+ */
+const VIRTUAL_NAME = /vethernet|virtualbox|vmware|vbox|hyper-v|wsl|docker|tailscale|zerotier|wireguard|loopback|npcap/i;
+const VIRTUAL_MAC = /^(0a:00:27|08:00:27|00:15:5d|00:50:56|00:0c:29|00:05:69|00:1c:14|02:42)/i;
+
+export function lanAddresses(
+  interfaces: ReturnType<typeof networkInterfaces> = networkInterfaces(),
+): string[] {
+  const found: { ip: string; rank: number }[] = [];
+  for (const [name, list] of Object.entries(interfaces)) {
     for (const address of list ?? []) {
       // IPv4 only: it is what home routers hand out, and it keeps the QR small.
       // Link-local (169.254) means "no network", so it is not offered.
-      if (address.family === 'IPv4' && !address.internal && !address.address.startsWith('169.254.')) {
-        found.push(address.address);
-      }
+      if (address.family !== 'IPv4' || address.internal || address.address.startsWith('169.254.')) continue;
+      const ip = address.address;
+      const virtual =
+        VIRTUAL_NAME.test(name) ||
+        VIRTUAL_MAC.test(address.mac) ||
+        ip.startsWith('192.168.56.') ||
+        // 100.64/10 is carrier-grade NAT, which is where Tailscale lives.
+        /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(ip);
+      const home = ip.startsWith('192.168.') ? 0 : ip.startsWith('10.') ? 1 : 2;
+      // Virtual ones are still offered, last, in case a setup genuinely needs one.
+      found.push({ ip, rank: (virtual ? 10 : 0) + home });
     }
   }
-  // Private home ranges first — the phone tries them in order.
-  const rank = (ip: string) => (ip.startsWith('192.168.') ? 0 : ip.startsWith('10.') ? 1 : 2);
-  return found.sort((a, b) => rank(a) - rank(b));
+  // The phone knocks on all of them at once, but the order is still what it
+  // remembers first.
+  return found.sort((a, b) => a.rank - b.rank).map((entry) => entry.ip);
 }
 
 function readBody(request: IncomingMessage): Promise<string | null> {

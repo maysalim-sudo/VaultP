@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseAmount } from '../money/money.js';
-import { LATEST_VERSION, currentVersion } from './migrations.js';
+import { LATEST_VERSION, SchemaTooNewError, currentVersion, migrate } from './migrations.js';
 import { VaultStore } from './store.js';
 import { openTestDatabase } from './testing/nodeSqlite.js';
 
@@ -140,7 +140,14 @@ describe('forward compatibility', () => {
           schemaVersion: 99,
         },
       ]),
-    ).toThrow(/newer than this build/);
+    ).toThrow(/newer version of VaultP/);
+  });
+
+  it('refuses a database left by a newer build, without changing it', () => {
+    const ctx = newStore('dev_phone');
+    ctx.db.exec(`PRAGMA user_version = ${LATEST_VERSION + 1}`);
+    expect(() => migrate(ctx.db)).toThrow(SchemaTooNewError);
+    expect(currentVersion(ctx.db)).toBe(LATEST_VERSION + 1);
   });
 });
 

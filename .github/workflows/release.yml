@@ -1,0 +1,145 @@
+# Build and publish a release when a version tag is pushed.
+#
+#   node scripts/set-version.mjs 0.2.0
+#   (write the CHANGELOG entry, commit)
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# Produces one GitHub release holding the Windows installer and portable .exe,
+# the files installed copies read to update themselves, the Android APK for the
+# website and the AAB for the Play Store, and a SHA-256 list for all of them.
+#
+# Nothing is published unless the tests pass first.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    # Windows, because that is where the desktop app runs and where its SQLite
+    # binary is swapped between Node and Electron.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  desktop:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check the tag matches the app version
+        shell: bash
+        run: |
+          app=$(node -p "require('./apps/desktop/package.json').version")
+          if [ "v$app" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} but apps/desktop is $app. Run scripts/set-version.mjs." >&2
+            exit 1
+          fi
+      - name: Build and publish the Windows app
+        run: npm run package --workspace @vaultp/desktop -- --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  android:
+    needs: desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+
+      # The release key never lives in the repository. Without it the build
+      # would quietly fall back to the debug key, and an APK signed with that
+      # cannot update anyone's install — so its absence stops the job instead.
+      - name: Put the signing key in place
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "ANDROID_KEYSTORE_BASE64 is not set; refusing to sign with the debug key." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > apps/mobile/android/app/vaultp-release.keystore
+          {
+            echo "VAULTP_STORE_FILE=vaultp-release.keystore"
+            echo "VAULTP_STORE_PASSWORD=$STORE_PASSWORD"
+            echo "VAULTP_KEY_ALIAS=$KEY_ALIAS"
+            echo "VAULTP_KEY_PASSWORD=$KEY_PASSWORD"
+          } > apps/mobile/android/keystore.properties
+
+      - name: Build the APK and the Play Store bundle
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x gradlew
+          # The APK is for 64-bit ARM, which is nearly every phone in use, and
+          # stays small. The bundle carries every architecture; the Play Store
+          # hands each phone only its own.
+          ./gradlew assembleRelease --no-daemon
+          ./gradlew bundleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+
+      - name: Make sure it was signed with the release key
+        run: |
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          certs=$("$apksigner" verify --print-certs apps/mobile/android/app/build/outputs/apk/release/app-release.apk)
+          echo "$certs"
+          if echo "$certs" | grep -q "CN=Android Debug"; then
+            echo "Signed with the debug key — not publishing." >&2
+            exit 1
+          fi
+
+      - name: Attach to the release, with checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir dist
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk dist/VaultP.apk
+          cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab dist/VaultP.aab
+          gh release upload "$GITHUB_REF_NAME" dist/VaultP.apk dist/VaultP.aab --clobber
+          # One list covering everything in the release, desktop files included.
+          gh release download "$GITHUB_REF_NAME" --dir dist --pattern '*.exe' --clobber
+          (cd dist && sha256sum VaultP.apk VaultP.aab *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber
+
+      - name: Use the CHANGELOG entry as the release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # Everything under "## <version>" up to the next "## ".
+          awk -v v="$version" '$0 ~ "^## \\[?"v"\\]?" {on=1; next} /^## / && on {exit} on' CHANGELOG.md > notes.md
+          if [ -s notes.md ]; then gh release edit "$GITHUB_REF_NAME" --notes-file notes.md; fi
+
+      - name: Remove the key from the runner
+        if: always()
+        run: rm -f apps/mobile/android/app/vaultp-release.keystore apps/mobile/android/keystore.properties

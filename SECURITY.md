@@ -74,7 +74,24 @@ discussion, but they will not be treated as vulnerabilities.
   the passphrase is gone, so is the data. That is the feature. A computer's
   "start over" moves its vault to a backup folder rather than deleting it.
 - **The desktop executables are not code-signed.** Verify what you downloaded
-  before trusting it.
+  against the release's `SHA256SUMS.txt` before trusting it.
+- **The desktop app checks GitHub for updates.** By default it asks the GitHub
+  releases of this repository whether a newer version exists, at start and every
+  six hours. GitHub sees the computer's address and that it runs VaultP, and
+  nothing from the vault. Unticking *Check for updates automatically* in
+  Settings stops every request except a press of *Check now*. An update is
+  installed from the same releases the website links to. Whoever controls this
+  repository's releases can therefore ship code to installed copies, which is
+  true of any auto-updating app and is why releases are built in CI, from a
+  tag, after the tests.
+- **"Let my phone connect" adds a Windows Firewall rule.** It needs Windows'
+  administrator prompt and allows inbound TCP to the VaultP program only, on its
+  sync ports only, from the local subnet only, on any network profile. Any
+  profile, because Windows marks most home Wi-Fi as Public. On a café's Wi-Fi
+  that means others on the same network can reach the sync port. They still
+  meet the HMAC check described under pairing, so they can neither read nor
+  write anything. Uninstalling VaultP does not remove the rule; delete
+  *VaultP (phone sync)* in Windows Defender Firewall to do so.
 
 ## What protects the data
 

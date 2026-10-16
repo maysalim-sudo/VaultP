@@ -387,10 +387,12 @@ export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
 
 export class SchemaTooNewError extends Error {
   constructor(found: number) {
+    // Shown to the person on the unlock screen, so it says what to do. The
+    // numbers stay at the end, for a bug report.
     super(
-      `Database schema is version ${found}, newer than this build understands ` +
-        `(${LATEST_VERSION}). Update the app rather than risk writing rows the ` +
-        `newer version cannot read back.`,
+      'This vault was last opened by a newer version of VaultP, so this one will not ' +
+        'touch it. Update VaultP on this device and it will open — nothing has been changed. ' +
+        `(Vault schema ${found}, this build ${LATEST_VERSION}.)`,
     );
     this.name = 'SchemaTooNewError';
   }

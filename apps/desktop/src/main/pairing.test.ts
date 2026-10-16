@@ -32,6 +32,7 @@ import {
   hubDirectory,
   hubHasVault,
   isPaired,
+  lanAddresses,
   pairingPort,
   pairingStatus,
   startPairing,
@@ -155,5 +156,31 @@ describe('the pairing server', () => {
     await startPairing(root, () => undefined);
     expect(await readFile(join(root, 'pairing.json'), 'utf8')).toBe(before);
     expect(isPaired()).toBe(true);
+  });
+});
+
+describe('the addresses offered to the phone', () => {
+  const nic = (address: string, mac = '3c:91:80:11:22:33') => ({
+    address,
+    mac,
+    family: 'IPv4' as const,
+    internal: false,
+    netmask: '255.255.255.0',
+    cidr: `${address}/24`,
+  });
+
+  it('puts the real Wi-Fi ahead of VirtualBox, Hyper-V and Tailscale', () => {
+    // The machine this was found on: VirtualBox's host-only adapter is called
+    // plain "Ethernet" and sits in 192.168.x, like a home network.
+    const found = lanAddresses({
+      Ethernet: [nic('192.168.56.1', '0a:00:27:00:00:0d')],
+      'vEthernet (Default Switch)': [nic('172.18.208.1', '00:15:5d:aa:bb:cc')],
+      Tailscale: [nic('100.79.118.117')],
+      'Wi-Fi 2': [nic('192.168.1.20')],
+      'Local Area Connection* 11': [nic('169.254.158.133')],
+    });
+    expect(found[0]).toBe('192.168.1.20');
+    expect(found).not.toContain('169.254.158.133');
+    expect(found).toHaveLength(4);
   });
 });
