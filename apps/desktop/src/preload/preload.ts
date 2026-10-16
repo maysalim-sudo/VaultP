@@ -60,6 +60,7 @@ const api: VaultpApi = {
   saveAllowanceConfig: (config) => ipcRenderer.invoke('overview:saveAllowanceConfig', config),
 
   listExpenses: (query) => ipcRenderer.invoke('expenses:list', query),
+  getExpense: (id) => ipcRenderer.invoke('expenses:get', id),
   listCategories: () => ipcRenderer.invoke('expenses:categories'),
   listCurrencies: () => ipcRenderer.invoke('expenses:currencies'),
   addExpense: (input) => ipcRenderer.invoke('expenses:add', input),
@@ -100,6 +101,7 @@ const api: VaultpApi = {
   addCategory: (form) => ipcRenderer.invoke('categories:add', form),
   ensureCategory: (name, icon) => ipcRenderer.invoke('categories:ensure', name, icon),
   archiveCategory: (id) => ipcRenderer.invoke('categories:archive', id),
+  updateCategory: (id, form) => ipcRenderer.invoke('categories:update', id, form),
 
   exportBackup: () => ipcRenderer.invoke('backup:export'),
   restoreBackup: () => ipcRenderer.invoke('backup:restore'),
@@ -121,6 +123,8 @@ const api: VaultpApi = {
   setRuleState: (id, state) => ipcRenderer.invoke('rules:setState', id, state),
   updateRuleAmount: (id, amount, currency) =>
     ipcRenderer.invoke('rules:updateAmount', id, amount, currency),
+  updateRule: (id, form) => ipcRenderer.invoke('rules:update', id, form),
+  deleteRule: (id) => ipcRenderer.invoke('rules:delete', id),
   runAutoLog: () => ipcRenderer.invoke('rules:runAutoLog'),
   listPendingReminders: () => ipcRenderer.invoke('rules:pending'),
   listUpcoming: () => ipcRenderer.invoke('rules:upcoming'),
@@ -129,6 +133,16 @@ const api: VaultpApi = {
   listPeople: () => ipcRenderer.invoke('debts:people'),
   addPerson: (input) => ipcRenderer.invoke('debts:addPerson', input),
   archivePerson: (id) => ipcRenderer.invoke('debts:archivePerson', id),
+  unarchivePerson: (id) => ipcRenderer.invoke('debts:unarchivePerson', id),
+  listArchivedPeople: () => ipcRenderer.invoke('debts:archivedPeople'),
+  getPerson: (id) => ipcRenderer.invoke('debts:person', id),
+  updatePerson: (id, input) => ipcRenderer.invoke('debts:updatePerson', id, input),
+
+  listAccounts: (includeArchived) => ipcRenderer.invoke('accounts:list', includeArchived),
+  addAccount: (form) => ipcRenderer.invoke('accounts:add', form),
+  updateAccount: (id, form) => ipcRenderer.invoke('accounts:update', id, form),
+  setAccountArchived: (id, archived) => ipcRenderer.invoke('accounts:setArchived', id, archived),
+  deleteAccount: (id) => ipcRenderer.invoke('accounts:delete', id),
   ledgerFor: (personId) => ipcRenderer.invoke('debts:ledger', personId),
   addDebtEntry: (form) => ipcRenderer.invoke('debts:addEntry', form),
   voidDebtEntry: (id, note) => ipcRenderer.invoke('debts:voidEntry', id, note),

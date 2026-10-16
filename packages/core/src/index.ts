@@ -33,6 +33,7 @@ export * from './debts/interest.js';
 export * from './debts/ledger.js';
 export * from './debts/repository.js';
 export * from './debts/progress.js';
+export * from './accounts/repository.js';
 export * from './crypto/sha256.js';
 export * from './db/sql.js';
 export * from './settings.js';

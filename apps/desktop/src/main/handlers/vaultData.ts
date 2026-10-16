@@ -32,8 +32,19 @@ export function registerVaultDataHandlers(requireVault: () => DesktopVault): voi
       detail: result.detail,
       amount: toOptionalMoneyDto(result.amount),
       date: result.date,
+      parentId: result.parentId,
     })),
   );
+
+  ipcMain.handle('categories:update', (_event, id: string, form: CategoryFormDto) => {
+    const expenses = requireVault().expenses;
+    const limit = form.monthlyLimit.trim();
+    expenses.updateCategory(id, {
+      name: form.name,
+      rollover: form.rollover,
+      monthlyLimit: limit ? parseAmount(limit, expenses.baseCurrency) : null,
+    });
+  });
 
   ipcMain.handle('categories:add', (_event, form: CategoryFormDto) => {
     const expenses = requireVault().expenses;

@@ -128,6 +128,29 @@ export class DebtRepository {
     this.store.commit('person', id, { archived: true });
   }
 
+  /** Bring an archived person back, entries and all — nothing was removed. */
+  unarchivePerson(id: string): void {
+    this.store.commit('person', id, { archived: false });
+  }
+
+  /**
+   * Correct who someone is. Only the fields given change, so a phone renaming
+   * and a computer adding a contact at the same time both survive the merge.
+   * Their entries hang off the id, not the name, so a rename touches none.
+   */
+  updatePerson(id: string, patch: { name?: string; contact?: string | null; note?: string | null }): Person {
+    if (!this.getPerson(id)) throw new DebtValidationError('That person no longer exists.');
+    const fields: Record<string, Json> = {};
+    if (patch.name !== undefined) {
+      if (patch.name.trim() === '') throw new DebtValidationError('A person needs a name.');
+      fields.name = patch.name.trim();
+    }
+    if (patch.contact !== undefined) fields.contact = patch.contact?.trim() || null;
+    if (patch.note !== undefined) fields.note = patch.note?.trim() || null;
+    if (Object.keys(fields).length > 0) this.store.commit('person', id, fields);
+    return this.getPerson(id)!;
+  }
+
   // ---------------------------------------------------------------- entries
 
   /** I gave them money. They owe me. */

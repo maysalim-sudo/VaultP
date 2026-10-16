@@ -21,6 +21,7 @@ import { NOTE_COLOURS, type Block } from '@vaultp/core';
 
 import type { NoteDto, NoteFolderDto, NotesQueryDto, TagDto } from '../../shared/api.js';
 import { Modal } from '../Modal.js';
+import { useIntent } from '../nav.js';
 import { MenuItem, NoteEditor, NoteImageView, noteBackground, type EditorStart } from '../notes/NoteEditor.js';
 import { api, invalidate, messageOf, useVaultQuery } from '../vault.js';
 import '../notes/notes.css';
@@ -62,6 +63,17 @@ export function Notes() {
   const [drag, setDrag] = useState<Drag | null>(null);
   const [hover, setHover] = useState<Hover>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Arriving from search or the dashboard: open that note, or start a new one.
+  useIntent('notes', (intent) => {
+    if (intent.kind === 'newNote') setEditor({ kind: 'new', with: intent.with, folderId: null });
+    if (intent.kind === 'note') {
+      void api()
+        .getNote(intent.id)
+        .then((note) => note && setEditor({ kind: 'existing', note }))
+        .catch((caught: unknown) => setError(messageOf(caught)));
+    }
+  });
 
   const notes = useVaultQuery(() => api().listNotes(queryFor(filter, search)));
   const folders = useVaultQuery(() => api().listNoteFolders());

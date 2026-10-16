@@ -14,6 +14,7 @@ import { BASE_CURRENCY, darkColors, lightColors } from '@vaultp/core';
 
 import { shutdownOcr } from './ocr.js';
 
+import { registerAccountHandlers } from './handlers/accounts.js';
 import { registerDebtHandlers } from './handlers/debts.js';
 import { registerDocumentHandlers } from './handlers/documents.js';
 import { registerExpenseHandlers } from './handlers/expenses.js';
@@ -375,3 +376,4 @@ registerNoteHandlers(requireVault);
 registerDocumentHandlers(requireVault);
 registerDebtHandlers(requireVault);
 registerVaultDataHandlers(requireVault);
+registerAccountHandlers(requireVault);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import type { BalanceDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
+import { useIntent } from '../nav.js';
 import { api, useRunner, useVaultQuery } from '../vault.js';
 import { PersonLedger } from './PersonLedger.js';
 
@@ -12,6 +13,13 @@ export function Debts() {
   const people = useVaultQuery(() => api().listPeople());
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const archived = useVaultQuery(() => api().listArchivedPeople(), showArchived);
+
+  useIntent('debts', (intent) => {
+    if (intent.kind === 'person') setOpen(intent.id);
+    if (intent.kind === 'newPerson') setAdding(true);
+  });
 
   const balanceOf = (personId: string): BalanceDto | undefined =>
     balances.data?.find((balance) => balance.id === personId);
@@ -41,6 +49,27 @@ export function Debts() {
           );
         })}
       </ul>
+
+      <p className="small">
+        <button className="link" onClick={() => setShowArchived((current) => !current)}>
+          {showArchived ? 'Hide archived people' : 'Show archived people'}
+        </button>
+      </p>
+      {showArchived ? (
+        archived.data && archived.data.length > 0 ? (
+          <ul className="list">
+            {archived.data.map((person) => (
+              <li key={person.id} className="clickable" onClick={() => setOpen(person.id)}>
+                <span>
+                  {person.name} <em className="muted">· archived</em>
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted small">Nobody is archived.</p>
+        )
+      ) : null}
 
       {adding ? <AddPerson onClose={() => setAdding(false)} /> : null}
       {open ? <PersonLedger personId={open} onClose={() => setOpen(null)} /> : null}

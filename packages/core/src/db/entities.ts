@@ -137,6 +137,10 @@ export const ENTITIES: Partial<Record<EntityName, EntityDef>> = {
     table: 'folder',
     columns: ['name', 'colour', 'sort_order', ...COMMON],
   },
+  account: {
+    table: 'account',
+    columns: ['name', 'kind', 'balance_minor', 'currency', 'balance_on', 'note', 'archived', 'sort_order', ...COMMON],
+  },
   tag: {
     table: 'tag',
     columns: ['name', 'colour', ...COMMON],

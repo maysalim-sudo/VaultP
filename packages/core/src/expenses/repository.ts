@@ -202,6 +202,37 @@ export class ExpenseRepository {
     this.store.commit('category', id, { archived: true });
   }
 
+  unarchiveCategory(id: string): void {
+    this.store.commit('category', id, { archived: false });
+  }
+
+  /**
+   * Rename a category or change its budget. Only what is given changes —
+   * notably, setting a limit no longer resets "carry over" the way re-adding
+   * the category did. `monthlyLimit: null` removes the budget.
+   */
+  updateCategory(
+    id: string,
+    patch: { name?: string; icon?: string | null; monthlyLimit?: Money | null; rollover?: boolean },
+  ): Category {
+    if (!this.getCategory(id)) throw new ExpenseValidationError('That category no longer exists.');
+    const fields: Record<string, Json> = {};
+    if (patch.name !== undefined) {
+      const name = patch.name.trim();
+      if (name === '') throw new ExpenseValidationError('A category needs a name.');
+      const twin = this.listCategories(true).find(
+        (category) => category.id !== id && category.name.toLowerCase() === name.toLowerCase(),
+      );
+      if (twin) throw new ExpenseValidationError(`There is already a category called ${twin.name}.`);
+      fields.name = name;
+    }
+    if (patch.icon !== undefined) fields.icon = patch.icon?.trim() || null;
+    if (patch.monthlyLimit !== undefined) fields.monthly_limit_minor = patch.monthlyLimit?.amountMinor ?? null;
+    if (patch.rollover !== undefined) fields.rollover = patch.rollover;
+    if (Object.keys(fields).length > 0) this.store.commit('category', id, fields);
+    return this.getCategory(id)!;
+  }
+
   getCategory(id: string): Category | undefined {
     const row = this.store.database.get<CategoryRow>(
       'SELECT * FROM category WHERE id = ? AND deleted_at IS NULL',
@@ -472,6 +503,52 @@ export class ExpenseRepository {
       currency: amount.currency,
     });
     return this.getRule(id)!;
+  }
+
+  /**
+   * Everything about a recurring charge except its price, which has its own
+   * method so the previous price is kept for spotting rises.
+   */
+  updateRule(
+    id: string,
+    patch: {
+      name?: string;
+      categoryId?: string | null;
+      frequency?: Frequency;
+      intervalN?: number;
+      anchorDate?: IsoDate;
+      autoLog?: boolean;
+    },
+  ): RecurringRule {
+    if (!this.getRule(id)) throw new ExpenseValidationError('That recurring charge no longer exists.');
+    const fields: Record<string, Json> = {};
+    if (patch.name !== undefined) {
+      if (patch.name.trim() === '') throw new ExpenseValidationError('A recurring charge needs a name.');
+      fields.name = patch.name.trim();
+    }
+    if (patch.categoryId !== undefined) fields.category_id = patch.categoryId || null;
+    if (patch.frequency !== undefined) fields.frequency = patch.frequency;
+    if (patch.intervalN !== undefined) {
+      if (!Number.isInteger(patch.intervalN) || patch.intervalN < 1) {
+        throw new ExpenseValidationError('Repeat every 1 or more.');
+      }
+      fields.interval_n = patch.intervalN;
+    }
+    if (patch.anchorDate !== undefined) {
+      parseDate(patch.anchorDate);
+      fields.anchor_date = patch.anchorDate;
+    }
+    if (patch.autoLog !== undefined) fields.auto_log = patch.autoLog;
+    if (Object.keys(fields).length > 0) this.store.commit('recurring_rule', id, fields);
+    return this.getRule(id)!;
+  }
+
+  /**
+   * Remove a recurring charge. Expenses it already logged stay: they happened,
+   * and each carries its own amount, date and category.
+   */
+  deleteRule(id: string): void {
+    this.store.remove('recurring_rule', id);
   }
 
   getRule(id: string): RecurringRule | undefined {

@@ -76,6 +76,33 @@ export function registerRuleHandlers(requireVault: () => DesktopVault): void {
     requireVault().expenses.updateRuleAmount(id, parseAmount(amount, currency));
   });
 
+  /**
+   * Save an edited rule. A changed price goes through `updateRuleAmount`, so
+   * the old price is kept and a rise still shows as one.
+   */
+  ipcMain.handle('rules:update', (_event, id: string, form: RuleFormDto) => {
+    const expenses = requireVault().expenses;
+    const existing = expenses.getRule(id);
+    if (!existing) throw new Error('That recurring charge is no longer in the vault.');
+
+    expenses.updateRule(id, {
+      name: form.name,
+      categoryId: form.categoryId,
+      frequency: form.frequency,
+      intervalN: form.intervalN,
+      anchorDate: form.anchorDate || existing.anchorDate,
+      autoLog: form.autoLog,
+    });
+    const amount = parseAmount(form.amount, form.currency);
+    if (amount.amountMinor !== existing.amount.amountMinor || amount.currency !== existing.amount.currency) {
+      expenses.updateRuleAmount(id, amount);
+    }
+  });
+
+  ipcMain.handle('rules:delete', (_event, id: string) => {
+    requireVault().expenses.deleteRule(id);
+  });
+
   ipcMain.handle('rules:runAutoLog', () => ({
     created: runAutoLog(requireVault().expenses, todayIn()).length,
   }));

@@ -143,12 +143,12 @@ describe('global search', () => {
     vault.notes.addNote({ body: 'Ask Sami about the car' });
   });
 
-  it('finds one word across all four modules at once', () => {
+  it('finds one word across every module at once', () => {
     // The reason these live in one app: you look for a name, not for which
     // module you happened to file it under.
     const results = searchEverything(vault.db, 'Sami');
     expect(new Set(results.map((r) => r.kind))).toEqual(
-      new Set(['expense', 'debt', 'document', 'note']),
+      new Set(['person', 'expense', 'debt', 'document', 'note']),
     );
   });
 
@@ -194,7 +194,12 @@ describe('global search', () => {
 
   it('groups results in a fixed order', () => {
     const grouped = groupResults(searchEverything(vault.db, 'Sami'));
-    expect(grouped.map((g) => g.kind)).toEqual(['expense', 'debt', 'document', 'note']);
+    expect(grouped.map((g) => g.kind)).toEqual(['person', 'note', 'expense', 'debt', 'document']);
+  });
+
+  it('finds the person themselves, so their ledger can be opened', () => {
+    const people = searchEverything(vault.db, 'sami').filter((r) => r.kind === 'person');
+    expect(people.map((r) => r.title)).toEqual(['Sami']);
   });
 
   it('caps how much each module can contribute', () => {

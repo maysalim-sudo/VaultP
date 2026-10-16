@@ -20,7 +20,7 @@ export function Rules() {
   const upcoming = useVaultQuery(() => api().listUpcoming());
   const categories = useVaultQuery(() => api().listCategories());
   const { busy, error, run } = useRunner();
-  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<{ rule: RuleDto | null } | null>(null);
   const [logged, setLogged] = useState<number | null>(null);
 
   const nameOf = (id: string | null) =>
@@ -43,7 +43,7 @@ export function Rules() {
           >
             Catch up auto-logged
           </button>
-          <button onClick={() => setAdding(true)}>New rule</button>
+          <button onClick={() => setEditing({ rule: null })}>New rule</button>
         </div>
       </div>
 
@@ -77,7 +77,12 @@ export function Rules() {
       <h3>Rules</h3>
       <ul className="list">
         {rules.data?.map((rule) => (
-          <RuleRow key={rule.id} rule={rule} categoryName={nameOf(rule.categoryId)} />
+          <RuleRow
+            key={rule.id}
+            rule={rule}
+            categoryName={nameOf(rule.categoryId)}
+            onEdit={() => setEditing({ rule })}
+          />
         ))}
       </ul>
       {rules.data?.length === 0 ? <p className="muted small">No rules yet.</p> : null}
@@ -99,12 +104,12 @@ export function Rules() {
         </>
       ) : null}
 
-      {adding ? <RuleForm onClose={() => setAdding(false)} /> : null}
+      {editing ? <RuleForm rule={editing.rule} onClose={() => setEditing(null)} /> : null}
     </>
   );
 }
 
-function RuleRow({ rule, categoryName }: { rule: RuleDto; categoryName: string }) {
+function RuleRow({ rule, categoryName, onEdit }: { rule: RuleDto; categoryName: string; onEdit: () => void }) {
   const { busy, run } = useRunner();
   const [amount, setAmount] = useState<string | null>(null);
 
@@ -180,25 +185,28 @@ function RuleRow({ rule, categoryName }: { rule: RuleDto; categoryName: string }
         >
           {rule.state === 'active' ? 'pause' : 'resume'}
         </button>
+        <button className="link" onClick={onEdit}>
+          edit
+        </button>
       </span>
     </li>
   );
 }
 
-function RuleForm({ onClose }: { onClose: () => void }) {
+function RuleForm({ rule, onClose }: { rule: RuleDto | null; onClose: () => void }) {
   const categories = useVaultQuery(() => api().listCategories());
   const currencies = useVaultQuery(() => api().listCurrencies());
   const { busy, error, run } = useRunner();
 
   const [form, setForm] = useState<RuleFormDto>({
-    name: '',
-    amount: '',
-    currency: baseCurrency(),
-    categoryId: null,
-    frequency: 'monthly',
-    intervalN: 1,
-    anchorDate: '',
-    autoLog: false,
+    name: rule?.name ?? '',
+    amount: rule?.amount.text ?? '',
+    currency: rule?.amount.currency ?? baseCurrency(),
+    categoryId: rule?.categoryId ?? null,
+    frequency: rule?.frequency ?? 'monthly',
+    intervalN: rule?.intervalN ?? 1,
+    anchorDate: rule?.anchorDate ?? '',
+    autoLog: rule?.autoLog ?? false,
   });
 
   const set = <K extends keyof RuleFormDto>(key: K, value: RuleFormDto[K]) =>
@@ -206,21 +214,37 @@ function RuleForm({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal
-      title="New recurring rule"
+      title={rule ? 'Edit recurring rule' : 'New recurring rule'}
       onClose={onClose}
       footer={
         <>
+          {rule ? (
+            <button
+              className="danger"
+              disabled={busy}
+              onClick={() => {
+                if (!window.confirm(`Delete ${rule.name}? Charges it already logged stay in your expenses.`)) return;
+                void run(async () => {
+                  await api().deleteRule(rule.id);
+                  onClose();
+                });
+              }}
+            >
+              Delete
+            </button>
+          ) : null}
           <span className="spacer" />
           <button
             disabled={busy || form.name.trim() === '' || form.amount.trim() === ''}
             onClick={() =>
               void run(async () => {
-                await api().addRule(form);
+                if (rule) await api().updateRule(rule.id, form);
+                else await api().addRule(form);
                 onClose();
               })
             }
           >
-            Create
+            {rule ? 'Save' : 'Create'}
           </button>
         </>
       }

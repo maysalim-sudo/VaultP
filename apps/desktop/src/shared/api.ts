@@ -204,12 +204,44 @@ export interface NoteImageDto {
 }
 
 export interface SearchResultDto {
-  readonly kind: 'expense' | 'debt' | 'document' | 'note';
+  readonly kind: 'expense' | 'debt' | 'document' | 'note' | 'person' | 'account';
   readonly id: string;
   readonly title: string;
   readonly detail: string;
   readonly amount: MoneyDto | null;
   readonly date: string | null;
+  /** The person a debt entry belongs to, so the right ledger can be opened. */
+  readonly parentId: string | null;
+}
+
+export type AccountKindDto = 'bank' | 'cash' | 'card' | 'savings' | 'other';
+
+export interface AccountDto {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: AccountKindDto;
+  readonly balance: MoneyDto;
+  /** The day the balance was true. */
+  readonly balanceOn: string;
+  readonly note: string | null;
+  readonly archived: boolean;
+}
+
+/** An account as the form holds it; the balance is the text typed. */
+export interface AccountFormDto {
+  readonly name: string;
+  readonly kind: AccountKindDto;
+  readonly balance: string;
+  readonly currency: string;
+  /** Empty for today. */
+  readonly balanceOn: string;
+  readonly note: string;
+}
+
+export interface AccountsDto {
+  readonly accounts: readonly AccountDto[];
+  /** One per currency; never converted into one figure. */
+  readonly totals: readonly MoneyDto[];
 }
 
 export interface CategoryFormDto {
@@ -263,6 +295,7 @@ export interface PersonDto {
   readonly name: string;
   readonly contact: string | null;
   readonly note: string | null;
+  readonly archived: boolean;
 }
 
 export interface LoanPositionDto {
@@ -507,6 +540,7 @@ export interface VaultpApi {
   readAllowanceConfig(): Promise<AllowanceConfigDto>;
   saveAllowanceConfig(config: AllowanceConfigDto): Promise<void>;
   listExpenses(query: ExpenseQueryDto): Promise<ExpenseDto[]>;
+  getExpense(id: string): Promise<ExpenseDto | null>;
   listCategories(): Promise<CategoryDto[]>;
   listCurrencies(): Promise<CurrencyDto[]>;
   addExpense(input: ExpenseFormDto): Promise<{ id: string }>;
@@ -555,6 +589,8 @@ export interface VaultpApi {
   /** Find a category by name, or create it — never a second one of the same name. */
   ensureCategory(name: string, icon: string | null): Promise<{ id: string; name: string }>;
   archiveCategory(id: string): Promise<void>;
+  /** Rename, or change the budget. A blank limit removes it. */
+  updateCategory(id: string, form: CategoryFormDto): Promise<void>;
 
   /** Writes the whole vault, unencrypted, wherever the user chooses. */
   exportBackup(): Promise<string | undefined>;
@@ -580,6 +616,9 @@ export interface VaultpApi {
   addRule(form: RuleFormDto): Promise<{ id: string }>;
   setRuleState(id: string, state: 'active' | 'paused' | 'ended'): Promise<void>;
   updateRuleAmount(id: string, amount: string, currency: string): Promise<void>;
+  /** Everything about a rule; a changed amount goes through the price-change path. */
+  updateRule(id: string, form: RuleFormDto): Promise<void>;
+  deleteRule(id: string): Promise<void>;
   /** Rules set to log themselves, caught up to today. Returns how many landed. */
   runAutoLog(): Promise<{ created: number }>;
   /** Remind-only rules that are due and still unlogged. */
@@ -590,6 +629,16 @@ export interface VaultpApi {
   listPeople(): Promise<PersonDto[]>;
   addPerson(input: { name: string; contact: string; note: string }): Promise<{ id: string }>;
   archivePerson(id: string): Promise<void>;
+  unarchivePerson(id: string): Promise<void>;
+  listArchivedPeople(): Promise<PersonDto[]>;
+  getPerson(id: string): Promise<PersonDto | null>;
+  updatePerson(id: string, input: { name: string; contact: string; note: string }): Promise<void>;
+
+  listAccounts(includeArchived: boolean): Promise<AccountsDto>;
+  addAccount(form: AccountFormDto): Promise<{ id: string }>;
+  updateAccount(id: string, form: AccountFormDto): Promise<void>;
+  setAccountArchived(id: string, archived: boolean): Promise<void>;
+  deleteAccount(id: string): Promise<void>;
   ledgerFor(personId: string): Promise<LedgerDto>;
   addDebtEntry(form: DebtEntryFormDto): Promise<{ id: string }>;
   /** Records the correction as an adjustment; the original entry stays visible. */

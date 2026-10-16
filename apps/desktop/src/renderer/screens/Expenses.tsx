@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import type { ExpenseDto } from '../../shared/api.js';
+import { useIntent } from '../nav.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 import { Awaiting } from './Awaiting.js';
 import { ExpenseEditor } from './ExpenseEditor.js';
@@ -20,6 +21,15 @@ type Editing = { expense: ExpenseDto | undefined } | null;
 export function Expenses() {
   const [categoryId, setCategoryId] = useState('');
   const [editing, setEditing] = useState<Editing>(null);
+
+  useIntent('expenses', (intent) => {
+    if (intent.kind === 'newExpense') setEditing({ expense: undefined });
+    if (intent.kind === 'expense') {
+      void api()
+        .getExpense(intent.id)
+        .then((expense) => expense && setEditing({ expense }));
+    }
+  });
 
   const query = useMemo(() => (categoryId ? { categoryId } : {}), [categoryId]);
   const expenses = useVaultQuery(() => api().listExpenses(query));

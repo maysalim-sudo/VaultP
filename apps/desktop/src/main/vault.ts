@@ -12,6 +12,7 @@ import { basename, dirname, join } from 'node:path';
 import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 
 import {
+  AccountRepository,
   DebtRepository,
   DriveBackend,
   DocumentRepository,
@@ -51,6 +52,7 @@ export interface DesktopVault {
   readonly debts: DebtRepository;
   readonly documents: DocumentRepository;
   readonly notes: NoteRepository;
+  readonly accounts: AccountRepository;
   readonly keys: VaultKeys;
   readonly slot: SlotId;
   readonly deviceId: string;
@@ -213,6 +215,7 @@ async function openWith(dataKey: Uint8Array, slot: SlotId): Promise<DesktopVault
     debts: new DebtRepository(store),
     documents: new DocumentRepository(store),
     notes: new NoteRepository(store),
+    accounts: new AccountRepository(store),
     keys,
     slot,
     deviceId: store.device,

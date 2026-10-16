@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 
-import type { DebtEntryFormDto, LedgerDto, SideBalanceDto } from '../../shared/api.js';
+import type { DebtEntryDto, DebtEntryFormDto, PersonDto, SideBalanceDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 
@@ -26,12 +26,14 @@ export function PersonLedger({
   onClose: () => void;
 }) {
   const ledger = useVaultQuery(() => api().ledgerFor(personId));
-  const people = useVaultQuery(() => api().listPeople());
+  // By id rather than from the list, which leaves out archived people.
+  const personQuery = useVaultQuery(() => api().getPerson(personId));
   const currencies = useVaultQuery(() => api().listCurrencies());
   const { busy, error, run } = useRunner();
-  const [entry, setEntry] = useState<DebtEntryFormDto | null>(null);
+  const [entry, setEntry] = useState<{ form: DebtEntryFormDto; replaces?: string } | null>(null);
+  const [editingPerson, setEditingPerson] = useState(false);
 
-  const person = people.data?.find((candidate) => candidate.id === personId);
+  const person = personQuery.data ?? undefined;
   const data = ledger.data;
 
   const blank = (kind: DebtEntryFormDto['kind']): DebtEntryFormDto => ({
@@ -63,13 +65,35 @@ export function PersonLedger({
           </button>
           <span className="spacer" />
           {(Object.keys(KIND_LABELS) as DebtEntryFormDto['kind'][]).map((kind) => (
-            <button key={kind} className="secondary" onClick={() => setEntry(blank(kind))}>
+            <button key={kind} className="secondary" onClick={() => setEntry({ form: blank(kind) })}>
               {KIND_LABELS[kind]}
             </button>
           ))}
         </>
       }
     >
+      {person ? (
+        <div className="row person-head">
+          <span className="muted small">
+            {[person.contact, person.note].filter(Boolean).join(' · ') || 'No contact or note'}
+            {person.archived ? ' · archived' : ''}
+          </span>
+          <span className="spacer" />
+          <button className="secondary" onClick={() => setEditingPerson(true)}>
+            Edit details
+          </button>
+          <button
+            className="secondary"
+            disabled={busy}
+            onClick={() =>
+              void run(() => (person.archived ? api().unarchivePerson(person.id) : api().archivePerson(person.id)))
+            }
+          >
+            {person.archived ? 'Unarchive' : 'Archive'}
+          </button>
+        </div>
+      ) : null}
+
       {ledger.error ? <p className="error">{ledger.error}</p> : null}
       {error ? <p className="error">{error}</p> : null}
 
@@ -103,6 +127,15 @@ export function PersonLedger({
             <span className="right">
               {item.amount.text} {item.amount.currency}
               <em className="muted"> {item.occurredOn}</em>
+              {correctionOf(item) ? (
+                <button
+                  className="link"
+                  disabled={busy}
+                  onClick={() => setEntry({ form: { ...blank(correctionOf(item)!), ...prefill(item) }, replaces: item.id })}
+                >
+                  correct
+                </button>
+              ) : null}
               {item.kind === 'adjustment' ? null : (
                 <button
                   className="link"
@@ -122,13 +155,78 @@ export function PersonLedger({
       </ul>
       {data?.entries.length === 0 ? <p className="muted small">Nothing recorded.</p> : null}
 
+      {editingPerson && person ? <EditPerson person={person} onClose={() => setEditingPerson(false)} /> : null}
+
       {entry ? (
         <EntryForm
-          form={entry}
+          form={entry.form}
+          replaces={entry.replaces}
           currencies={(currencies.data ?? []).map((currency) => currency.code)}
           onClose={() => setEntry(null)}
         />
       ) : null}
+    </Modal>
+  );
+}
+
+/**
+ * Which form re-records this entry. Entries are never edited in place — the
+ * ledger is evidence — so a correction voids the original and records the
+ * right one, and both stay visible.
+ */
+function correctionOf(item: DebtEntryDto): DebtEntryFormDto['kind'] | null {
+  if (item.kind === 'loan') return item.owedToMe ? 'lend' : 'borrow';
+  if (item.kind === 'payment') return item.owedToMe ? 'repaidToMe' : 'repaidByMe';
+  return null;
+}
+
+function prefill(item: DebtEntryDto): Partial<DebtEntryFormDto> {
+  return {
+    amount: item.amount.text.replace('-', ''),
+    currency: item.amount.currency,
+    occurredOn: item.occurredOn,
+    note: item.note ?? '',
+  };
+}
+
+function EditPerson({ person, onClose }: { person: PersonDto; onClose: () => void }) {
+  const [name, setName] = useState(person.name);
+  const [contact, setContact] = useState(person.contact ?? '');
+  const [note, setNote] = useState(person.note ?? '');
+  const { busy, error, run } = useRunner();
+
+  return (
+    <Modal
+      title="Edit details"
+      onClose={onClose}
+      footer={
+        <>
+          <span className="spacer" />
+          <button
+            disabled={busy || name.trim() === ''}
+            onClick={() =>
+              void run(async () => {
+                await api().updatePerson(person.id, { name, contact, note });
+                onClose();
+              })
+            }
+          >
+            Save
+          </button>
+        </>
+      }
+    >
+      <Field label="Name">
+        <input value={name} onChange={(event) => setName(event.target.value)} autoFocus />
+      </Field>
+      <Field label="Contact">
+        <input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="Phone, email, anything" />
+      </Field>
+      <Field label="Note">
+        <input value={note} onChange={(event) => setNote(event.target.value)} />
+      </Field>
+      <p className="muted small">Their loans and repayments stay exactly as they are.</p>
+      {error ? <p className="error">{error}</p> : null}
     </Modal>
   );
 }
@@ -166,10 +264,13 @@ function Side({ title, side }: { title: string; side: SideBalanceDto }) {
 
 function EntryForm({
   form,
+  replaces,
   currencies,
   onClose,
 }: {
   form: DebtEntryFormDto;
+  /** Set when correcting: this entry is voided as the new one is recorded. */
+  replaces?: string | undefined;
   currencies: readonly string[];
   onClose: () => void;
 }) {
@@ -179,7 +280,7 @@ function EntryForm({
 
   return (
     <Modal
-      title={KIND_LABELS[state.kind]}
+      title={replaces ? `Correct: ${KIND_LABELS[state.kind]}` : KIND_LABELS[state.kind]}
       onClose={onClose}
       footer={
         <>
@@ -188,12 +289,15 @@ function EntryForm({
             disabled={busy || state.amount.trim() === ''}
             onClick={() =>
               void run(async () => {
+                // Recorded first, so a typo in the new amount leaves the old
+                // entry standing rather than voided with nothing in its place.
                 await api().addDebtEntry(state);
+                if (replaces) await api().voidDebtEntry(replaces, 'Corrected');
                 onClose();
               })
             }
           >
-            Record
+            {replaces ? 'Save correction' : 'Record'}
           </button>
         </>
       }

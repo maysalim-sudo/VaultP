@@ -4,12 +4,25 @@ import { useState } from 'react';
 
 import type { AllowanceConfigDto, AllowanceDto, BudgetDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
+import { useNav } from '../nav.js';
+import { noteBackground } from '../notes/NoteEditor.js';
 import { api, useRunner, useVaultQuery } from '../vault.js';
 
 export function Dashboard() {
   const overview = useVaultQuery(() => api().overview());
+  const notes = useVaultQuery(() => api().listNotes({ view: 'all' }));
+  const accounts = useVaultQuery(() => api().listAccounts(false));
   const [configuring, setConfiguring] = useState(false);
+  const nav = useNav();
   const data = overview.data;
+
+  // Pinned first, then the most recently touched: what you were working on.
+  const recentNotes = [...(notes.data ?? [])]
+    .sort(
+      (a, b) =>
+        Number(b.pinned) - Number(a.pinned) || (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
+    )
+    .slice(0, 6);
 
   return (
     <>
@@ -21,6 +34,64 @@ export function Dashboard() {
       </div>
 
       {overview.error ? <p className="error">{overview.error}</p> : null}
+
+      {/* Notes first: the reason this app exists. One click to a blank note. */}
+      <section className="quick">
+        <button className="quick-note" onClick={() => nav.go('notes', { kind: 'newNote', with: 'text' })}>
+          Take a note…
+        </button>
+        <button
+          className="secondary quick-icon"
+          title="New checklist"
+          aria-label="New checklist"
+          onClick={() => nav.go('notes', { kind: 'newNote', with: 'checklist' })}
+        >
+          ☑
+        </button>
+        <button
+          className="secondary quick-icon"
+          title="New note with an image"
+          aria-label="New note with an image"
+          onClick={() => nav.go('notes', { kind: 'newNote', with: 'image' })}
+        >
+          🖼
+        </button>
+        <span className="quick-gap" />
+        <button className="secondary" onClick={() => nav.go('expenses', { kind: 'newExpense' })}>
+          + Expense
+        </button>
+        <button className="secondary" onClick={() => nav.go('debts', { kind: 'newPerson' })}>
+          + Person
+        </button>
+        <button className="secondary" onClick={() => nav.go('accounts', { kind: 'newAccount' })}>
+          + Account
+        </button>
+        <button className="secondary" onClick={() => nav.go('documents', { kind: 'newDocument' })}>
+          + Document
+        </button>
+      </section>
+
+      {recentNotes.length > 0 ? (
+        <section className="recent-notes">
+          {recentNotes.map((note) => (
+            <button
+              key={note.id}
+              className="recent-note"
+              style={{ background: noteBackground(note.colour) }}
+              onClick={() => nav.go('notes', { kind: 'note', id: note.id })}
+            >
+              {note.pinned ? <span className="recent-pin" aria-label="Pinned">📌</span> : null}
+              {note.title ? <strong>{note.title}</strong> : null}
+              <span className="recent-body">{note.body || (note.title ? '' : 'Empty note')}</span>
+              {note.checklist ? (
+                <span className="muted small">
+                  {note.checklist.done}/{note.checklist.total} done
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </section>
+      ) : null}
 
       <section className="cards">
         <div className="card">
@@ -91,11 +162,30 @@ export function Dashboard() {
           ) : null}
         </div>
 
-        <div className="card">
+        <button className="card card-link" onClick={() => nav.go('accounts')}>
+          <span className="stat-label">In your accounts</span>
+          {accounts.data && accounts.data.totals.length > 0 ? (
+            accounts.data.totals.map((total, index) => (
+              <strong key={total.currency} className={`stat-value ${index === 0 ? '' : 'secondary-figure'}`}>
+                {total.text}
+                <span className="unit">{total.currency}</span>
+              </strong>
+            ))
+          ) : (
+            <strong className="stat-value">—</strong>
+          )}
+          <span className="stat-note">
+            {accounts.data?.accounts.length
+              ? `${accounts.data.accounts.length} account${accounts.data.accounts.length === 1 ? '' : 's'}, as last checked`
+              : 'Add your bank, cash and cards'}
+          </span>
+        </button>
+
+        <button className="card card-link" onClick={() => nav.go('debts')}>
           <span className="stat-label">Owed</span>
           <strong className="stat-value">{data?.openBalances.length ?? 0}</strong>
           <span className="stat-note">open balances</span>
-        </div>
+        </button>
 
         <div className="card">
           <span className="stat-label">Needs attention</span>
@@ -164,13 +254,17 @@ export function Dashboard() {
           <h3>Attention</h3>
           <ul className="list">
             {data.expiringDocuments.map((document) => (
-              <li key={document.id}>
+              <li
+                key={document.id}
+                className="clickable"
+                onClick={() => nav.go('documents', { kind: 'document', id: document.id })}
+              >
                 <span>{document.title}</span>
                 <span className="right warn">expires {document.expiryDate}</span>
               </li>
             ))}
             {data.overdueNotes.map((note) => (
-              <li key={note.id}>
+              <li key={note.id} className="clickable" onClick={() => nav.go('notes', { kind: 'note', id: note.id })}>
                 <span>{note.title || note.body.split('\n')[0]}</span>
                 <span className="right warn">due {note.dueOn}</span>
               </li>

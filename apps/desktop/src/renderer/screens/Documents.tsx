@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import type { DocumentDto } from '../../shared/api.js';
+import { useIntent } from '../nav.js';
 import { api, useRunner, useVaultQuery } from '../vault.js';
 import { DocumentDetail } from './DocumentDetail.js';
 
@@ -10,6 +11,16 @@ export function Documents() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   const { busy, error, run } = useRunner();
+
+  useIntent('documents', (intent) => {
+    if (intent.kind === 'document') setOpen(intent.id);
+    if (intent.kind === 'newDocument') {
+      void run(async () => {
+        const created = await api().addDocumentFromFile();
+        if (created) setOpen(created.id);
+      });
+    }
+  });
 
   const term = useMemo(() => search, [search]);
   const documents = useVaultQuery(() => api().listDocuments(term));

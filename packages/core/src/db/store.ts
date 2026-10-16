@@ -20,8 +20,8 @@ import {
 } from '../oplog/event.js';
 import { type MaterializedRow, applyEvent } from '../oplog/replay.js';
 import { type SqlDatabase, type SqlValue, toSqlValue } from './adapter.js';
-import { entityDef } from './entities.js';
-import { migrate } from './migrations.js';
+import { entityDef, isKnownEntity } from './entities.js';
+import { currentVersion, migrate } from './migrations.js';
 
 export interface VaultStoreOptions {
   readonly db: SqlDatabase;
@@ -64,14 +64,18 @@ export class VaultStore {
 
   /** Migrate, restore the clock, and return a ready store. */
   static open(options: VaultStoreOptions): VaultStore {
+    const before = currentVersion(options.db);
     migrate(options.db);
+    const upgraded = before > 0 && currentVersion(options.db) > before;
     const saved = options.db.get<{ wall_ms: number; counter: number }>(
       'SELECT wall_ms, counter FROM clock_state WHERE id = 1',
     );
     const state: Hlc | undefined = saved
       ? { wallMs: saved.wall_ms, counter: saved.counter, device: options.device }
       : undefined;
-    return new VaultStore(options, state);
+    const store = new VaultStore(options, state);
+    if (upgraded) store.materializeWaiting();
+    return store;
   }
 
   // ---------------------------------------------------------------- writing
@@ -176,8 +180,34 @@ export class VaultStore {
       ],
     );
 
-    this.materialize(event);
+    // A kind of record this build has no table for comes from a newer version on
+    // another device. It is kept in the log — so it is still passed on, and
+    // still here when this device updates — but there is nowhere to show it yet.
+    // Throwing instead would stop all sync on the older device.
+    if (isKnownEntity(event.entity)) this.materialize(event);
     return true;
+  }
+
+  /**
+   * After an upgrade that added a table, fill it from events logged while this
+   * build did not know it. Only tables still empty are considered, so it costs
+   * a grouped count and nothing more on a vault with nothing waiting.
+   */
+  private materializeWaiting(): void {
+    const logged = this.db.all<{ entity: string; n: number }>(
+      'SELECT entity, COUNT(*) AS n FROM oplog GROUP BY entity',
+    );
+    for (const { entity } of logged) {
+      if (!isKnownEntity(entity)) continue;
+      const def = entityDef(entity);
+      if (this.db.get<{ one: number }>(`SELECT 1 AS one FROM ${def.table} LIMIT 1`)) continue;
+      const events = this.db
+        .all<OplogRow>('SELECT * FROM oplog WHERE entity = ? ORDER BY hlc ASC', [entity])
+        .map(decodeOplogRow);
+      this.db.transaction(() => {
+        for (const event of events) this.materialize(event);
+      });
+    }
   }
 
   private materialize(event: VaultEvent): void {
@@ -327,9 +357,10 @@ export class VaultStore {
   rebuild(): void {
     this.db.transaction(() => {
       const events = this.allEvents();
-      const tables = new Set(events.map((event) => entityDef(event.entity).table));
+      const known = events.filter((event) => isKnownEntity(event.entity));
+      const tables = new Set(known.map((event) => entityDef(event.entity).table));
       for (const table of tables) this.db.run(`DELETE FROM ${table}`);
-      for (const event of events) this.materialize(event);
+      for (const event of known) this.materialize(event);
     });
   }
 }

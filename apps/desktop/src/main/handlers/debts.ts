@@ -17,6 +17,7 @@ import {
   type DebtEntry,
   type InterestTerms,
   type LedgerBalance,
+  type Person,
   type SideBalance,
 } from '@vaultp/core';
 
@@ -40,6 +41,16 @@ function toEntryDto(entry: DebtEntry): DebtEntryDto {
     occurredOn: entry.occurredOn,
     note: entry.note,
     settledOn: entry.settledOn,
+  };
+}
+
+function toPersonDto(person: Person): PersonDto {
+  return {
+    id: person.id,
+    name: person.name,
+    contact: person.contact,
+    note: person.note,
+    archived: person.archived,
   };
 }
 
@@ -124,16 +135,30 @@ export function registerDebtHandlers(requireVault: () => DesktopVault): void {
       .filter((entry): entry is BalanceDto => entry !== undefined);
   });
 
-  ipcMain.handle('debts:people', (): PersonDto[] =>
-    requireVault()
-      .debts.listPeople()
-      .map((person) => ({
-        id: person.id,
-        name: person.name,
-        contact: person.contact,
-        note: person.note,
-      })),
+  ipcMain.handle('debts:people', (): PersonDto[] => requireVault().debts.listPeople().map(toPersonDto));
+
+  ipcMain.handle('debts:person', (_event, id: string): PersonDto | null => {
+    const person = requireVault().debts.getPerson(id);
+    return person ? toPersonDto(person) : null;
+  });
+
+  ipcMain.handle(
+    'debts:updatePerson',
+    (_event, id: string, input: { name: string; contact: string; note: string }) => {
+      requireVault().debts.updatePerson(id, { name: input.name, contact: input.contact, note: input.note });
+    },
   );
+
+  ipcMain.handle('debts:archivedPeople', (): PersonDto[] =>
+    requireVault()
+      .debts.listPeople(true)
+      .filter((person) => person.archived)
+      .map(toPersonDto),
+  );
+
+  ipcMain.handle('debts:unarchivePerson', (_event, id: string) => {
+    requireVault().debts.unarchivePerson(id);
+  });
 
   ipcMain.handle(
     'debts:addPerson',

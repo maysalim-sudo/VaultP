@@ -23,6 +23,7 @@ export type EntityName =
   | 'document'
   | 'note'
   | 'folder'
+  | 'account'
   | 'tag'
   | 'tagging'
   | 'file'

@@ -5,14 +5,15 @@
  * there are more than about five places to go, and there are more than five.
  */
 
+// Search is not a place: it is the bar above every screen (Ctrl+K).
 export const SCREENS = [
   { id: 'dashboard', label: 'Dashboard', icon: '◆' },
+  { id: 'notes', label: 'Notes', icon: '✎' },
   { id: 'expenses', label: 'Expenses', icon: '▤' },
   { id: 'rules', label: 'Recurring', icon: '↻' },
   { id: 'debts', label: 'Debts', icon: '⇄' },
+  { id: 'accounts', label: 'Accounts', icon: '◎' },
   { id: 'documents', label: 'Documents', icon: '▣' },
-  { id: 'notes', label: 'Notes', icon: '✎' },
-  { id: 'search', label: 'Search', icon: '⌕' },
   { id: 'settings', label: 'Settings', icon: '⚙' },
 ] as const;
 

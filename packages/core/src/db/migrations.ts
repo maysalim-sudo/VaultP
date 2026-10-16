@@ -348,6 +348,33 @@ const MIGRATIONS: readonly Migration[] = [
       promoteParked(db, 'note', ['folder_id', 'position']);
     },
   },
+  {
+    version: 9,
+    name: 'accounts',
+    up(db) {
+      // Where money sits — a bank account, cash, a card, savings — with the
+      // balance as the person last read it. Typed in, not computed: expenses
+      // are not drawn from an account, so the figure is a statement of fact
+      // with the date it was true (`balance_on`), never a running total that
+      // could drift from the bank's.
+      db.exec(`
+        CREATE TABLE account (
+          id            TEXT PRIMARY KEY,
+          name          TEXT,
+          kind          TEXT,
+          balance_minor INTEGER,
+          currency      TEXT,
+          balance_on    TEXT,
+          note          TEXT,
+          archived      INTEGER,
+          sort_order    REAL,
+          created_at    TEXT,
+          updated_at    TEXT,
+          ${ENTITY_INTERNALS}
+        );
+      `);
+    },
+  },
 ];
 
 /**

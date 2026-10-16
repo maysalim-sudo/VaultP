@@ -67,6 +67,11 @@ export function registerExpenseHandlers(requireVault: () => DesktopVault): void 
       .map(toExpenseDto),
   );
 
+  ipcMain.handle('expenses:get', (_event, id: string) => {
+    const expense = requireVault().expenses.getExpense(id);
+    return expense ? toExpenseDto(expense) : null;
+  });
+
   ipcMain.handle('expenses:categories', () =>
     requireVault().expenses.listCategories().map(toCategoryDto),
   );

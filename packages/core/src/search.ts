@@ -18,7 +18,7 @@ import { type Money, money } from './money/money.js';
 import { noteHeadline } from './notes/repository.js';
 import type { IsoDate } from './time/date.js';
 
-export type SearchResultKind = 'expense' | 'debt' | 'document' | 'note';
+export type SearchResultKind = 'expense' | 'debt' | 'document' | 'note' | 'person' | 'account';
 
 export interface SearchResult {
   readonly kind: SearchResultKind;
@@ -210,6 +210,62 @@ export function searchEverything(
     });
   }
 
+  // --------------------------------------------------------------- people
+  //
+  // The person themselves, not only their entries: searching "Sami" should
+  // offer Sami's ledger even before anything has been lent.
+  const people = db.all<{ id: string; name: string | null; contact: string | null; note: string | null }>(
+    `SELECT id, name, contact, note
+       FROM person
+      WHERE deleted_at IS NULL
+        AND (name LIKE ? ESCAPE '\\' OR contact LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\')
+      ORDER BY name COLLATE NOCASE
+      LIMIT ?`,
+    [pattern, pattern, pattern, limit] as SqlValue[],
+  );
+
+  for (const row of people) {
+    results.push({
+      kind: 'person',
+      id: row.id,
+      title: row.name ?? 'Person',
+      detail: row.contact ?? row.note ?? 'person',
+      amount: null,
+      date: null,
+      parentId: null,
+    });
+  }
+
+  // ------------------------------------------------------------- accounts
+  const accounts = db.all<{
+    id: string;
+    name: string | null;
+    note: string | null;
+    balance_minor: number | null;
+    currency: string | null;
+    balance_on: string | null;
+  }>(
+    `SELECT id, name, note, balance_minor, currency, balance_on
+       FROM account
+      WHERE deleted_at IS NULL
+        AND (name LIKE ? ESCAPE '\\' OR note LIKE ? ESCAPE '\\')
+      ORDER BY sort_order
+      LIMIT ?`,
+    [pattern, pattern, limit] as SqlValue[],
+  );
+
+  for (const row of accounts) {
+    results.push({
+      kind: 'account',
+      id: row.id,
+      title: row.name ?? 'Account',
+      detail: row.balance_on ? `balance on ${row.balance_on}` : 'account',
+      amount: money(row.balance_minor ?? 0, row.currency ?? baseCurrency),
+      date: row.balance_on,
+      parentId: null,
+    });
+  }
+
   return results;
 }
 
@@ -217,7 +273,7 @@ export function searchEverything(
 export function groupResults(
   results: readonly SearchResult[],
 ): Array<{ kind: SearchResultKind; results: SearchResult[] }> {
-  const order: SearchResultKind[] = ['expense', 'debt', 'document', 'note'];
+  const order: SearchResultKind[] = ['person', 'note', 'expense', 'debt', 'account', 'document'];
   return order
     .map((kind) => ({ kind, results: results.filter((r) => r.kind === kind) }))
     .filter((group) => group.results.length > 0);

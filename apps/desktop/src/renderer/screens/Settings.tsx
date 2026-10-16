@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import type { CategoryFormDto, UpdateStatusDto } from '../../shared/api.js';
+import type { CategoryDto, CategoryFormDto, UpdateStatusDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 import { DriveSettings } from './Drive.js';
@@ -10,19 +10,19 @@ import { DriveSettings } from './Drive.js';
 export function Settings() {
   const categories = useVaultQuery(() => api().listCategories());
   const { busy, error, run } = useRunner();
-  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<{ category: CategoryDto | null } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   return (
     <>
       <div className="head">
         <h2>Settings</h2>
-        <button onClick={() => setAdding(true)}>New category</button>
+        <button onClick={() => setEditing({ category: null })}>New category</button>
       </div>
 
       {error ? <p className="error">{error}</p> : null}
       {message ? <p className="muted small">{message}</p> : null}
-      {adding ? <CategoryForm onClose={() => setAdding(false)} /> : null}
+      {editing ? <CategoryForm category={editing.category} onClose={() => setEditing(null)} /> : null}
 
       <h3>Categories</h3>
       <ul className="list">
@@ -41,6 +41,9 @@ export function Settings() {
               )}
             </span>
             <span className="right">
+              <button className="link" disabled={busy} onClick={() => setEditing({ category })}>
+                edit
+              </button>
               <button
                 className="link"
                 disabled={busy}
@@ -198,17 +201,17 @@ function describe(status: UpdateStatusDto): string {
   }
 }
 
-function CategoryForm({ onClose }: { onClose: () => void }) {
+function CategoryForm({ category, onClose }: { category: CategoryDto | null; onClose: () => void }) {
   const { busy, error, run } = useRunner();
   const [form, setForm] = useState<CategoryFormDto>({
-    name: '',
-    monthlyLimit: '',
-    rollover: false,
+    name: category?.name ?? '',
+    monthlyLimit: category?.monthlyLimit?.text ?? '',
+    rollover: category?.rollover ?? false,
   });
 
   return (
     <Modal
-      title="New category"
+      title={category ? 'Edit category' : 'New category'}
       onClose={onClose}
       footer={
         <>
@@ -217,12 +220,13 @@ function CategoryForm({ onClose }: { onClose: () => void }) {
             disabled={busy || form.name.trim() === ''}
             onClick={() =>
               void run(async () => {
-                await api().addCategory(form);
+                if (category) await api().updateCategory(category.id, form);
+                else await api().addCategory(form);
                 onClose();
               })
             }
           >
-            Create
+            {category ? 'Save' : 'Create'}
           </button>
         </>
       }
