@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -35,10 +36,12 @@ import {
   saveAllowanceConfig,
   todayIn,
   toDecimalString,
+  type Category,
   type CategoryBudget,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
+import { FieldsSheet } from '../components/FieldsSheet.js';
 import { YearGauge } from '../components/YearGauge.js';
 import { BackupScreen } from './BackupScreen.js';
 import { paletteFor, type Palette } from '../components/theme.js';
@@ -52,6 +55,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
 
   const [editingLimit, setEditingLimit] = useState<CategoryBudget | null>(null);
   const [editingCeiling, setEditingCeiling] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showingBackup, setShowingBackup] = useState(false);
 
   const forecast = useMemo(
@@ -165,6 +169,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
                 budget={budget}
                 palette={palette}
                 onPress={() => setEditingLimit(budget)}
+                onLongPress={() => setEditingCategory(budget.category)}
               />
             ))}
 
@@ -174,6 +179,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
                   <Pressable
                     key={budget.category.id}
                     onPress={() => setEditingLimit(budget)}
+                    onLongPress={() => setEditingCategory(budget.category)}
                     style={[
                       styles.chip,
                       { borderColor: palette.border, backgroundColor: palette.surface },
@@ -189,6 +195,9 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
                 ))}
               </View>
             ) : null}
+            <Text style={[styles.caption, { color: palette.dim }]}>
+              Tap a category to set its limit; hold it to rename or archive it.
+            </Text>
           </Section>
 
           {/* --------------------------------------------------- allowance */}
@@ -226,17 +235,46 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
             initialMinor={editingLimit.limit?.amountMinor ?? 0}
             onCancel={() => setEditingLimit(null)}
             onSave={(minor) => {
+              // Only the limit changes — carry-over and everything else stay.
               mutate((v) =>
-                v.expenses.addCategory({
-                  id: editingLimit.category.id,
-                  name: editingLimit.category.name,
-                  sortOrder: editingLimit.category.sortOrder,
-                  ...(editingLimit.category.icon ? { icon: editingLimit.category.icon } : {}),
-                  ...(editingLimit.category.color ? { color: editingLimit.category.color } : {}),
-                  ...(minor > 0 ? { monthlyLimit: money(minor, BASE_CURRENCY) } : {}),
+                v.expenses.updateCategory(editingLimit.category.id, {
+                  monthlyLimit: minor > 0 ? money(minor, BASE_CURRENCY) : null,
                 }),
               );
               setEditingLimit(null);
+            }}
+          />
+        ) : null}
+
+        {editingCategory ? (
+          <FieldsSheet
+            title="Edit category"
+            palette={palette}
+            fields={[
+              { key: 'name', label: 'Name', initial: editingCategory.name, required: true },
+              { key: 'icon', label: 'Icon', initial: editingCategory.icon ?? '', placeholder: 'An emoji, e.g. 🍽️' },
+            ]}
+            footnote="Archiving hides it from new expenses. Past expenses keep it, so nothing loses its heading."
+            actions={[
+              {
+                label: 'Archive',
+                destructive: true,
+                onPress: () => {
+                  const id = editingCategory.id;
+                  setEditingCategory(null);
+                  mutate((v) => v.expenses.archiveCategory(id));
+                },
+              },
+            ]}
+            onCancel={() => setEditingCategory(null)}
+            onSave={(values) => {
+              const id = editingCategory.id;
+              setEditingCategory(null);
+              try {
+                mutate((v) => v.expenses.updateCategory(id, { name: values.name ?? '', icon: values.icon ?? null }));
+              } catch (caught: unknown) {
+                Alert.alert('Not renamed', caught instanceof Error ? caught.message : String(caught));
+              }
             }}
           />
         ) : null}
@@ -322,10 +360,12 @@ function BudgetRow({
   budget,
   palette,
   onPress,
+  onLongPress,
 }: {
   budget: CategoryBudget;
   palette: Palette;
   onPress: () => void;
+  onLongPress: () => void;
 }) {
   const colour = budget.overspent
     ? palette.negative
@@ -334,7 +374,7 @@ function BudgetRow({
       : (budget.category.color ?? palette.accent);
 
   return (
-    <Pressable onPress={onPress} style={styles.budgetRow}>
+    <Pressable onPress={onPress} onLongPress={onLongPress} style={styles.budgetRow}>
       <View style={styles.budgetHeader}>
         <Text style={[styles.budgetName, { color: palette.text }]} numberOfLines={1}>
           {budget.category.icon ?? ''} {budget.category.name}

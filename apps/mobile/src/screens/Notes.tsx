@@ -57,6 +57,7 @@ import { NoteActions } from '../notes/NoteActions.js';
 import { NoteEditor, wash, type EditorStart } from '../notes/NoteEditor.js';
 import { Sheet, SheetRow } from '../notes/sheet.js';
 import type { OpenVault } from '../vault/open.js';
+import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 type Scheme = 'light' | 'dark';
@@ -152,13 +153,26 @@ function inside(point: Point, frame: Frame): boolean {
   );
 }
 
-export function Notes({ onClose }: { onClose?: () => void }) {
+export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => void } & IntentProps) {
   const { vault, version, mutate } = useOpenVault();
   const scheme: Scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const palette = paletteFor(scheme);
   const today = todayIn();
 
   const [editor, setEditor] = useState<EditorStart | null>(null);
+
+  // Arriving from search or Home: open that note, or start the kind asked for.
+  useEffect(() => {
+    if (!intent) return;
+    if (intent.kind === 'note') {
+      const note = vault.notes.getNote(intent.id);
+      if (note) setEditor({ kind: 'existing', note });
+    }
+    if (intent.kind === 'newNote') {
+      setEditor({ kind: 'new', with: intent.with === 'image' ? 'library' : intent.with, folderId: null });
+    }
+    onIntentHandled?.();
+  }, [intent, vault, onIntentHandled]);
   const [filter, setFilter] = useState<Filter>({ kind: 'all' });
   const [query, setQuery] = useState('');
   const [panel, setPanel] = useState<Panel>(null);

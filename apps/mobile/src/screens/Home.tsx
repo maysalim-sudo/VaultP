@@ -46,7 +46,7 @@ import {
 
 import { describeDate } from '../components/DateField.js';
 import { paletteFor, type Palette } from '../components/theme.js';
-import type { ViewName } from '../components/Sidebar.js';
+import type { Navigate } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 const LOCALE = 'fr-TN';
@@ -85,9 +85,11 @@ function tint(hex: string, alpha = '26'): string {
 export function Home({
   onNavigate,
   onEditExpense,
+  onSearch,
 }: {
-  onNavigate: (view: ViewName) => void;
+  onNavigate: Navigate;
   onEditExpense: (expense: Expense) => void;
+  onSearch: () => void;
 }) {
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
@@ -115,6 +117,18 @@ export function Home({
   }, [vault, version, today]);
 
   const recent = useMemo(() => vault.expenses.listExpenses({ limit: 12 }), [vault, version]);
+
+  /** Pinned first, then the latest touched: what you were in the middle of. */
+  const recentNotes = useMemo(
+    () =>
+      [...vault.notes.listOpen()]
+        .sort((a, b) => Number(b.pinned) - Number(a.pinned) || (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+        .slice(0, 8),
+    [vault, version],
+  );
+
+  const accountTotals = useMemo(() => vault.accounts.totals(), [vault, version]);
+  const accountCount = useMemo(() => vault.accounts.listAccounts().length, [vault, version]);
 
   const categories = useMemo(() => vault.expenses.listCategories(true), [vault, version]);
   const categoryById = useMemo(
@@ -225,6 +239,84 @@ export function Home({
   return (
     <View style={[styles.root, { backgroundColor: palette.background }]}>
       <ScrollView contentContainerStyle={styles.body}>
+        {/* ---------------------------------------------------------- search */}
+        <Pressable
+          onPress={onSearch}
+          accessibilityLabel="Search everything"
+          style={({ pressed }) => [
+            styles.searchBar,
+            { backgroundColor: palette.surface, borderColor: palette.border },
+            pressed ? styles.pressed : null,
+          ]}
+        >
+          <Text style={styles.searchGlyph}>🔎</Text>
+          <Text style={[styles.searchText, { color: palette.dim }]}>Search notes, people, expenses…</Text>
+        </Pressable>
+
+        {/* ----------------------------------------------- quick create: notes */}
+        <View style={styles.quickRow}>
+          <Pressable
+            onPress={() => onNavigate('notes', { kind: 'newNote', with: 'text' })}
+            style={({ pressed }) => [
+              styles.takeNote,
+              { backgroundColor: palette.surface, borderColor: palette.border },
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <Text style={[styles.takeNoteText, { color: palette.dim }]}>Take a note…</Text>
+          </Pressable>
+          <QuickIcon
+            glyph="☑️"
+            label="New checklist"
+            palette={palette}
+            onPress={() => onNavigate('notes', { kind: 'newNote', with: 'checklist' })}
+          />
+          <QuickIcon
+            glyph="📷"
+            label="New note from the camera"
+            palette={palette}
+            onPress={() => onNavigate('notes', { kind: 'newNote', with: 'camera' })}
+          />
+        </View>
+
+        {recentNotes.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.notesStrip}
+            style={styles.notesStripOuter}
+          >
+            {recentNotes.map((note) => (
+              <Pressable
+                key={note.id}
+                onPress={() => onNavigate('notes', { kind: 'note', id: note.id })}
+                style={({ pressed }) => [
+                  styles.noteCard,
+                  { backgroundColor: palette.surface, borderColor: palette.border },
+                  pressed ? styles.pressed : null,
+                ]}
+              >
+                {note.title ? (
+                  <Text style={[styles.noteTitle, { color: palette.text }]} numberOfLines={1}>
+                    {note.pinned ? '📌 ' : ''}
+                    {note.title}
+                  </Text>
+                ) : null}
+                <Text style={[styles.noteBody, { color: palette.dim }]} numberOfLines={note.title ? 3 : 4}>
+                  {!note.title && note.pinned ? '📌 ' : ''}
+                  {note.body || 'Empty note'}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+
+        <View style={styles.chipRow}>
+          <QuickChip label="＋ Expense" palette={palette} onPress={() => onNavigate('add')} />
+          <QuickChip label="＋ Person" palette={palette} onPress={() => onNavigate('debts', { kind: 'newPerson' })} />
+          <QuickChip label="＋ Account" palette={palette} onPress={() => onNavigate('accounts', { kind: 'newAccount' })} />
+        </View>
+
         {/* ------------------------------------------------------------ hero */}
         <View style={styles.heroBlock}>
           <View style={[styles.period, { backgroundColor: palette.surface, borderColor: palette.border }]}>
@@ -278,6 +370,16 @@ export function Home({
             onPress={() => onNavigate('debts')}
           />
         </View>
+        <View style={styles.tiles}>
+          <StatTile
+            glyph="💳"
+            colour={palette.accent}
+            label={accountCount > 0 ? `In ${accountCount} account${accountCount === 1 ? '' : 's'}` : 'Accounts'}
+            value={accountTotals.length > 0 ? accountTotals.map(formatAmount).join('  ·  ') : 'Add your balances'}
+            palette={palette}
+            onPress={() => onNavigate('accounts')}
+          />
+        </View>
 
         {/* ------------------------------------------------------- attention */}
         {attentionCount > 0 ? (
@@ -306,7 +408,7 @@ export function Home({
                 detail={note.dueOn ? describeDate(note.dueOn) : ''}
                 detailColour={palette.warning}
                 palette={palette}
-                onPress={() => onNavigate('notes')}
+                onPress={() => onNavigate('notes', { kind: 'note', id: note.id })}
               />
             ))}
 
@@ -325,7 +427,7 @@ export function Home({
                   }
                   detailColour={days < 0 ? palette.negative : palette.warning}
                   palette={palette}
-                  onPress={() => onNavigate('documents')}
+                  onPress={() => onNavigate('documents', { kind: 'document', id: document.id })}
                 />
               );
             })}
@@ -388,7 +490,7 @@ export function Home({
                   detailColour={owed ? palette.positive : palette.negative}
                   right={formatAmount(money(Math.abs(balance.net.amountMinor), balance.currency))}
                   palette={palette}
-                  onPress={() => onNavigate('debts')}
+                  onPress={() => onNavigate('debts', { kind: 'person', id: balance.personId })}
                 />
               );
             })}
@@ -462,6 +564,43 @@ export function Home({
         </Pressable>
       </View>
     </View>
+  );
+}
+
+function QuickIcon({
+  glyph,
+  label,
+  palette,
+  onPress,
+}: {
+  glyph: string;
+  label: string;
+  palette: Palette;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.quickIcon,
+        { backgroundColor: palette.surface, borderColor: palette.border },
+        pressed ? styles.pressed : null,
+      ]}
+    >
+      <Text style={styles.quickGlyph}>{glyph}</Text>
+    </Pressable>
+  );
+}
+
+function QuickChip({ label, palette, onPress }: { label: string; palette: Palette; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.quickChip, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
+    >
+      <Text style={[styles.quickChipText, { color: palette.text }]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -684,6 +823,33 @@ const styles = StyleSheet.create({
   heroNote: { fontSize: typeScale.xs, marginTop: spacing.xs, fontWeight: '500' },
 
   tiles: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
+  },
+  searchGlyph: { fontSize: 15 },
+  searchText: { fontSize: typeScale.base },
+
+  // Notes first: a blank note is one tap from opening the app.
+  quickRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  takeNote: { flex: 1, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.lg, paddingVertical: 15 },
+  takeNoteText: { fontSize: typeScale.md, fontWeight: '500' },
+  quickIcon: { width: 52, borderWidth: 1, borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
+  quickGlyph: { fontSize: 20 },
+  notesStripOuter: { marginHorizontal: -spacing.lg, marginTop: spacing.md },
+  notesStrip: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  noteCard: { width: 150, minHeight: 92, borderWidth: 1, borderRadius: radii.lg, padding: spacing.md, gap: 4 },
+  noteTitle: { fontSize: typeScale.base, fontWeight: '700' },
+  noteBody: { fontSize: typeScale.sm, lineHeight: 18 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
+  quickChip: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radii.pill },
+  quickChipText: { fontSize: typeScale.sm, fontWeight: '700' },
   tile: {
     flex: 1,
     borderRadius: radii.xl,

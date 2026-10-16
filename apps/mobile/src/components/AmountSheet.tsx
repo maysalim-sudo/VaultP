@@ -28,6 +28,7 @@ export function AmountSheet({
   initialMinor = 0,
   currency: initialCurrency = BASE_CURRENCY,
   allowCurrencyChange = false,
+  signed = false,
   confirmLabel = 'Save',
   onCancel,
   onSave,
@@ -37,6 +38,8 @@ export function AmountSheet({
   initialMinor?: number;
   currency?: string;
   allowCurrencyChange?: boolean;
+  /** Offer a minus: an overdrawn account, a card balance. onSave then gets a signed value. */
+  signed?: boolean;
   confirmLabel?: string;
   onCancel: () => void;
   onSave: (minor: number, currency: string) => void;
@@ -44,11 +47,12 @@ export function AmountSheet({
   const palette = paletteFor(useColorScheme());
   const [currency, setCurrency] = useState(initialCurrency);
   const exponent = exponentOf(currency);
+  const [negative, setNegative] = useState(signed && initialMinor < 0);
   const [draft, setDraft] = useState<Draft>(
-    initialMinor > 0 ? draftFromMinor(initialMinor, exponent) : EMPTY_DRAFT,
+    initialMinor !== 0 ? draftFromMinor(Math.abs(initialMinor), exponent) : EMPTY_DRAFT,
   );
 
-  const minor = draftToMinor(draft, exponent);
+  const minor = draftToMinor(draft, exponent) * (negative ? -1 : 1);
 
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onCancel}>
@@ -94,6 +98,26 @@ export function AmountSheet({
                       }}
                     >
                       {code}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            {signed ? (
+              <View style={styles.currencyRow}>
+                {[false, true].map((minus) => (
+                  <Pressable
+                    key={String(minus)}
+                    onPress={() => setNegative(minus)}
+                    style={[
+                      styles.currencyChip,
+                      { borderColor: palette.border },
+                      negative === minus ? { backgroundColor: palette.accent, borderColor: 'transparent' } : null,
+                    ]}
+                  >
+                    <Text style={{ color: negative === minus ? palette.onAccent : palette.dim, fontWeight: '600', fontSize: 13 }}>
+                      {minus ? '− Overdrawn / owed' : '+ In credit'}
                     </Text>
                   </Pressable>
                 ))}

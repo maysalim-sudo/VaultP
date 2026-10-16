@@ -33,6 +33,7 @@ import {
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
 import { CategoryChips } from '../components/CategoryChips.js';
 import { DateField, describeDate } from '../components/DateField.js';
+import { FieldsSheet } from '../components/FieldsSheet.js';
 import {
   type Draft,
   draftFromMinor,
@@ -73,6 +74,9 @@ export function ExpenseEditor({
   // Editable, because an expense is often logged the morning after it happened.
   const [occurredOn, setOccurredOn] = useState(expense.occurredOn);
   const [editingDate, setEditingDate] = useState(false);
+  const [merchant, setMerchant] = useState(expense.merchant ?? '');
+  const [note, setNote] = useState(expense.note ?? '');
+  const [editingWords, setEditingWords] = useState(false);
 
   const foreign = currency !== BASE_CURRENCY;
   const activeDraft = field === 'billed' ? billed : debited;
@@ -97,6 +101,8 @@ export function ExpenseEditor({
         amount: money(billedMinor, currency),
         occurredOn,
         categoryId: categoryId ?? '',
+        merchant,
+        note,
         // Only send the debited figure when it was actually filled in; an empty
         // field means "not known yet", not "zero".
         ...(foreign && debitedMinor > 0
@@ -204,6 +210,16 @@ export function ExpenseEditor({
               palette={palette}
             />
 
+            <Pressable
+              onPress={() => setEditingWords(true)}
+              style={[styles.wordsRow, { backgroundColor: palette.surface, borderColor: palette.border }]}
+            >
+              <Text style={[styles.wordsText, { color: merchant || note ? palette.text : palette.dim }]} numberOfLines={2}>
+                {merchant || note ? [merchant, note].filter(Boolean).join('  ·  ') : 'Where, and a note'}
+              </Text>
+              <Text style={{ color: palette.accent, fontWeight: '600' }}>Edit</Text>
+            </Pressable>
+
             <AmountPad
               draft={activeDraft}
               exponent={activeExponent}
@@ -241,6 +257,24 @@ export function ExpenseEditor({
           </ScrollView>
         </View>
       </View>
+
+      {editingWords ? (
+        <FieldsSheet
+          title="Where, and a note"
+          palette={palette}
+          fields={[
+            { key: 'merchant', label: 'Where', initial: merchant, placeholder: 'Shop, café, service' },
+            { key: 'note', label: 'Note', initial: note, placeholder: 'Anything to remember' },
+          ]}
+          saveLabel="Done"
+          onCancel={() => setEditingWords(false)}
+          onSave={(values) => {
+            setMerchant(values.merchant ?? '');
+            setNote(values.note ?? '');
+            setEditingWords(false);
+          }}
+        />
+      ) : null}
     </Modal>
   );
 }
@@ -259,6 +293,17 @@ const styles = StyleSheet.create({
   headerAction: { fontSize: 16, fontWeight: '600' },
   body: { paddingHorizontal: 20, paddingBottom: 32 },
   dateRow: { paddingBottom: 8 },
+  wordsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 12,
+  },
+  wordsText: { flex: 1, fontSize: 14 },
 
   fieldLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
   activeField: { opacity: 1 },

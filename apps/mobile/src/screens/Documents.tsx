@@ -7,7 +7,7 @@
  * empty.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,10 +27,11 @@ import { paletteFor, type Palette } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { importFile } from '../documents/fileStore.js';
 import { recogniseText, suggestTitle } from '../documents/ocr.js';
+import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { DocumentDetail } from './DocumentDetail.js';
 
-export function Documents({ onClose }: { onClose?: () => void }) {
+export function Documents({ onClose, intent, onIntentHandled }: { onClose?: () => void } & IntentProps) {
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const today = todayIn();
@@ -39,6 +40,16 @@ export function Documents({ onClose }: { onClose?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<VaultDocument | null>(null);
+
+  // Arriving from search or Home: open that document.
+  useEffect(() => {
+    if (!intent) return;
+    if (intent.kind === 'document') {
+      const found = vault.documents.getDocument(intent.id);
+      if (found) setOpen(found);
+    }
+    onIntentHandled?.();
+  }, [intent, vault, onIntentHandled]);
 
   const documents = useMemo(
     () =>

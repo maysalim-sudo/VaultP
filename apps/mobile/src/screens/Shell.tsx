@@ -21,12 +21,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, StyleSheet, View, useColorScheme } from 'react-native';
 
-import type { Category, Expense } from '@vaultp/core';
+import type { Category, Expense, SearchResult } from '@vaultp/core';
 
 import { COLLAPSED_WIDTH, Sidebar, type ViewName } from '../components/Sidebar.js';
 import { paletteFor } from '../components/theme.js';
+import type { Intent, IntentProps, Navigate } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
+import { Accounts } from './Accounts.js';
 import { BackupScreen } from './BackupScreen.js';
 import { Dashboard } from './Dashboard.js';
 import { Debts } from './Debts.js';
@@ -45,16 +47,46 @@ export function Shell() {
   const [view, setView] = useState<ViewName>('home');
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [pending, setPending] = useState<{ view: ViewName; intent: Intent } | null>(null);
 
   const categories = useMemo<readonly Category[]>(
     () => vault.expenses.listCategories(),
     [vault, version],
   );
 
-  const navigate = useCallback((next: ViewName) => {
+  const navigate = useCallback<Navigate>((next, intent) => {
     setView(next);
     setExpanded(false);
+    setPending(intent ? { view: next, intent } : null);
   }, []);
+
+  /** Props for the screen showing: its intent, if it was opened with one. */
+  const intentFor = (name: ViewName): IntentProps => ({
+    intent: pending?.view === name ? pending.intent : null,
+    onIntentHandled: () => setPending(null),
+  });
+
+  function openResult(result: SearchResult) {
+    setSearching(false);
+    switch (result.kind) {
+      case 'expense': {
+        const expense = vault.expenses.getExpense(result.id);
+        if (expense) setEditing(expense);
+        return;
+      }
+      case 'note':
+        return navigate('notes', { kind: 'note', id: result.id });
+      case 'person':
+        return navigate('debts', { kind: 'person', id: result.id });
+      case 'debt':
+        return result.parentId ? navigate('debts', { kind: 'person', id: result.parentId }) : undefined;
+      case 'account':
+        return navigate('accounts', { kind: 'account', id: result.id });
+      case 'document':
+        return navigate('documents', { kind: 'document', id: result.id });
+    }
+  }
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -91,9 +123,15 @@ export function Shell() {
           expanded={expanded}
           onSelect={navigate}
           onToggle={() => setExpanded((current) => !current)}
+          onSearch={() => {
+            setExpanded(false);
+            setSearching(true);
+          }}
           palette={palette}
         />
       </View>
+
+      {searching ? <Search onClose={() => setSearching(false)} onOpen={openResult} /> : null}
 
       {editing ? (
         <ExpenseEditor
@@ -108,7 +146,7 @@ export function Shell() {
   function renderView() {
     switch (view) {
       case 'home':
-        return <Home onNavigate={navigate} onEditExpense={setEditing} />;
+        return <Home onNavigate={navigate} onEditExpense={setEditing} onSearch={() => setSearching(true)} />;
       case 'add':
         return <AddEntry />;
       case 'insights':
@@ -116,13 +154,13 @@ export function Shell() {
       case 'recurring':
         return <RecurringRules categories={categories} />;
       case 'debts':
-        return <Debts />;
+        return <Debts {...intentFor('debts')} />;
+      case 'accounts':
+        return <Accounts {...intentFor('accounts')} />;
       case 'documents':
-        return <Documents />;
+        return <Documents {...intentFor('documents')} />;
       case 'notes':
-        return <Notes />;
-      case 'search':
-        return <Search />;
+        return <Notes {...intentFor('notes')} />;
       case 'backup':
         return <BackupScreen />;
     }

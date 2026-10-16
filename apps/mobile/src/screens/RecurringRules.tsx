@@ -5,13 +5,14 @@
  * when a rule fires, and the scheduler that logs it exactly once across two
  * devices, are already built and tested — this is the surface for them.
  *
- * Rules are paused, never deleted. Cancelling a subscription and deleting it are
- * different things: deleting it would erase the spending history that makes a
- * year-on-year comparison possible.
+ * Tap a rule to change its name, schedule, category or price. Pausing is the
+ * usual way to stop one; deleting is there for a rule that was a mistake, and
+ * even then the expenses it already logged stay — they happened.
  */
 
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,6 +35,8 @@ import {
 } from '@vaultp/core';
 
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
+import { AmountSheet } from '../components/AmountSheet.js';
+import { FieldsSheet } from '../components/FieldsSheet.js';
 import {
   EMPTY_DRAFT,
   type Draft,
@@ -62,6 +65,8 @@ export function RecurringRules({
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<RecurringRule | null>(null);
+  const [repricing, setRepricing] = useState<RecurringRule | null>(null);
 
   const rules = useMemo(() => vault.expenses.listRules(), [vault, version]);
   const active = rules.filter((rule) => rule.state === 'active');
@@ -102,6 +107,7 @@ export function RecurringRules({
               categories={categories}
               onPause={() => mutate((v) => v.expenses.setRuleState(rule.id, 'paused'))}
               onResume={() => mutate((v) => v.expenses.setRuleState(rule.id, 'active'))}
+              onEdit={() => setEditing(rule)}
             />
           ))}
 
@@ -117,9 +123,94 @@ export function RecurringRules({
               categories={categories}
               onPause={() => mutate((v) => v.expenses.setRuleState(rule.id, 'paused'))}
               onResume={() => mutate((v) => v.expenses.setRuleState(rule.id, 'active'))}
+              onEdit={() => setEditing(rule)}
             />
           ))}
         </ScrollView>
+
+        {editing ? (
+          <FieldsSheet
+            title="Edit recurring charge"
+            palette={palette}
+            fields={[{ key: 'name', label: 'Name', initial: editing.name, required: true }]}
+            choices={[
+              {
+                key: 'frequency',
+                label: 'Repeats',
+                initial: editing.frequency,
+                options: FREQUENCIES.map((frequency) => ({ value: frequency.value, label: frequency.label })),
+              },
+              {
+                key: 'category',
+                label: 'Category',
+                initial: editing.categoryId ?? '',
+                options: [
+                  { value: '', label: 'None' },
+                  ...categories.map((category) => ({ value: category.id, label: category.name })),
+                ],
+              },
+              {
+                key: 'autoLog',
+                label: 'When it comes due',
+                initial: editing.autoLog ? 'yes' : 'no',
+                options: [
+                  { value: 'yes', label: 'Log it for me' },
+                  { value: 'no', label: 'Just remind me' },
+                ],
+              },
+            ]}
+            footnote={`Costs ${toDecimalString(editing.amount)} ${editing.amount.currency}. Expenses it already logged stay as they are.`}
+            actions={[
+              {
+                label: 'Change price',
+                onPress: () => {
+                  setRepricing(editing);
+                  setEditing(null);
+                },
+              },
+              {
+                label: 'Delete',
+                destructive: true,
+                onPress: () => {
+                  const rule = editing;
+                  setEditing(null);
+                  Alert.alert(`Delete ${rule.name}?`, 'Charges it already logged stay in your expenses.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete', style: 'destructive', onPress: () => mutate((v) => v.expenses.deleteRule(rule.id)) },
+                  ]);
+                },
+              },
+            ]}
+            onCancel={() => setEditing(null)}
+            onSave={(values) => {
+              const id = editing.id;
+              setEditing(null);
+              mutate((v) =>
+                v.expenses.updateRule(id, {
+                  name: values.name ?? '',
+                  frequency: (values.frequency as Frequency) ?? 'monthly',
+                  categoryId: values.category || null,
+                  autoLog: values.autoLog === 'yes',
+                }),
+              );
+            }}
+          />
+        ) : null}
+
+        {repricing ? (
+          <AmountSheet
+            title={`${repricing.name}: new price`}
+            hint="The old price is kept, so a rise still shows."
+            initialMinor={repricing.amount.amountMinor}
+            currency={repricing.amount.currency}
+            onCancel={() => setRepricing(null)}
+            onSave={(minor, currency) => {
+              const id = repricing.id;
+              setRepricing(null);
+              if (minor > 0) mutate((v) => v.expenses.updateRuleAmount(id, money(minor, currency)));
+            }}
+          />
+        ) : null}
 
         {adding ? (
           <NewRuleForm
@@ -139,12 +230,14 @@ function RuleRow({
   categories,
   onPause,
   onResume,
+  onEdit,
 }: {
   rule: RecurringRule;
   palette: Palette;
   categories: readonly Category[];
   onPause: () => void;
   onResume: () => void;
+  onEdit: () => void;
 }) {
   const paused = rule.state !== 'active';
   const category = categories.find((c) => c.id === rule.categoryId);
@@ -152,7 +245,7 @@ function RuleRow({
 
   return (
     <View style={[styles.ruleRow, { borderBottomColor: palette.divider }]}>
-      <View style={styles.ruleMain}>
+      <Pressable style={styles.ruleMain} onPress={onEdit} accessibilityLabel={`Edit ${rule.name}`}>
         <Text style={[styles.ruleName, { color: paused ? palette.dim : palette.text }]}>
           {category?.icon ? `${category.icon}  ` : ''}
           {rule.name}
@@ -163,7 +256,7 @@ function RuleRow({
           {paused ? 'paused' : `next ${next}`}
           {rule.autoLog && !paused ? '  ·  auto' : ''}
         </Text>
-      </View>
+      </Pressable>
       <Pressable
         onPress={paused ? onResume : onPause}
         style={[styles.ruleAction, { borderColor: palette.border }]}

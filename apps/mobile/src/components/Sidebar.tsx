@@ -21,9 +21,9 @@ export type ViewName =
   | 'add'
   | 'recurring'
   | 'debts'
+  | 'accounts'
   | 'documents'
   | 'notes'
-  | 'search'
   | 'insights'
   | 'backup';
 
@@ -33,15 +33,17 @@ interface Destination {
   readonly label: string;
 }
 
+// Search is not a destination: it is the 🔎 at the top of the strip, over
+// whatever screen is showing.
 export const DESTINATIONS: readonly Destination[] = [
   { name: 'home', icon: '🏠', label: 'Home' },
+  { name: 'notes', icon: '📝', label: 'Notes' },
   { name: 'add', icon: '➕', label: 'Add expense' },
   { name: 'insights', icon: '📊', label: 'Month' },
   { name: 'recurring', icon: '🔁', label: 'Recurring' },
   { name: 'debts', icon: '🤝', label: 'Debts' },
+  { name: 'accounts', icon: '💳', label: 'Accounts' },
   { name: 'documents', icon: '📄', label: 'Documents' },
-  { name: 'notes', icon: '📝', label: 'Notes' },
-  { name: 'search', icon: '🔎', label: 'Search' },
   { name: 'backup', icon: '☁️', label: 'Backup & sync' },
 ];
 
@@ -53,12 +55,15 @@ export function Sidebar({
   expanded,
   onSelect,
   onToggle,
+  onSearch,
   palette,
 }: {
   active: ViewName;
   expanded: boolean;
   onSelect: (view: ViewName) => void;
   onToggle: () => void;
+  /** Open search over the current screen. */
+  onSearch: () => void;
   palette: Palette;
 }) {
   const width = useRef(
@@ -91,6 +96,20 @@ export function Sidebar({
         <Text style={[styles.icon, { color: palette.dim }]}>{expanded ? '‹' : '›'}</Text>
         {expanded ? (
           <Text style={[styles.label, { color: palette.dim }]}>VaultP</Text>
+        ) : null}
+      </Pressable>
+
+      <Pressable
+        onPress={onSearch}
+        style={[styles.item, styles.search, { borderColor: palette.border }]}
+        android_ripple={{ color: palette.ripple }}
+        accessibilityLabel="Search everything"
+      >
+        <Text style={styles.icon}>🔎</Text>
+        {expanded ? (
+          <Text numberOfLines={1} style={[styles.label, { color: palette.dim }]}>
+            Search
+          </Text>
         ) : null}
       </Pressable>
 
@@ -144,6 +163,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   items: { marginTop: 8 },
+  // Set apart from the destinations: it opens over the screen, not instead of it.
+  search: { marginTop: 4, borderWidth: StyleSheet.hairlineWidth },
   item: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,7 +7,7 @@
  * the moment attention lapses, and "owes you" / "you owe" cannot be misread.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
@@ -27,18 +27,35 @@ import { Avatar } from '../components/Avatar.js';
 import { Screen } from '../components/Screen.js';
 import { TextPrompt } from '../components/TextPrompt.js';
 import { paletteFor, type Palette } from '../components/theme.js';
+import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { PersonLedger } from './PersonLedger.js';
 
-export function Debts({ onClose }: { onClose?: () => void }) {
+export function Debts({ onClose, intent, onIntentHandled }: { onClose?: () => void } & IntentProps) {
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const today = todayIn();
 
   const [adding, setAdding] = useState(false);
   const [openPerson, setOpenPerson] = useState<Person | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+
+  // Arriving from search or Home: open that person, or start a new one.
+  useEffect(() => {
+    if (!intent) return;
+    if (intent.kind === 'person') {
+      const person = vault.debts.getPerson(intent.id);
+      if (person) setOpenPerson(person);
+    }
+    if (intent.kind === 'newPerson') setAdding(true);
+    onIntentHandled?.();
+  }, [intent, vault, onIntentHandled]);
 
   const people = useMemo(() => vault.debts.listPeople(), [vault, version]);
+  const archived = useMemo(
+    () => (showArchived ? vault.debts.listPeople(true).filter((person) => person.archived) : []),
+    [vault, version, showArchived],
+  );
 
   const balances = useMemo(() => {
     const byPerson = new Map<string, LedgerBalance | 'mixed'>();
@@ -116,6 +133,24 @@ export function Debts({ onClose }: { onClose?: () => void }) {
               key={person.id}
               person={person}
               balance={balances.get(person.id)}
+              palette={palette}
+              onOpen={() => setOpenPerson(person)}
+            />
+          ))}
+
+          <Pressable onPress={() => setShowArchived((current) => !current)} hitSlop={8} style={styles.archivedToggle}>
+            <Text style={{ color: palette.dim }}>
+              {showArchived ? 'Hide archived people' : 'Show archived people'}
+            </Text>
+          </Pressable>
+          {showArchived && archived.length === 0 ? (
+            <Text style={{ color: palette.dim, textAlign: 'center' }}>Nobody is archived.</Text>
+          ) : null}
+          {archived.map((person) => (
+            <PersonCard
+              key={person.id}
+              person={person}
+              balance={undefined}
               palette={palette}
               onOpen={() => setOpenPerson(person)}
             />
@@ -218,6 +253,7 @@ function PersonCard({
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingTop: 48 },
   pressed: { transform: [{ scale: 0.97 }] },
+  archivedToggle: { alignItems: 'center', paddingVertical: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   headerAction: { fontSize: 24, fontWeight: '600' },
   title: { flex: 1, fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },

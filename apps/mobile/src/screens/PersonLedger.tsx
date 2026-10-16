@@ -13,7 +13,8 @@
  * control people get backwards.
  *
  * The history is the audit trail, as a timeline by month. Nothing here edits a
- * past row: a mistake is corrected by a visible adjustment.
+ * past row: holding an entry offers to void it, or to correct it — the right
+ * one is recorded and the old one voided, both visible.
  */
 
 import { useMemo, useState } from 'react';
@@ -35,6 +36,7 @@ import {
 import { AmountSheet } from '../components/AmountSheet.js';
 import { Avatar } from '../components/Avatar.js';
 import { describeDate } from '../components/DateField.js';
+import { FieldsSheet } from '../components/FieldsSheet.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
@@ -47,12 +49,60 @@ const ACTIONS: Record<Action, { label: string; hint: string }> = {
   repaid_by_me: { label: 'I paid them', hint: 'A repayment you made.' },
 };
 
-export function PersonLedger({ person, onClose }: { person: Person; onClose: () => void }) {
+export function PersonLedger({ person: opened, onClose }: { person: Person; onClose: () => void }) {
   const { vault, version, mutate } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const today = todayIn();
 
+  // Read fresh, so a rename shows at once; the one passed in is the fallback.
+  const person = useMemo(() => vault.debts.getPerson(opened.id) ?? opened, [vault, version, opened]);
+
   const [action, setAction] = useState<Action | null>(null);
+  const [editing, setEditing] = useState(false);
+  /** An entry being re-recorded: the original is voided once the new one lands. */
+  const [correcting, setCorrecting] = useState<DebtEntry | null>(null);
+
+  function entryOptions(entry: DebtEntry) {
+    if (entry.kind !== 'loan' && entry.kind !== 'payment') return;
+    Alert.alert(
+      describeEntry(entry),
+      `${toDecimalString(entry.amount)} ${entry.amount.currency} on ${entry.occurredOn}. ` +
+        'Past entries are never changed in place: a correction records the right one and voids this, and both stay in the history.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Void',
+          style: 'destructive',
+          onPress: () => mutate((v) => v.debts.voidEntry(entry.id, 'Voided on the phone')),
+        },
+        { text: 'Correct amount', onPress: () => setCorrecting(entry) },
+      ],
+    );
+  }
+
+  function saveCorrection(entry: DebtEntry, minor: number, currency: string) {
+    setCorrecting(null);
+    if (minor <= 0) return;
+    const input = {
+      personId: person.id,
+      amount: money(minor, currency),
+      occurredOn: entry.occurredOn,
+      ...(entry.note ? { note: entry.note } : {}),
+    };
+    mutate((v) => {
+      // Recorded first, so nothing is voided unless its replacement exists.
+      if (entry.kind === 'loan') {
+        const terms = entry.terms.method === 'none' ? {} : { interest: entry.terms };
+        if (entry.direction === 'owed_to_me') v.debts.lend({ ...input, ...terms });
+        else v.debts.borrow({ ...input, ...terms });
+      } else if (entry.direction === 'owed_to_me') {
+        v.debts.recordRepaymentToMe(input);
+      } else {
+        v.debts.recordRepaymentByMe(input);
+      }
+      return v.debts.voidEntry(entry.id, 'Corrected on the phone');
+    });
+  }
 
   const entries = useMemo(() => [...vault.debts.entriesFor(person.id)].reverse(), [vault, version, person.id]);
 
@@ -118,7 +168,20 @@ export function PersonLedger({ person, onClose }: { person: Person; onClose: () 
           <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>
             {person.name}
           </Text>
+          <View style={styles.headerSpacer} />
+          <Pressable
+            onPress={() => setEditing(true)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.editButton, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
+          >
+            <Text style={[styles.editText, { color: palette.text }]}>Edit</Text>
+          </Pressable>
         </View>
+        {person.contact || person.note || person.archived ? (
+          <Text style={[styles.details, { color: palette.dim }]} numberOfLines={2}>
+            {[person.archived ? 'Archived' : null, person.contact, person.note].filter(Boolean).join('  ·  ')}
+          </Text>
+        ) : null}
 
         <ScrollView contentContainerStyle={styles.body}>
           {/* Where we stand. */}
@@ -202,7 +265,7 @@ export function PersonLedger({ person, onClose }: { person: Person; onClose: () 
                 <Text style={[styles.month, { color: palette.textFaint }]}>{label}</Text>
                 <View style={[styles.timeline, { borderLeftColor: palette.border }]}>
                   {items.map((entry) => (
-                    <EntryRow key={entry.id} entry={entry} palette={palette} />
+                    <EntryRow key={entry.id} entry={entry} palette={palette} onLongPress={() => entryOptions(entry)} />
                   ))}
                 </View>
               </View>
@@ -220,9 +283,61 @@ export function PersonLedger({ person, onClose }: { person: Person; onClose: () 
             onSave={(minor, currency) => record(action, minor, currency)}
           />
         ) : null}
+
+        {correcting ? (
+          <AmountSheet
+            title={`Correct: ${describeEntry(correcting)}`}
+            hint="The right amount. The old entry is voided and kept in the history."
+            initialMinor={correcting.amount.amountMinor}
+            currency={correcting.amount.currency}
+            allowCurrencyChange
+            confirmLabel="Correct"
+            onCancel={() => setCorrecting(null)}
+            onSave={(minor, currency) => saveCorrection(correcting, minor, currency)}
+          />
+        ) : null}
+
+        {editing ? (
+          <FieldsSheet
+            title="Edit details"
+            palette={palette}
+            fields={[
+              { key: 'name', label: 'Name', initial: person.name, required: true },
+              { key: 'contact', label: 'Contact', initial: person.contact ?? '', placeholder: 'Phone, email, anything', keyboard: 'default' },
+              { key: 'note', label: 'Note', initial: person.note ?? '' },
+            ]}
+            footnote="Their loans and repayments stay exactly as they are."
+            actions={[
+              {
+                label: person.archived ? 'Unarchive' : 'Archive',
+                onPress: () => {
+                  setEditing(false);
+                  mutate((v) => (person.archived ? v.debts.unarchivePerson(person.id) : v.debts.archivePerson(person.id)));
+                },
+              },
+            ]}
+            onCancel={() => setEditing(false)}
+            onSave={(values) => {
+              setEditing(false);
+              mutate((v) =>
+                v.debts.updatePerson(person.id, {
+                  name: values.name ?? person.name,
+                  contact: values.contact ?? null,
+                  note: values.note ?? null,
+                }),
+              );
+            }}
+          />
+        ) : null}
       </View>
     </Modal>
   );
+}
+
+function describeEntry(entry: DebtEntry): string {
+  if (entry.kind === 'loan') return entry.direction === 'owed_to_me' ? 'You lent' : 'You borrowed';
+  if (entry.kind === 'payment') return entry.direction === 'owed_to_me' ? 'They paid you' : 'You paid them';
+  return entry.kind === 'settlement' ? 'Settled up' : 'Correction';
 }
 
 function groupByMonth(entries: readonly DebtEntry[]): { label: string; items: DebtEntry[] }[] {
@@ -237,7 +352,15 @@ function groupByMonth(entries: readonly DebtEntry[]): { label: string; items: De
   return groups;
 }
 
-function EntryRow({ entry, palette }: { entry: DebtEntry; palette: Palette }) {
+function EntryRow({
+  entry,
+  palette,
+  onLongPress,
+}: {
+  entry: DebtEntry;
+  palette: Palette;
+  onLongPress: () => void;
+}) {
   // Money that left you goes up and away; money that came back comes down.
   const { text, glyph, colour } =
     entry.kind === 'settlement'
@@ -253,7 +376,11 @@ function EntryRow({ entry, palette }: { entry: DebtEntry; palette: Palette }) {
             : { text: 'You paid them', glyph: '↗', colour: palette.negative };
 
   return (
-    <View style={styles.entry}>
+    <Pressable
+      onLongPress={onLongPress}
+      delayLongPress={350}
+      style={({ pressed }) => [styles.entry, pressed ? { opacity: 0.6 } : null]}
+    >
       <View style={[styles.dot, { backgroundColor: palette.background, borderColor: colour }]}>
         <Text style={[styles.dotGlyph, { color: colour }]}>{glyph}</Text>
       </View>
@@ -268,7 +395,7 @@ function EntryRow({ entry, palette }: { entry: DebtEntry; palette: Palette }) {
       <Text style={[styles.entryAmount, { color: palette.text }]}>
         {toDecimalString(entry.amount)} {entry.amount.currency}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -278,6 +405,10 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   back: { fontSize: 24, fontWeight: '600', paddingRight: spacing.xs },
   name: { fontSize: typeScale.lg, fontWeight: '700', flexShrink: 1 },
+  headerSpacer: { flex: 1 },
+  editButton: { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radii.pill },
+  editText: { fontSize: typeScale.sm, fontWeight: '600' },
+  details: { fontSize: typeScale.sm, paddingHorizontal: spacing.xl, marginTop: -spacing.xs },
 
   body: { paddingHorizontal: spacing.xl, paddingBottom: 56 },
   standing: { fontSize: typeScale.base, marginTop: spacing.md },

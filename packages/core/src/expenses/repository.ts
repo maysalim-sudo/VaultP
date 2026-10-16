@@ -363,9 +363,11 @@ export class ExpenseRepository {
       parseDate(patch.occurredOn);
       fields.occurred_on = patch.occurredOn;
     }
-    if (patch.categoryId !== undefined) fields.category_id = patch.categoryId;
-    if (patch.merchant !== undefined) fields.merchant = patch.merchant;
-    if (patch.note !== undefined) fields.note = patch.note;
+    // Blank means "none", stored as null — an empty string is a value that
+    // looks like nothing and matches nothing.
+    if (patch.categoryId !== undefined) fields.category_id = patch.categoryId || null;
+    if (patch.merchant !== undefined) fields.merchant = patch.merchant?.trim() || null;
+    if (patch.note !== undefined) fields.note = patch.note?.trim() || null;
 
     if (patch.amount !== undefined || patch.charged !== undefined) {
       const amount = patch.amount ?? existing.amount;

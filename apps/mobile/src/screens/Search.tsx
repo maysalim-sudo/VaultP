@@ -33,13 +33,25 @@ import { Screen } from '../components/Screen.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 const SECTION_LABELS: Record<SearchResultKind, string> = {
+  person: 'People',
+  note: 'Notes',
   expense: 'Expenses',
   debt: 'Debts',
+  account: 'Accounts',
   document: 'Documents',
-  note: 'Notes',
 };
 
-export function Search({ onClose }: { onClose?: () => void }) {
+/**
+ * Opened over whatever screen was showing, from the 🔎 in the drawer or the
+ * bar on Home. Tapping a result opens that thing itself.
+ */
+export function Search({
+  onClose,
+  onOpen,
+}: {
+  onClose?: () => void;
+  onOpen?: (result: SearchResult) => void;
+}) {
   const { vault, version } = useOpenVault();
   const palette = paletteFor(useColorScheme());
   const [term, setTerm] = useState('');
@@ -80,8 +92,8 @@ export function Search({ onClose }: { onClose?: () => void }) {
         <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
           {term.trim() === '' ? (
             <Text style={[styles.hint, { color: palette.dim }]}>
-              A name, a merchant, a policy number — including text inside a scanned
-              document.
+              A person, a note, a merchant, an account, a policy number — including
+              text inside a scanned document.
             </Text>
           ) : total === 0 ? (
             <Text style={[styles.hint, { color: palette.dim }]}>
@@ -99,6 +111,7 @@ export function Search({ onClose }: { onClose?: () => void }) {
                   key={`${result.kind}:${result.id}`}
                   result={result}
                   palette={palette}
+                  onPress={onOpen ? () => onOpen(result) : undefined}
                 />
               ))}
             </View>
@@ -109,9 +122,26 @@ export function Search({ onClose }: { onClose?: () => void }) {
   );
 }
 
-function ResultRow({ result, palette }: { result: SearchResult; palette: Palette }) {
+function ResultRow({
+  result,
+  palette,
+  onPress,
+}: {
+  result: SearchResult;
+  palette: Palette;
+  onPress?: (() => void) | undefined;
+}) {
   return (
-    <View style={[styles.row, { borderBottomColor: palette.divider }]}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      android_ripple={{ color: palette.ripple }}
+      style={({ pressed }) => [
+        styles.row,
+        { borderBottomColor: palette.divider },
+        pressed ? { transform: [{ scale: 0.98 }] } : null,
+      ]}
+    >
       <View style={styles.rowMain}>
         <Text style={[styles.title, { color: palette.text }]} numberOfLines={2}>
           {result.title}
@@ -133,7 +163,7 @@ function ResultRow({ result, palette }: { result: SearchResult; palette: Palette
           <Text style={[styles.date, { color: palette.dim }]}>{result.date}</Text>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
