@@ -21,8 +21,11 @@ subscription. Every feature works with the network off, forever.
 
 ![The VaultP desktop dashboard — this month's spending, the month-end projection, the foreign-currency allowance and budget positions](docs/hero.png)
 
-> *The desktop dashboard. The phone is a separate design — see [`docs/mobile-home.png`](docs/mobile-home.png)
-> and [`docs/mobile-sidebar.png`](docs/mobile-sidebar.png).*
+> *The desktop dashboard. The phone is a separate design:*
+
+| Phone: home | Phone: sidebar |
+| --- | --- |
+| <img src="docs/mobile-home.png" alt="The VaultP phone home screen" width="300"> | <img src="docs/mobile-sidebar.png" alt="The VaultP phone sidebar" width="300"> |
 
 ![The desktop expenses screen, showing a settled foreign charge, an estimated one marked with a tilde, and one still awaiting a statement](docs/desktop-expenses.png)
 
@@ -198,7 +201,7 @@ from the shared core, so they agree by construction rather than by discipline.
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/salimmay/vaultp.git
+git clone https://github.com/maysalim-sudo/VaultP.git
 cd VaultP
 npm install
 ```
