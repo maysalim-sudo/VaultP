@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { NOTE_COLOURS, type Block } from '@vaultp/core';
 
 import type { NoteDto, NoteFolderDto, NotesQueryDto, TagDto } from '../../shared/api.js';
+import { Glyph, Icon } from '../icons.js';
 import { Modal } from '../Modal.js';
 import { useIntent } from '../nav.js';
 import { MenuItem, NoteEditor, NoteImageView, noteBackground, type EditorStart } from '../notes/NoteEditor.js';
@@ -165,17 +166,17 @@ export function Notes() {
     { key: 'all', label: 'All notes', filter: { kind: 'all' } },
     ...(folders.data ?? []).map((folder) => ({
       key: `folder:${folder.id}`,
-      label: `📁 ${folder.name}`,
+      label: folder.name,
       filter: { kind: 'folder', id: folder.id } as Filter,
       folder,
     })),
     ...(labels.data ?? []).map((label) => ({
       key: `label:${label.id}`,
-      label: `🏷 ${label.name}`,
+      label: `#${label.name}`,
       filter: { kind: 'label', id: label.id } as Filter,
     })),
-    { key: 'archive', label: '🗄 Archive', filter: { kind: 'archive' } },
-    { key: 'done', label: '✓ Done', filter: { kind: 'done' } },
+    { key: 'archive', label: 'Archive', filter: { kind: 'archive' } },
+    { key: 'done', label: 'Done', filter: { kind: 'done' } },
   ];
   const isActive = (f: Filter) => f.kind === filter.kind && (!('id' in f) || ('id' in filter && filter.id === f.id));
 
@@ -227,11 +228,13 @@ export function Notes() {
     >
       <div className="notes-top">
         <div className="notes-search">
-          <span className="muted">⌕</span>
+          <span className="muted">
+            <Glyph glyph="⌕" size={16} />
+          </span>
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search your notes" />
           {search ? (
-            <button className="icon-btn" onClick={() => setSearch('')} title="Clear">
-              ✕
+            <button className="icon-btn" onClick={() => setSearch('')} title="Clear" aria-label="Clear the search">
+              <Glyph glyph="✕" />
             </button>
           ) : null}
         </div>
@@ -240,7 +243,7 @@ export function Notes() {
           title={layout.data === 'list' ? 'Show as a grid' : 'Show as a list'}
           onClick={() => void act(() => api().setNotesLayout(layout.data === 'list' ? 'grid' : 'list'))}
         >
-          {layout.data === 'list' ? '▦' : '☰'}
+          <Icon name={layout.data === 'list' ? 'grid' : 'list'} size={18} />
         </button>
       </div>
 
@@ -265,7 +268,7 @@ export function Notes() {
           );
         })}
         <button className="tag dashed" onClick={() => setNaming({})}>
-          ＋ Folder
+          + Folder
         </button>
       </div>
 
@@ -279,14 +282,14 @@ export function Notes() {
             title="New checklist"
             onClick={() => setEditor({ kind: 'new', with: 'checklist', folderId: currentFolder })}
           >
-            ☑
+            <Glyph glyph="☑" size={18} />
           </button>
           <button
             className="icon-btn"
             title="New note with an image"
             onClick={() => setEditor({ kind: 'new', with: 'image', folderId: currentFolder })}
           >
-            🖼
+            <Glyph glyph="🖼" size={18} />
           </button>
         </div>
       ) : null}
@@ -296,7 +299,10 @@ export function Notes() {
       {notes.data && list.length === 0 ? (
         <div className="empty notes-empty">
           <div className="notes-empty-icon">
-            {searching ? '🔍' : filter.kind === 'archive' ? '🗄' : filter.kind === 'done' ? '✓' : filter.kind === 'folder' ? '📁' : '💡'}
+            <Glyph
+              glyph={searching ? '🔍' : filter.kind === 'archive' ? '🗄' : filter.kind === 'done' ? '✓' : filter.kind === 'folder' ? '📁' : '💡'}
+              size={56}
+            />
           </div>
           {searching
             ? 'No note has that in it'
@@ -712,14 +718,14 @@ function NoteCard({ note, folderName }: { note: NoteDto; folderName: string | nu
             case 'check':
               return (
                 <div key={block.id} className={`card-check ${block.checked ? 'checked' : ''}`}>
-                  <span>{block.checked ? '☑' : '☐'}</span>
+                  <span className={`box ${block.checked ? 'on' : ''}`} aria-hidden="true" />
                   <span>{block.text}</span>
                 </div>
               );
             case 'table':
               return (
                 <div key={block.id} className="card-meta">
-                  ▦ Table · {block.rows.length} × {block.rows[0]?.length ?? 0}
+                  Table · {block.rows.length} × {block.rows[0]?.length ?? 0}
                 </div>
               );
             case 'divider':
@@ -752,15 +758,15 @@ function NoteCard({ note, folderName }: { note: NoteDto; folderName: string | nu
           <div className="card-chips">
             {note.dueOn ? (
               <span className="chip">
-                {note.remind ? '🔔' : '🕒'} {note.dueOn}
+                {note.remind ? 'REMIND' : 'DUE'} {note.dueOn}
               </span>
             ) : null}
             {note.checklist && !hideTicked ? (
               <span className="chip">
-                ☑ {note.checklist.done}/{note.checklist.total}
+                {note.checklist.done}/{note.checklist.total} DONE
               </span>
             ) : null}
-            {folderName ? <span className="chip">📁 {folderName}</span> : null}
+            {folderName ? <span className="chip">{folderName}</span> : null}
             {note.labels.map((label: TagDto) => (
               <span key={label.id} className="chip">
                 {label.name}

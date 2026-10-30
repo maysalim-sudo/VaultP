@@ -738,3 +738,63 @@ button.tile.signal:hover { background: var(--accent); opacity: 0.92; }
 .acct-grid .dots { font-size: 34px; }
 .acct-grid .stale { color: var(--accent-text); }
 .rows .amt > .badge { font-size: 9px; font-weight: 500; }
+
+/* ---------------------------------------------------------------- documents */
+
+.doc-hero { margin-bottom: 10px; padding: 22px 24px; }
+button.doc-hero:hover { background: var(--surface-overlay); }
+.doc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .doc-grid { grid-template-columns: minmax(0, 1fr); } }
+.tile.doc { flex-direction: row; align-items: center; gap: 16px; padding: 16px; min-height: 96px; }
+.tile.doc .what { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.tile.doc .what strong { font-size: 15px; font-weight: 600; }
+.tile.doc .what > span:last-child { font-size: var(--text-xs); color: var(--text-dim); }
+.page-thumb {
+  width: 52px;
+  height: 64px;
+  flex: 0 0 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 9px;
+  border-radius: 8px;
+  background: var(--surface-overlay);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.page-thumb i { display: block; height: 3px; border-radius: 2px; background: var(--border); }
+.page-thumb i:first-child { width: 70%; background: var(--text-faint); }
+.page-thumb i:nth-child(3) { width: 85%; }
+.page-thumb i:last-child { width: 55%; }
+
+/* ---------------------------------------------------------------- expense form */
+
+.amount-tile { display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; border-radius: var(--radius-lg); background: var(--surface-overlay); }
+.amount-tile .label-row { display: flex; justify-content: space-between; align-items: center; }
+.amount-tile select { flex: 0 0 auto; padding: 6px 12px; border-radius: var(--radius-pill); font: 500 12px var(--font-mono); }
+.amount-readout {
+  text-align: right;
+  font-size: 60px;
+  line-height: 1;
+  padding: 8px 4px 4px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: text;
+}
+.amount-readout:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.amount-debited { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--divider); }
+button.icon-tag { display: inline-flex; align-items: center; gap: 6px; }
+.lined { display: flex; flex-direction: column; border-top: 1px solid var(--divider); }
+.lined label { display: flex; align-items: center; gap: 12px; min-height: 50px; border-bottom: 1px solid var(--divider); }
+.lined .label { width: 56px; flex: 0 0 56px; }
+.lined input { border: 0; background: transparent; padding: 10px 0; border-radius: 0; font-weight: 500; }
+.lined input:focus { border: 0; box-shadow: none; }
+.keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.keypad button {
+  height: 52px;
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  color: var(--text);
+  font: 800 24px / 1 var(--font-display);
+}
+.keypad button:hover { opacity: 1; background: var(--border); }
+.doc-hero { width: 100%; }

@@ -8,7 +8,10 @@
 
 import { useState } from 'react';
 
+import { exponentOf, formatAmount, money, parseAmount, toDecimalString } from '@vaultp/core';
+
 import type { CategoryDto, CurrencyDto, ExpenseDto, ExpenseFormDto } from '../../shared/api.js';
+import { Icon, categoryIcon } from '../icons.js';
 import { Field, Modal } from '../Modal.js';
 import { api, baseCurrency, useRunner } from '../vault.js';
 
@@ -39,6 +42,19 @@ function formOf(expense: ExpenseDto | undefined, today: string): ExpenseFormDto 
   };
 }
 
+/** The amount as whole minor units, the way the keypad builds it. */
+function minorOf(amount: string, currency: string): number {
+  if (amount.trim() === '') return 0;
+  try {
+    return Math.abs(parseAmount(amount, currency).amountMinor);
+  } catch {
+    return 0;
+  }
+}
+
+const MAX_MINOR = 9_999_999_999;
+const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '⌫'] as const;
+
 export function ExpenseEditor({
   expense,
   categories,
@@ -61,6 +77,21 @@ export function ExpenseEditor({
     setForm((current) => ({ ...current, [key]: value }));
 
   const foreign = form.currency !== baseCurrency();
+
+  // A card terminal's amount: digits fill in from the right, so the decimals
+  // are always there and always as many as the currency has. Typed or pressed,
+  // the same rule.
+  const minor = minorOf(form.amount, form.currency);
+  const setMinor = (next: number) => {
+    const clamped = Math.max(0, Math.min(MAX_MINOR, next));
+    set('amount', clamped === 0 ? '' : toDecimalString(money(clamped, form.currency)));
+  };
+  const press = (key: (typeof KEYS)[number]) => {
+    if (key === '⌫') setMinor(Math.floor(minor / 10));
+    else if (key === '00') setMinor(minor * 100);
+    else setMinor(minor * 10 + Number(key));
+  };
+  const shown = formatAmount(money(minor, form.currency), { unit: 'none' });
 
   const save = () =>
     void run(async () => {
@@ -88,92 +119,112 @@ export function ExpenseEditor({
             </button>
           ) : null}
           <span className="spacer" />
-          <button disabled={busy || form.amount.trim() === ''} onClick={save}>
-            Save
+          <button className="accent" disabled={busy || minor === 0} onClick={save}>
+            Save {shown} {form.currency}
           </button>
         </>
       }
     >
-      <div className="row">
-        <Field label="Amount">
-          <input
-            value={form.amount}
-            onChange={(event) => set('amount', event.target.value)}
-            placeholder="0"
-            autoFocus
-          />
-        </Field>
-        <Field label="Currency">
+      <section className="amount-tile">
+        <div className="label-row">
+          <span className="label">AMOUNT · {exponentOf(form.currency)} DECIMALS</span>
           <select
+            aria-label="Currency"
             value={form.currency}
             onChange={(event) => set('currency', event.target.value)}
           >
             {currencies.map((currency) => (
               <option key={currency.code} value={currency.code}>
-                {currency.code} — {currency.name}
+                {currency.code}
               </option>
             ))}
           </select>
-        </Field>
-      </div>
+        </div>
+        <div
+          className="amount-readout dots"
+          role="textbox"
+          aria-label={`Amount, ${shown} ${form.currency}. Type digits; Backspace removes one.`}
+          tabIndex={0}
+          autoFocus
+          ref={(element) => {
+            // A new expense starts with the cursor in the amount, like a till.
+            if (element && !expense && document.activeElement === document.body) element.focus();
+          }}
+          onKeyDown={(event) => {
+            if (/^[0-9]$/.test(event.key)) {
+              event.preventDefault();
+              press(event.key as (typeof KEYS)[number]);
+            } else if (event.key === 'Backspace') {
+              event.preventDefault();
+              press('⌫');
+            } else if (event.key === 'Delete') {
+              event.preventDefault();
+              setMinor(0);
+            } else if (event.key === 'Enter' && minor > 0) {
+              save();
+            }
+          }}
+        >
+          {shown}
+        </div>
+        {foreign ? (
+          <label className="amount-debited">
+            <span className="label">DEBITED IN {baseCurrency()}</span>
+            <input
+              value={form.charged}
+              onChange={(event) => set('charged', event.target.value)}
+              placeholder="Leave blank until the statement arrives"
+            />
+          </label>
+        ) : null}
+      </section>
 
-      {foreign ? (
-        <Field label={`Debited (${baseCurrency()}) — leave blank until the statement arrives`}>
-          <input
-            value={form.charged}
-            onChange={(event) => set('charged', event.target.value)}
-            placeholder="not yet known"
-          />
-        </Field>
-      ) : null}
-
-      <div className="row">
-        <Field label="Date">
-          <input
-            type="date"
-            value={form.occurredOn}
-            onChange={(event) => set('occurredOn', event.target.value)}
-          />
-        </Field>
-        <Field label="Category">
-          <select
-            value={form.categoryId ?? ''}
-            onChange={(event) => {
-              if (event.target.value === OTHER) setAdding(true);
-              else set('categoryId', event.target.value || null);
-            }}
+      <div className="chips">
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            className={`tag icon-tag ${form.categoryId === category.id ? 'on' : ''}`}
+            onClick={() => set('categoryId', form.categoryId === category.id ? null : category.id)}
           >
-            <option value="">Uncategorised</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.icon ? `${category.icon}  ` : ''}
-                {category.name}
-              </option>
-            ))}
-            {/* Just made, and the list has not caught up yet. */}
-            {created && !categories.some((c) => c.id === created.id) ? (
-              <option value={created.id}>{created.name}</option>
-            ) : null}
-            <option value={OTHER}>Other…</option>
-          </select>
-        </Field>
+            <Icon name={categoryIcon(category.name)} size={14} />
+            {category.name}
+          </button>
+        ))}
+        {/* Just made, and the list has not caught up yet. */}
+        {created && !categories.some((c) => c.id === created.id) ? (
+          <button className="tag icon-tag on">{created.name}</button>
+        ) : null}
+        <button className="tag" onClick={() => setAdding(true)}>
+          + Other
+        </button>
       </div>
 
-      <Field label="Merchant">
-        <input
-          value={form.merchant}
-          onChange={(event) => set('merchant', event.target.value)}
-          placeholder="Where"
-        />
-      </Field>
+      <div className="lined">
+        <label>
+          <span className="label">FOR</span>
+          <input value={form.merchant} onChange={(event) => set('merchant', event.target.value)} placeholder="Where" />
+        </label>
+        <label>
+          <span className="label">DATE</span>
+          <input type="date" value={form.occurredOn} onChange={(event) => set('occurredOn', event.target.value)} />
+        </label>
+        <label>
+          <span className="label">NOTE</span>
+          <input
+            value={form.note}
+            onChange={(event) => set('note', event.target.value)}
+            placeholder="Anything worth remembering"
+          />
+        </label>
+      </div>
 
-      <Field label="Note">
-        <input
-          value={form.note}
-          onChange={(event) => set('note', event.target.value)}
-          placeholder="Anything worth remembering"
-        />
-      </Field>
+      <div className="keypad" aria-label="Keypad">
+        {KEYS.map((key) => (
+          <button key={key} aria-label={key === '⌫' ? 'Delete a digit' : `Digit ${key}`} onClick={() => press(key)}>
+            {key}
+          </button>
+        ))}
+      </div>
 
       {error ? <p className="error">{error}</p> : null}
 
@@ -191,9 +242,6 @@ export function ExpenseEditor({
     </Modal>
   );
 }
-
-/** The dropdown value that means "make a new one" rather than a category id. */
-const OTHER = '__other__';
 
 const ICONS = ['🛒', '🍽', '🚕', '🏠', '💊', '🎓', '🎁', '🐾', '✈️', '🔧', '👕', '📱'] as const;
 

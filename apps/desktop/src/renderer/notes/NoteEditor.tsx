@@ -45,6 +45,7 @@ import {
 } from '@vaultp/core';
 
 import type { NoteDto, NoteFolderDto, NoteImageDto, NoteInputDto, TagDto } from '../../shared/api.js';
+import { Glyph } from '../icons.js';
 import { api, invalidate, messageOf } from '../vault.js';
 import { imageSize, useNoteImage } from './images.js';
 
@@ -69,7 +70,7 @@ const FORMATS: ReadonlyArray<readonly [TextStyle | 'bullet' | 'numbered' | 'chec
   ['quote', 'Quote'],
   ['bullet', '• Bulleted list'],
   ['numbered', '1. Numbered list'],
-  ['check', '☑ Checklist'],
+  ['check', '☐ Checklist'],
 ];
 
 /** Typed at the start of a plain line, these turn it into that kind of line. */
@@ -510,7 +511,7 @@ export function NoteEditor({
                 if (!pinned) setArchived(false);
               }}
             >
-              📌
+              <Glyph glyph="📌" size={18} />
             </button>
           </div>
 
@@ -571,12 +572,12 @@ export function NoteEditor({
             <div className="note-chips">
               {dueOn ? (
                 <button className="chip" onClick={() => toggleMenu('reminder')}>
-                  {remind ? '🔔' : '🕒'} {dueOn}
+                  <Glyph glyph={remind ? '🔔' : '🕒'} size={12} /> {dueOn}
                 </button>
               ) : null}
               {folderId ? (
                 <button className="chip" onClick={() => toggleMenu('folder')}>
-                  📁 {folders.find((f) => f.id === folderId)?.name ?? 'Folder'}
+                  <Glyph glyph="📁" size={12} /> {folders.find((f) => f.id === folderId)?.name ?? 'Folder'}
                 </button>
               ) : null}
               {knownLabels
@@ -1018,7 +1019,11 @@ export function NoteImageView({ block, onOpen, compact }: { block: ImageBlock; o
   if (state.status !== 'ready') {
     return (
       <div className={`image-placeholder ${compact ? 'compact' : ''}`} style={{ aspectRatio: ratio }}>
-        {state.status === 'missing' ? <span className="muted small">🖼 {state.reason}</span> : null}
+        {state.status === 'missing' ? (
+          <span className="muted small">
+            <Glyph glyph="🖼" size={14} /> {state.reason}
+          </span>
+        ) : null}
       </div>
     );
   }
@@ -1146,8 +1151,8 @@ function ToolButton({
   onClick: () => void;
 }) {
   return (
-    <button className={`icon-btn ${active ? 'on' : ''}`} title={title} onClick={onClick}>
-      {glyph}
+    <button className={`icon-btn ${active ? 'on' : ''}`} title={title} aria-label={title} onClick={onClick}>
+      <Glyph glyph={glyph} size={18} />
     </button>
   );
 }
@@ -1167,7 +1172,9 @@ export function MenuItem({
 }) {
   return (
     <button className={`menu-item ${danger ? 'danger-text' : ''}`} onClick={onClick}>
-      <span className="menu-glyph">{glyph}</span>
+      <span className="menu-glyph">
+        <Glyph glyph={glyph} />
+      </span>
       <span className="grow">{label}</span>
       {trailing ? <span className="menu-trailing">{trailing}</span> : null}
     </button>
