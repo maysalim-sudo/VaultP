@@ -61,6 +61,8 @@ Today there are three paths:
 
 ## Phase 2: finish the design in FigCraft
 
+**Superseded 2026-10-30:** the owner approved a new industrial design instead of fixing the FigCraft kit. It lives in `docs/ux/industrial/` (see its README). Phases 3–4 build to that; the items below still apply where they make sense.
+
 Fix in the UI kit first, then build. Each item is an artboard edit, light and dark.
 
 ### 2.1 Fixes to existing artboards

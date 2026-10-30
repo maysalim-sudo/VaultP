@@ -1,0 +1,35 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-30T18:00:00Z"},
+  "title": "VaultP — industrial UI",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "P-home-dark.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Phone · Overview · dark", "is_interactive": true},
+    "P-money-dark.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Phone · Money / Expenses · dark", "is_interactive": true},
+    "P-notes-dark.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Phone · Notes · dark", "is_interactive": true},
+    "P-docs-dark.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Phone · Documents · dark", "is_interactive": true},
+    "P-add-dark.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Phone · New expense · dark", "is_interactive": true},
+    "P-home-light.dc.html": {"x": 0, "y": 1224, "w": 390, "h": 844, "title": "Phone · Overview · light", "is_interactive": true},
+    "P-people-light.dc.html": {"x": 470, "y": 1224, "w": 390, "h": 844, "title": "Phone · Money / People · light", "is_interactive": true},
+    "P-accounts-light.dc.html": {"x": 940, "y": 1224, "w": 390, "h": 844, "title": "Phone · Money / Accounts · light", "is_interactive": true},
+    "P-search-light.dc.html": {"x": 1410, "y": 1224, "w": 390, "h": 844, "title": "Phone · Search · light", "is_interactive": true},
+    "P-vault-light.dc.html": {"x": 1880, "y": 1224, "w": 390, "h": 844, "title": "Phone · Vault settings · light", "is_interactive": true},
+    "Main.dc.html": {"x": 0, "y": 2448, "w": 1440, "h": 960, "title": "Desktop · Overview · dark — live prototype", "is_interactive": true},
+    "D-money-dark.dc.html": {"x": 1520, "y": 2448, "w": 1440, "h": 960, "title": "Desktop · Money / Expenses · dark", "is_interactive": true},
+    "D-home-light.dc.html": {"x": 0, "y": 3788, "w": 1440, "h": 960, "title": "Desktop · Overview · light", "is_interactive": true},
+    "D-notes-light.dc.html": {"x": 1520, "y": 3788, "w": 1440, "h": 960, "title": "Desktop · Notes · light", "is_interactive": true}
+  },
+  "order": [
+    "P-home-dark.dc.html", "P-money-dark.dc.html", "P-notes-dark.dc.html", "P-docs-dark.dc.html", "P-add-dark.dc.html",
+    "P-home-light.dc.html", "P-people-light.dc.html", "P-accounts-light.dc.html", "P-search-light.dc.html", "P-vault-light.dc.html",
+    "Main.dc.html", "D-money-dark.dc.html", "D-home-light.dc.html", "D-notes-light.dc.html"
+  ],
+  "notes": {
+    "rowPhoneDark": {"x": 0, "y": -260, "text": "Phone — dark", "kind": "title1", "maxW": 2270},
+    "rowPhoneLight": {"x": 0, "y": 964, "text": "Phone — light", "kind": "title1", "maxW": 2270},
+    "rowDesktopDark": {"x": 0, "y": 2188, "text": "Desktop — dark (left: live prototype)", "kind": "title1", "maxW": 2960},
+    "rowDesktopLight": {"x": 0, "y": 3528, "text": "Desktop — light", "kind": "title1", "maxW": 2960}
+  },
+  "designSystems": []
+}

@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VaultP</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@600;800&amp;family=Inter+Tight:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}; width: 100%; height: 100vh; display: flex; flex-direction: {{dir}}; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.35; overflow: hidden; position: relative; box-sizing: border-box">
+
+<!-- ================= DESKTOP RAIL ================= -->
+<sc-if value="{{wide}}" hint-placeholder-val="{{true}}">
+<nav aria-label="Main" style="width: 92px; flex: 0 0 92px; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 0; border-right: 1px solid var(--line)">
+  <div aria-label="VaultP" style="width: 40px; height: 40px; margin-bottom: 18px; border-radius: 12px; background: var(--text); display: grid; grid-template-columns: repeat(3, 6px); grid-auto-rows: 6px; gap: 3px; place-content: center">
+    <span style="background: var(--bg); border-radius: 50%"></span><span style="background: var(--bg); border-radius: 50%"></span><span style="background: var(--bg); border-radius: 50%"></span>
+    <span style="background: var(--bg); border-radius: 50%"></span><span style="background: var(--accent); border-radius: 50%"></span><span style="background: var(--bg); border-radius: 50%"></span>
+    <span style="background: var(--bg); border-radius: 50%"></span><span style="background: var(--bg); border-radius: 50%"></span><span style="background: var(--bg); border-radius: 50%"></span>
+  </div>
+  <sc-for list="{{nav}}" as="item" hint-placeholder-count="4">
+    <button onClick="{{item.go}}" aria-current="{{item.cur}}" style="appearance: none; cursor: pointer; width: 72px; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; background: {{item.bg}}; color: {{item.color}}; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .14em">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+      {{item.short}}
+    </button>
+  </sc-for>
+  <button onClick="{{openSheet}}" aria-label="New entry" style="appearance: none; cursor: pointer; width: 56px; height: 56px; margin-top: 10px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--accent); color: var(--onAccent)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>
+  </button>
+  <div style="margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 8px">
+    <button onClick="{{toggleTheme}}" aria-label="Switch light or dark" style="appearance: none; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--dim)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{themeIcon}}"></path></svg>
+    </button>
+    <button onClick="{{goSettings}}" aria-label="Vault settings" style="appearance: none; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--dim)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{ic.sliders}}"></path></svg>
+    </button>
+    <span title="In sync" style="width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--pos)"></span>
+  </div>
+</nav>
+</sc-if>
+
+<!-- ================= MAIN COLUMN ================= -->
+<div style="flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column">
+
+  <header style="flex: 0 0 auto; box-sizing: border-box; display: flex; align-items: center; gap: 10px; padding: {{headerPad}}">
+    <sc-if value="{{showBack}}" hint-placeholder-val="{{false}}">
+      <button onClick="{{goBack}}" aria-label="Back" style="appearance: none; cursor: pointer; width: 44px; height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ic.back}}"></path></svg>
+      </button>
+    </sc-if>
+    <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+      <span style="font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .16em; color: var(--faint)">{{kicker}}</span>
+      <h1 style="margin: 0; font-size: {{titleSize}}; font-weight: 600; letter-spacing: -.025em; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{title}}</h1>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px">
+      <sc-if value="{{wide}}" hint-placeholder-val="{{true}}">
+        <button onClick="{{goSearch}}" style="appearance: none; cursor: pointer; width: 360px; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 8px 0 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--tile); color: var(--faint); font-family: var(--sans); font-size: 14px; text-align: left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{ic.search}}"></path></svg>
+          <span style="flex: 1">Search everything</span>
+          <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .1em; padding: 5px 9px; border-radius: 999px; background: var(--tile2); color: var(--dim)">CTRL K</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{phoneTop}}" hint-placeholder-val="{{false}}">
+        <button onClick="{{goSearch}}" aria-label="Search" style="appearance: none; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{ic.search}}"></path></svg>
+        </button>
+        <button onClick="{{goSettings}}" aria-label="Vault settings" style="appearance: none; cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--text)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{ic.sliders}}"></path></svg>
+        </button>
+      </sc-if>
+    </div>
+  </header>
+
+  <main style="flex: 1; min-height: 0; overflow-y: auto">
+    <div style="max-width: {{maxW}}; margin: 0 auto; padding: {{bodyPad}}; box-sizing: border-box">
+
+<!-- ================= HOME ================= -->
+<sc-if value="{{isHome}}" hint-placeholder-val="{{true}}">
+  <div style="display: grid; grid-template-columns: {{homeCols}}; gap: 10px">
+
+    <!-- hero: the month -->
+    <section style="grid-column: {{g.hero}}; grid-row: {{g.heroRow}}; background: var(--tile); border-radius: 22px; padding: {{heroPad}}; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .16em; color: var(--faint)">
+        <span>SPENT · OCTOBER</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent)"></span>DAY 30 / 31</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap">
+        <span style="font-family: var(--dot); font-size: {{heroSize}}; font-weight: 800; line-height: .82; letter-spacing: -.02em">428.750</span>
+        <span style="font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--dim); padding-bottom: 4px">TND</span>
+      </div>
+      <div aria-label="Spending per day in October" style="display: flex; align-items: flex-end; gap: {{barGap}}; height: {{barsH}}">
+        <sc-for list="{{bars}}" as="b" hint-placeholder-count="31">
+          <span style="flex: 1; height: {{b.h}}; min-height: 3px; border-radius: 3px; background: {{b.bg}}; border: {{b.border}}; box-sizing: border-box"></span>
+        </sc-for>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--faint); margin-top: -10px">
+        <span>01</span><span>08</span><span>15</span><span>22</span><span>31</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 14px; border-top: 1px solid var(--line)">
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--faint)">TODAY</span><span style="font-family: var(--mono); font-size: 14px; font-weight: 500">18.500</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px"><span style="font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--faint)">HEADING FOR</span><span style="font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--est)">≈ 612.400</span></div>
+        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-end"><span style="font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--faint)">BUDGET</span><span style="font-family: var(--mono); font-size: 14px; font-weight: 500">700.000</span></div>
+      </div>
+    </section>
+
+    <!-- owed to you -->
+    <button onClick="{{goPeople}}" style="appearance: none; cursor: pointer; border: 0; text-align: left; background: var(--tile); color: var(--text); border-radius: 22px; padding: 18px; min-height: 148px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: var(--sans)">
+      <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">OWED TO YOU</span>
+      <span style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: var(--dot); font-size: 34px; font-weight: 800; line-height: .9; color: var(--pos)">120.000</span>
+        <span style="font-size: 12px; color: var(--dim)">Samir · 20% repaid</span>
+      </span>
+    </button>
+
+    <!-- you owe -->
+    <button onClick="{{goPeople}}" style="appearance: none; cursor: pointer; border: 0; text-align: left; background: var(--tile); color: var(--text); border-radius: 22px; padding: 18px; min-height: 148px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: var(--sans)">
+      <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">YOU OWE</span>
+      <span style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: var(--dot); font-size: 34px; font-weight: 800; line-height: .9; color: var(--accentText)">65.000</span>
+        <span style="font-size: 12px; color: var(--dim)">Amel · since 08 Sep</span>
+      </span>
+    </button>
+
+    <!-- allowance dial -->
+    <section style="background: var(--tile); border-radius: 22px; padding: 18px; min-height: 148px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">FX ALLOWANCE</span>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <div style="position: relative; width: 76px; height: 76px; flex: 0 0 76px">
+          <svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true" style="transform: rotate(-90deg)">
+            <circle cx="38" cy="38" r="33" fill="none" stroke="var(--line)" stroke-width="6" stroke-dasharray="1.6 3.58"></circle>
+            <circle cx="38" cy="38" r="33" fill="none" stroke="var(--text)" stroke-width="6" stroke-dasharray="{{dial.used}}"></circle>
+            <circle cx="38" cy="38" r="24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="{{dial.marker}}"></circle>
+          </svg>
+          <span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--dot); font-size: 20px; font-weight: 800">53</span>
+        </div>
+        <span style="display: flex; flex-direction: column; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--dim)">
+          <span style="color: var(--text); font-weight: 500">2,800 LEFT</span>
+          <span>OF 6,000 TND</span>
+          <span style="color: var(--accentText)">OUT ≈ 18 DEC</span>
+        </span>
+      </div>
+    </section>
+
+    <!-- next charge -->
+    <button onClick="{{goRecurring}}" style="appearance: none; cursor: pointer; border: 0; text-align: left; background: var(--accent); color: var(--onAccent); border-radius: 22px; padding: 18px; min-height: 148px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: var(--sans)">
+      <span style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .16em"><span>NEXT BILL</span><span>REMIND</span></span>
+      <span style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: var(--dot); font-size: 34px; font-weight: 800; line-height: .9">1 DAY</span>
+        <span style="font-size: 13px; font-weight: 600">Internet · 65.000 TND</span>
+      </span>
+    </button>
+
+    <!-- attention -->
+    <section style="grid-column: {{g.wide2}}; background: var(--tile); border-radius: 22px; padding: 8px 0; box-sizing: border-box">
+      <div style="display: flex; justify-content: space-between; padding: 12px 18px 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">
+        <span>NEEDS YOU</span><span>03</span>
+      </div>
+      <sc-for list="{{attention}}" as="a" hint-placeholder-count="3">
+        <button onClick="{{a.go}}" style="appearance: none; cursor: pointer; width: 100%; box-sizing: border-box; min-height: 64px; display: flex; align-items: center; gap: 14px; padding: 10px 18px; border: 0; border-top: {{a.divider}}; background: transparent; color: var(--text); text-align: left; font-family: var(--sans)">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--faint); width: 18px">{{a.n}}</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 15px; font-weight: 600; letter-spacing: -.01em">{{a.t}}</span>
+            <span style="font-size: 12px; color: var(--dim)">{{a.m}}</span>
+          </span>
+          <span style="font-family: var(--mono); font-size: 13px; font-weight: 500; color: {{a.tone}}">{{a.v}}</span>
+        </button>
+      </sc-for>
+    </section>
+
+    <!-- notes -->
+    <section style="grid-column: {{g.wide2}}; background: var(--tile); border-radius: 22px; padding: 18px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">
+        <span>RECENT NOTES</span>
+        <button onClick="{{goNotes}}" style="appearance: none; cursor: pointer; border: 0; background: transparent; color: var(--text); padding: 8px 0; font-family: var(--mono); font-size: 10px; letter-spacing: .16em">ALL 12 →</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{recentNotes}}" as="n" hint-placeholder-count="2">
+          <button onClick="{{goNotes}}" style="appearance: none; cursor: pointer; border: 0; text-align: left; background: var(--tile2); color: var(--text); border-radius: 14px; padding: 14px; min-height: 104px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; font-family: var(--sans)">
+            <span style="display: flex; gap: 4px">
+              <sc-for list="{{n.dots}}" as="d" hint-placeholder-count="5">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: {{d.bg}}"></span>
+              </sc-for>
+            </span>
+            <span style="font-size: 14px; font-weight: 600; letter-spacing: -.01em">{{n.t}}</span>
+            <span style="font-size: 12px; color: var(--dim); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{n.sn}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+<!-- ================= MONEY ================= -->
+<sc-if value="{{isMoney}}" hint-placeholder-val="{{false}}">
+  <div role="tablist" aria-label="Money" style="display: flex; gap: 4px; padding: 4px; margin-bottom: 14px; max-width: {{segMax}}; background: var(--tile); border-radius: 999px">
+    <sc-for list="{{segs}}" as="sg" hint-placeholder-count="4">
+      <button role="tab" aria-selected="{{sg.sel}}" onClick="{{sg.go}}" style="appearance: none; cursor: pointer; flex: 1; height: 40px; border: 0; border-radius: 999px; background: {{sg.bg}}; color: {{sg.color}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .12em">{{sg.label}}</button>
+    </sc-for>
+  </div>
+
+  <!-- expenses -->
+  <sc-if value="{{segExpenses}}" hint-placeholder-val="{{true}}">
+    <div style="display: grid; grid-template-columns: {{moneyCols}}; gap: 10px; align-items: start">
+      <div style="grid-column: {{g.side}}; grid-row: 1; display: flex; flex-direction: column; gap: 10px">
+        <section style="background: var(--tile); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+          <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">OCTOBER · 42 CHARGES</span>
+          <div style="display: flex; align-items: flex-end; gap: 8px">
+            <span style="font-family: var(--dot); font-size: 52px; font-weight: 800; line-height: .82">428.750</span>
+            <span style="font-family: var(--mono); font-size: 12px; color: var(--dim); padding-bottom: 2px">TND</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <sc-for list="{{budgets}}" as="b" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 84px 1fr 44px; align-items: center; gap: 10px">
+                <span style="font-size: 12px; color: var(--dim)">{{b.n}}</span>
+                <span style="display: flex; gap: 2px">
+                  <sc-for list="{{b.cells}}" as="c" hint-placeholder-count="10">
+                    <span style="flex: 1; height: 10px; border-radius: 2px; background: {{c.bg}}"></span>
+                  </sc-for>
+                </span>
+                <span style="font-family: var(--mono); font-size: 11px; text-align: right; color: {{b.tone}}">{{b.pct}}%</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="grid-column: {{g.main}}; grid-row: {{g.mainRow}}; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 6px; overflow-x: auto">
+          <sc-for list="{{catChips}}" as="c" hint-placeholder-count="6">
+            <button onClick="{{c.go}}" aria-pressed="{{c.sel}}" style="appearance: none; cursor: pointer; flex: 0 0 auto; height: 36px; padding: 0 14px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.bg}}; color: {{c.color}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .1em">{{c.label}}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{days}}" as="day" hint-placeholder-count="3">
+          <section style="background: var(--tile); border-radius: 22px; padding: 6px 0">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px 10px">
+              <span style="font-family: var(--dot); font-size: 28px; font-weight: 800; line-height: 1">{{day.num}}</span>
+              <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">{{day.label}}</span>
+              <span style="margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--dim)">{{day.total}}</span>
+            </div>
+            <sc-for list="{{day.rows}}" as="row" hint-placeholder-count="2">
+              <button style="appearance: none; cursor: pointer; width: 100%; box-sizing: border-box; min-height: 62px; display: flex; align-items: center; gap: 14px; padding: 10px 18px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; font-family: var(--sans)">
+                <span style="width: 40px; height: 40px; flex: 0 0 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--tile2); color: var(--dim)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{row.icon}}"></path></svg>
+                </span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                  <span style="font-size: 15px; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{row.t}}</span>
+                  <span style="font-size: 12px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{row.cat}} · {{row.m}}</span>
+                </span>
+                <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-family: var(--mono)">
+                  <span style="font-size: 15px; font-weight: 500; color: {{row.tone}}">{{row.a}}</span>
+                  <span style="font-size: 9px; letter-spacing: .14em; color: var(--faint)">{{row.unit}}</span>
+                </span>
+              </button>
+            </sc-for>
+          </section>
+        </sc-for>
+        <sc-if value="{{noDays}}" hint-placeholder-val="{{false}}">
+          <div style="background: var(--tile); border-radius: 22px; padding: 40px 16px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--faint)">NOTHING HERE THIS MONTH</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- people -->
+  <sc-if value="{{segPeople}}" hint-placeholder-val="{{false}}">
+    <div style="display: grid; grid-template-columns: {{moneyCols}}; gap: 10px; align-items: start">
+      <div style="grid-column: {{g.main}}; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div style="background: var(--tile); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+            <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">OWED TO YOU</span>
+            <span style="font-family: var(--dot); font-size: 32px; font-weight: 800; line-height: .9; color: var(--pos)">120.000</span>
+          </div>
+          <div style="background: var(--tile); border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 14px">
+            <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">YOU OWE</span>
+            <span style="font-family: var(--dot); font-size: 32px; font-weight: 800; line-height: .9; color: var(--accentText)">65.000</span>
+          </div>
+        </div>
+        <section style="background: var(--tile); border-radius: 22px; padding: 6px 0">
+          <sc-for list="{{people}}" as="pp" hint-placeholder-count="2">
+            <button style="appearance: none; cursor: pointer; width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 0; border-top: {{pp.divider}}; background: transparent; color: var(--text); text-align: left; font-family: var(--sans)">
+              <span style="width: 44px; height: 44px; flex: 0 0 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--tile2); font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .06em">{{pp.ini}}</span>
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+                <span style="font-size: 16px; font-weight: 600">{{pp.n}}</span>
+                <span style="font-size: 12px; color: var(--dim)">{{pp.meta}}</span>
+              </span>
+              <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-family: var(--mono)">
+                <span style="font-size: 15px; font-weight: 500; color: {{pp.tone}}">{{pp.amt}}</span>
+                <span style="font-size: 9px; letter-spacing: .14em; color: var(--faint)">{{pp.rel}}</span>
+              </span>
+            </button>
+          </sc-for>
+        </section>
+      </div>
+      <section style="grid-column: {{g.side}}; background: var(--tile); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)"><span>SAMIR · LOAN</span><span>03 SEP</span></div>
+        <div style="display: flex; align-items: flex-end; gap: 8px">
+          <span style="font-family: var(--dot); font-size: 48px; font-weight: 800; line-height: .82; color: var(--pos)">120.000</span>
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">LEFT</span>
+        </div>
+        <div style="display: flex; gap: 3px">
+          <sc-for list="{{loanCells}}" as="c" hint-placeholder-count="20">
+            <span style="flex: 1; height: 18px; border-radius: 3px; background: {{c.bg}}"></span>
+          </sc-for>
+        </div>
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--dim)">30.000 OF 150.000 REPAID</span>
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{ledger}}" as="l" hint-placeholder-count="2">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line)">
+              <span style="width: 54px; font-family: var(--mono); font-size: 11px; color: var(--faint)">{{l.d}}</span>
+              <span style="flex: 1; font-size: 13px">{{l.t}}</span>
+              <span style="font-family: var(--mono); font-size: 13px; color: {{l.tone}}">{{l.a}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <button style="appearance: none; cursor: pointer; height: 52px; border: 0; border-radius: 999px; background: var(--text); color: var(--bg); font-family: var(--sans); font-size: 15px; font-weight: 600">Record repayment</button>
+      </section>
+    </div>
+  </sc-if>
+
+  <!-- recurring -->
+  <sc-if value="{{segRecurring}}" hint-placeholder-val="{{false}}">
+    <div style="display: grid; grid-template-columns: {{moneyCols}}; gap: 10px; align-items: start">
+      <section style="grid-column: {{g.side}}; background: var(--tile); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">NEXT 30 DAYS</span>
+        <div style="display: flex; align-items: flex-end; gap: 8px">
+          <span style="font-family: var(--dot); font-size: 48px; font-weight: 800; line-height: .82; color: var(--est)">≈119.240</span>
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">TND</span>
+        </div>
+        <span style="font-size: 13px; color: var(--dim)">3 charges · 2 log themselves, 1 waits for you</span>
+      </section>
+      <section style="grid-column: {{g.main}}; grid-row: {{g.mainRow}}; background: var(--tile); border-radius: 22px; padding: 6px 0">
+        <sc-for list="{{recurring}}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 12px 18px; min-height: 66px; box-sizing: border-box; border-top: {{r.divider}}; opacity: {{r.op}}">
+            <span style="width: 52px; flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+              <span style="font-family: var(--dot); font-size: 22px; font-weight: 800; line-height: 1">{{r.dd}}</span>
+              <span style="font-family: var(--mono); font-size: 9px; letter-spacing: .14em; color: var(--faint)">{{r.mm}}</span>
+            </span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600">{{r.n}}</span>
+              <span style="font-size: 12px; color: var(--dim)">{{r.s}}</span>
+            </span>
+            <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px; font-family: var(--mono)">
+              <span style="font-size: 14px; font-weight: 500; color: {{r.tone}}">{{r.a}}</span>
+              <span style="font-size: 9px; letter-spacing: .14em; padding: 3px 8px; border-radius: 999px; background: {{r.tagBg}}; color: {{r.tagColor}}">{{r.mode}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+  </sc-if>
+
+  <!-- accounts -->
+  <sc-if value="{{segAccounts}}" hint-placeholder-val="{{false}}">
+    <div style="display: grid; grid-template-columns: {{moneyCols}}; gap: 10px; align-items: start">
+      <section style="grid-column: {{g.side}}; background: var(--tile); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">ACROSS 4 ACCOUNTS · NOW</span>
+        <div style="display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap">
+          <span style="font-family: var(--dot); font-size: 48px; font-weight: 800; line-height: .82; color: var(--est)">≈869.260</span>
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">TND</span>
+        </div>
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">+ 320.00 USD</span>
+        <span style="font-size: 12px; color: var(--dim)">What the bank last said, minus what you spent since. The bank figure is never overwritten.</span>
+      </section>
+      <div style="grid-column: {{g.main}}; grid-row: {{g.mainRow}}; display: grid; grid-template-columns: {{acctCols}}; gap: 10px">
+        <sc-for list="{{accounts}}" as="ac" hint-placeholder-count="4">
+          <button style="appearance: none; cursor: pointer; border: 0; text-align: left; background: var(--tile); color: var(--text); border-radius: 22px; padding: 18px; min-height: 150px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px; font-family: var(--sans)">
+            <span style="display: flex; align-items: center; gap: 10px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ac.icon}}"></path></svg>
+              <span style="font-size: 15px; font-weight: 600">{{ac.n}}</span>
+              <span style="margin-left: auto; width: 7px; height: 7px; border-radius: 50%; background: {{ac.dot}}"></span>
+            </span>
+            <span style="display: flex; align-items: flex-end; gap: 6px">
+              <span style="font-family: var(--dot); font-size: 30px; font-weight: 800; line-height: .85; color: {{ac.tone}}">{{ac.now}}</span>
+              <span style="font-family: var(--mono); font-size: 11px; color: var(--faint)">{{ac.unit}}</span>
+            </span>
+            <span style="margin-top: auto; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: {{ac.metaTone}}">BANK SAID {{ac.said}} · {{ac.on}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</sc-if>
+
+<!-- ================= NOTES ================= -->
+<sc-if value="{{isNotes}}" hint-placeholder-val="{{false}}">
+  <div style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px">
+    <sc-for list="{{noteChips}}" as="c" hint-placeholder-count="5">
+      <button onClick="{{c.go}}" aria-pressed="{{c.sel}}" style="appearance: none; cursor: pointer; flex: 0 0 auto; height: 36px; padding: 0 14px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.bg}}; color: {{c.color}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .1em">{{c.label}}</button>
+    </sc-for>
+  </div>
+  <div style="display: grid; grid-template-columns: {{noteCols}}; gap: 10px">
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="6">
+      <article style="background: {{n.bg}}; color: {{n.fg}}; border-radius: 22px; padding: 18px; display: flex; flex-direction: column; gap: 10px; min-height: 168px; box-sizing: border-box">
+        <div style="display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: .16em; opacity: .75">
+          <span>{{n.k}}</span><span>{{n.pin}}</span>
+        </div>
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2">{{n.t}}</h2>
+        <p style="margin: 0; font-size: 13px; opacity: .78; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden">{{n.sn}}</p>
+        <div style="margin-top: auto; display: flex; align-items: center; gap: 10px">
+          <span style="display: flex; gap: 4px">
+            <sc-for list="{{n.dots}}" as="d" hint-placeholder-count="5">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: {{d.op}}"></span>
+            </sc-for>
+          </span>
+          <span style="font-family: var(--mono); font-size: 9px; letter-spacing: .14em; opacity: .75">{{n.meta}}</span>
+        </div>
+      </article>
+    </sc-for>
+  </div>
+</sc-if>
+
+<!-- ================= DOCUMENTS ================= -->
+<sc-if value="{{isDocs}}" hint-placeholder-val="{{false}}">
+  <div style="display: grid; grid-template-columns: {{docCols}}; gap: 10px">
+    <section style="grid-column: {{g.docHero}}; background: var(--tile); border-radius: 22px; padding: 20px; display: flex; align-items: center; gap: 18px; box-sizing: border-box">
+      <span style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">CAR INSURANCE ENDS IN</span>
+        <span style="display: flex; align-items: flex-end; gap: 8px">
+          <span style="font-family: var(--dot); font-size: 64px; font-weight: 800; line-height: .8; color: var(--accentText)">62</span>
+          <span style="font-family: var(--mono); font-size: 12px; color: var(--dim)">DAYS · 31 DEC</span>
+        </span>
+      </span>
+      <button style="appearance: none; cursor: pointer; margin-left: auto; height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-family: var(--sans); font-size: 14px; font-weight: 600">Open</button>
+    </section>
+    <sc-for list="{{docs}}" as="d" hint-placeholder-count="4">
+      <article style="background: var(--tile); border-radius: 22px; padding: 16px; display: flex; align-items: center; gap: 14px; min-height: 88px; box-sizing: border-box">
+        <span style="width: 52px; height: 64px; flex: 0 0 52px; border-radius: 8px; background: var(--tile2); border: 1px solid var(--line); box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 10px 8px">
+          <span style="height: 3px; width: 70%; border-radius: 2px; background: var(--line2)"></span>
+          <span style="height: 3px; width: 100%; border-radius: 2px; background: var(--line)"></span>
+          <span style="height: 3px; width: 90%; border-radius: 2px; background: var(--line)"></span>
+          <span style="height: 3px; width: 60%; border-radius: 2px; background: var(--line)"></span>
+        </span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+          <span style="font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--faint)">{{d.k}}</span>
+          <span style="font-size: 15px; font-weight: 600">{{d.t}}</span>
+          <span style="font-size: 12px; color: var(--dim)">{{d.meta}}</span>
+        </span>
+        <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--dim); text-align: right">{{d.st}}</span>
+      </article>
+    </sc-for>
+  </div>
+  <button style="appearance: none; cursor: pointer; margin-top: 12px; width: {{btnW}}; height: 56px; padding: 0 28px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 999px; background: var(--text); color: var(--bg); font-family: var(--sans); font-size: 15px; font-weight: 600">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="{{ic.scan}}"></path></svg>Scan a document
+  </button>
+</sc-if>
+
+<!-- ================= NEW EXPENSE ================= -->
+<sc-if value="{{isAdd}}" hint-placeholder-val="{{false}}">
+  <div style="max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px">
+    <section aria-live="polite" style="background: var(--tile); border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)"><span>AMOUNT</span><span>TND · 3 DECIMALS</span></div>
+      <div style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 8px; min-height: 60px">
+        <span style="font-family: var(--dot); font-size: 60px; font-weight: 800; line-height: .82; letter-spacing: -.02em">{{amountText}}</span>
+      </div>
+      <div style="display: flex; gap: 6px; overflow-x: auto">
+        <sc-for list="{{formCats}}" as="c" hint-placeholder-count="6">
+          <button onClick="{{c.go}}" aria-pressed="{{c.sel}}" style="appearance: none; cursor: pointer; flex: 0 0 auto; height: 34px; padding: 0 12px; border: 1px solid {{c.border}}; border-radius: 999px; background: {{c.bg}}; color: {{c.color}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .1em">{{c.label}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+        <label style="display: flex; align-items: center; gap: 12px; height: 48px; border-bottom: 1px solid var(--line)">
+          <span style="width: 64px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--faint)">FOR</span>
+          <input value="{{what}}" onChange="{{onWhat}}" style="flex: 1; min-width: 0; height: 40px; border: 0; outline: none; background: transparent; color: var(--text); font-family: var(--sans); font-size: 15px; font-weight: 500">
+        </label>
+        <div style="display: flex; align-items: center; gap: 12px; height: 48px">
+          <span style="width: 64px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--faint)">PAID</span>
+          <span style="flex: 1; font-size: 15px; font-weight: 500">BIAT Bank</span>
+          <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--dim)">TODAY</span>
+        </div>
+      </div>
+    </section>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+        <button onClick="{{k.go}}" aria-label="{{k.aria}}" style="appearance: none; cursor: pointer; height: {{keyH}}; border: 0; border-radius: 16px; background: var(--tile); color: var(--text); font-family: var(--dot); font-size: 26px; font-weight: 800">{{k.label}}</button>
+      </sc-for>
+    </div>
+    <button onClick="{{save}}" style="appearance: none; cursor: pointer; height: 58px; border: 0; border-radius: 999px; background: var(--accent); color: var(--onAccent); font-family: var(--sans); font-size: 16px; font-weight: 700; letter-spacing: -.01em">Save {{amountText}} TND</button>
+  </div>
+</sc-if>
+
+<!-- ================= SEARCH ================= -->
+<sc-if value="{{isSearch}}" hint-placeholder-val="{{false}}">
+  <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px">
+    <label style="height: 56px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 20px; background: var(--tile); border-radius: 999px; color: var(--dim)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="{{ic.search}}"></path></svg>
+      <input aria-label="Search everything" value="{{q}}" onChange="{{onQ}}" placeholder="Notes, money, people, documents" style="flex: 1; min-width: 0; height: 48px; border: 0; outline: none; background: transparent; color: var(--text); font-family: var(--sans); font-size: 17px; font-weight: 500">
+      <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--faint)">{{resultCount}}</span>
+    </label>
+    <sc-for list="{{results}}" as="grp" hint-placeholder-count="3">
+      <section style="background: var(--tile); border-radius: 22px; padding: 6px 0">
+        <div style="padding: 12px 18px 8px; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--faint)">{{grp.label}}</div>
+        <sc-for list="{{grp.items}}" as="it" hint-placeholder-count="2">
+          <button onClick="{{it.go}}" style="appearance: none; cursor: pointer; width: 100%; box-sizing: border-box; min-height: 60px; display: flex; align-items: center; gap: 14px; padding: 10px 18px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; font-family: var(--sans)">
+            <span style="width: 36px; height: 36px; flex: 0 0 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--tile2); color: var(--dim)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{it.icon}}"></path></svg>
+            </span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 600">{{it.t}}</span>
+              <span style="font-size: 12px; color: var(--dim)">{{it.m}}</span>
+            </span>
+            <span style="font-family: var(--mono); font-size: 13px; color: {{it.tone}}">{{it.v}}</span>
+          </button>
+        </sc-for>
+      </section>
+    </sc-for>
+    <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+      <div style="background: var(--tile); border-radius: 22px; padding: 40px 16px; text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--faint)">NOTHING MATCHES</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ================= VAULT SETTINGS ================= -->
+<sc-if value="{{isSettings}}" hint-placeholder-val="{{false}}">
+  <div style="max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: {{setCols}}; gap: 10px">
+    <section style="grid-column: 1 / -1; background: var(--tile); border-radius: 22px; padding: 20px; display: flex; align-items: center; gap: 16px">
+      <span style="position: relative; width: 52px; height: 52px; flex: 0 0 52px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: var(--pos)"></span>
+      </span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 17px; font-weight: 600; letter-spacing: -.01em">In sync</span>
+        <span style="font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--faint)">PHONE ⇄ DESKTOP-VAULT · 2 MIN AGO</span>
+      </span>
+      <button style="appearance: none; cursor: pointer; height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text); font-family: var(--sans); font-size: 14px; font-weight: 600">Sync now</button>
+    </section>
+    <sc-for list="{{settings}}" as="row" hint-placeholder-count="6">
+      <div style="background: var(--tile); border-radius: 22px; padding: 18px; min-height: 108px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+        <span style="display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--faint)">
+          <span>{{row.g}}</span>
+          <span style="padding: 3px 8px; border-radius: 999px; background: {{row.tagBg}}; color: {{row.tagColor}}">{{row.v}}</span>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 15px; font-weight: 600">{{row.t}}</span>
+          <span style="font-size: 12px; color: var(--dim)">{{row.m}}</span>
+        </span>
+      </div>
+    </sc-for>
+    <div role="radiogroup" aria-label="Theme" style="grid-column: 1 / -1; display: flex; gap: 4px; padding: 4px; background: var(--tile); border-radius: 999px">
+      <button role="radio" aria-checked="{{isLight}}" onClick="{{setLight}}" style="appearance: none; cursor: pointer; flex: 1; height: 44px; border: 0; border-radius: 999px; background: {{lightBg}}; color: {{lightColor}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .14em">LIGHT</button>
+      <button role="radio" aria-checked="{{isDark}}" onClick="{{setDark}}" style="appearance: none; cursor: pointer; flex: 1; height: 44px; border: 0; border-radius: 999px; background: {{darkBg}}; color: {{darkColor}}; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .14em">DARK</button>
+    </div>
+  </div>
+</sc-if>
+
+    </div>
+  </main>
+
+  <!-- ================= PHONE TAB BAR ================= -->
+  <sc-if value="{{phone}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 0 0 auto; padding: 8px 12px 14px">
+      <nav aria-label="Main" style="height: 64px; box-sizing: border-box; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; padding: 0 6px; background: var(--tile); border-radius: 999px">
+        <sc-for list="{{navLeft}}" as="item" hint-placeholder-count="2">
+          <button onClick="{{item.go}}" aria-current="{{item.cur}}" aria-label="{{item.label}}" style="appearance: none; cursor: pointer; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: {{item.color}}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+            <span style="width: 4px; height: 4px; border-radius: 50%; background: {{item.bar}}"></span>
+          </button>
+        </sc-for>
+        <div style="display: flex; justify-content: center">
+          <button onClick="{{openSheet}}" aria-label="New entry" style="appearance: none; cursor: pointer; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--accent); color: var(--onAccent)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="{{ic.plus}}"></path></svg>
+          </button>
+        </div>
+        <sc-for list="{{navRight}}" as="item" hint-placeholder-count="2">
+          <button onClick="{{item.go}}" aria-current="{{item.cur}}" aria-label="{{item.label}}" style="appearance: none; cursor: pointer; height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 0; background: transparent; color: {{item.color}}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+            <span style="width: 4px; height: 4px; border-radius: 50%; background: {{item.bar}}"></span>
+          </button>
+        </sc-for>
+      </nav>
+    </div>
+  </sc-if>
+</div>
+
+<!-- ================= CREATE SHEET ================= -->
+<sc-if value="{{sheet}}" hint-placeholder-val="{{false}}">
+  <div style="position: absolute; inset: 0; z-index: 10; display: flex; align-items: {{sheetAlign}}; justify-content: center; padding: {{sheetPad}}; box-sizing: border-box">
+    <button onClick="{{closeSheet}}" aria-label="Close" style="appearance: none; position: absolute; inset: 0; border: 0; background: var(--scrim); cursor: pointer"></button>
+    <div role="dialog" aria-label="New entry" style="position: relative; width: {{sheetW}}; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px; background: var(--bg); border-radius: 28px">
+      <sc-for list="{{createItems}}" as="cr" hint-placeholder-count="6">
+        <button onClick="{{cr.go}}" style="appearance: none; cursor: pointer; grid-column: {{cr.span}}; min-height: 104px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; padding: 16px; border: 0; border-radius: 20px; background: {{cr.bg}}; color: {{cr.fg}}; text-align: left; font-family: var(--sans)">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{cr.icon}}"></path></svg>
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 16px; font-weight: 600; letter-spacing: -.01em">{{cr.t}}</span>
+            <span style="font-size: 12px; opacity: .72">{{cr.m}}</span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ================= TOAST ================= -->
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+  <div role="status" style="position: absolute; left: 50%; bottom: {{toastBottom}}; transform: translateX(-50%); z-index: 11; display: flex; align-items: center; gap: 14px; height: 52px; padding: 0 6px 0 20px; border-radius: 999px; background: var(--text); color: var(--bg); font-family: var(--sans); font-size: 14px; font-weight: 600; white-space: nowrap">
+    {{toastText}}
+    <button onClick="{{undo}}" style="appearance: none; cursor: pointer; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--accent); color: var(--onAccent); font-family: var(--sans); font-size: 14px; font-weight: 700">Undo</button>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"device":{"editor":"enum","options":["auto","phone","desktop"],"default":"auto"},"start":{"editor":"enum","options":["home","money","notes","docs","add","search","settings"],"default":"home"},"seg":{"editor":"enum","options":["expenses","people","recurring","accounts"],"default":"expenses"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  state = {};
+
+  onResize = () => this.setState({ w: window.innerWidth });
+
+  componentDidMount() {
+    window.addEventListener('resize', this.onResize);
+    this.onResize();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onResize);
+    clearTimeout(this.toastTimer);
+  }
+
+  renderVals() {
+    const p = this.props;
+    const s = this.state;
+    const set = (patch) => this.setState(patch);
+
+    const dark = s.dark !== undefined ? s.dark : (p.theme || 'dark') !== 'light';
+    const screen = s.screen || p.start || 'home';
+    const seg = s.seg || p.seg || 'expenses';
+    const width = s.w || 1440;
+    const device = p.device && p.device !== 'auto' ? p.device : (width >= 900 ? 'desktop' : 'phone');
+    const wide = device === 'desktop';
+
+    const T = dark ? {
+      bg: '#000000', tile: '#111111', tile2: '#1C1C1C', line: '#262626', line2: '#3A3A3A',
+      text: '#F4F4F1', dim: '#A6A6A2', faint: '#8C8C88',
+      accent: '#FF5A1F', accentText: '#FF6D38', onAccent: '#000000',
+      pos: '#3FD68F', est: '#A3BCE0', scrim: 'rgba(0,0,0,.72)'
+    } : {
+      bg: '#E9E7E1', tile: '#F7F6F2', tile2: '#ECEAE4', line: '#DAD7CF', line2: '#BDB9B0',
+      text: '#0B0B0B', dim: '#4C4C49', faint: '#5E5E5A',
+      accent: '#FF5A1F', accentText: '#B33A08', onAccent: '#0B0B0B',
+      pos: '#17724E', est: '#3E5A80', scrim: 'rgba(11,11,11,.45)'
+    };
+    T.sans = "'Inter Tight', system-ui, sans-serif";
+    T.mono = "'JetBrains Mono', ui-monospace, monospace";
+    T.dot = "'Doto', 'JetBrains Mono', monospace";
+    const rootStyle = Object.keys(T).map((k) => '--' + k + ':' + T[k]).join(';');
+
+    const I = {
+      home: 'M4 10.5 12 4l8 6.5V20h-5v-5.5H9V20H4z',
+      money: 'M3.5 7.5h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2zM3.5 7.5 15 4v3.5M16 13.5h1.5',
+      notes: 'M6 3.5h8.5l3.5 3.5v13.5H6zM14.5 3.5V7H18M9 12h6M9 15.5h4',
+      docs: 'M4 5.5h6l2 2h8v12H4zM4 10h16',
+      plus: 'M12 5v14M5 12h14',
+      search: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM20 20l-4.8-4.8',
+      sliders: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
+      sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
+      moon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z',
+      back: 'M15 5l-7 7 7 7',
+      cart: 'M3 4h2l2.4 11h10.2L20 8H6.2M9 20h.01M17 20h.01',
+      food: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 5s1 4 3 4v9',
+      car: 'M5 16v-5l2-5h10l2 5v5zM3 16h18M7 19v-3M17 19v-3',
+      bolt: 'M13 3 5 13h6l-1 8 8-10h-6z',
+      repeat: 'M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5',
+      receipt: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
+      people: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2 20a7 7 0 0 1 14 0M16 4.5a3.5 3.5 0 0 1 0 6.5M22 20a7 7 0 0 0-4-6.3',
+      bank: 'M3 9 12 4l9 5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18',
+      card: 'M3 6h18v12H3zM3 10h18M7 15h4',
+      cash: 'M3 7h18v10H3zM12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+      globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z',
+      shield: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z',
+      id: 'M4 5h16v14H4zM9 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 16a3 3 0 0 1 6 0M14 9h4M14 13h4',
+      checklist: 'M4 6l1.5 1.5L8 5M4 13l1.5 1.5L8 12M11 6.5h9M11 13.5h9M11 19.5h9',
+      scan: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M4 12h16',
+      image: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6'
+    };
+
+    const go = (to, extra) => () => this.setState(Object.assign({ screen: to, sheet: false, prev: screen }, extra || {}));
+    const tone = { pos: 'var(--pos)', neg: 'var(--accentText)', est: 'var(--est)', text: 'var(--text)', dim: 'var(--dim)' };
+    const div = (i) => (i === 0 ? '0' : '1px solid var(--line)');
+    const chip = (label, sel, onGo) => ({
+      label: label.toUpperCase(), sel: sel ? 'true' : 'false', go: onGo,
+      bg: sel ? 'var(--text)' : 'transparent', color: sel ? 'var(--bg)' : 'var(--dim)', border: sel ? 'var(--text)' : 'var(--line)'
+    });
+
+    // ---------- navigation
+    const nav = [
+      { id: 'home', label: 'Home', short: 'HOME', icon: I.home },
+      { id: 'money', label: 'Money', short: 'MONEY', icon: I.money },
+      { id: 'notes', label: 'Notes', short: 'NOTES', icon: I.notes },
+      { id: 'docs', label: 'Documents', short: 'DOCS', icon: I.docs }
+    ].map((n) => {
+      const on = n.id === screen;
+      return Object.assign(n, {
+        go: go(n.id), cur: on ? 'page' : 'false',
+        color: on ? 'var(--text)' : 'var(--faint)',
+        bg: on ? 'var(--tile)' : 'transparent',
+        bar: on ? 'var(--accent)' : 'transparent'
+      });
+    });
+
+    const titles = {
+      home: ['FRI 30 OCT · 21:40', 'Good evening'],
+      money: ['OCTOBER 2026', 'Money'],
+      notes: ['12 NOTES · 2 PINNED', 'Notes'],
+      docs: ['5 SCANS · ENCRYPTED', 'Documents'],
+      add: ['NEW ENTRY', 'Expense'],
+      search: ['EVERYTHING', 'Search'],
+      settings: ['LOCAL VAULT', 'Vault']
+    };
+    const sub = ['add', 'search', 'settings'].indexOf(screen) >= 0;
+
+    // ---------- home
+    const daily = [8, 0, 21, 6, 12, 4, 0, 30, 7, 5, 14, 0, 9, 6, 18, 3, 0, 11, 16, 2, 8, 0, 6, 9, 4, 59.55, 0, 92.4, 44.24, 18.5, null];
+    const bars = daily.map((v, i) => {
+      if (v === null) return { h: '100%', bg: 'transparent', border: '1px dashed var(--line2)' };
+      const today = i === 29;
+      return { h: Math.max(3, Math.round((v / 92.4) * 100)) + '%', bg: today ? 'var(--accent)' : (v === 0 ? 'var(--line)' : 'var(--text)'), border: '0' };
+    });
+    const circ = 2 * Math.PI * 33;
+    const inner = 2 * Math.PI * 24;
+    const dial = { used: (circ * 0.53).toFixed(1) + ' ' + circ.toFixed(1), marker: (inner * 0.82).toFixed(1) + ' ' + inner.toFixed(1) };
+
+    const attention = [
+      { t: 'Internet bill tomorrow', m: 'Topnet · BIAT Bank · waiting for you to log it', v: '65.000', tn: 'text', to: 'money', seg: 'recurring' },
+      { t: 'Car insurance ends in 62 days', m: '31 Dec 2026 · reminder set', v: '62 D', tn: 'neg', to: 'docs' },
+      { t: 'Netflix still an estimate', m: '10.99 EUR · until the bank statement', v: '≈ 36.240', tn: 'est', to: 'money', seg: 'expenses' }
+    ].map((a, i) => Object.assign(a, { n: '0' + (i + 1), divider: div(i), tone: tone[a.tn], go: go(a.to, a.seg ? { seg: a.seg } : {}) }));
+
+    // ---------- notes
+    const shades = dark
+      ? { sage: ['#1F2B22', '#DCEBDD'], sand: ['#2E2716', '#F1E6C8'], clay: ['#33201A', '#F3D9CF'], slate: ['#1B2230', '#D8E1F0'], plain: ['#111111', '#F4F4F1'], signal: ['#FF5A1F', '#000000'] }
+      : { sage: ['#DCE6DA', '#13251A'], sand: ['#EFE4C6', '#2C220C'], clay: ['#F0D9CE', '#3A1A0E'], slate: ['#D9E1EC', '#14203A'], plain: ['#F7F6F2', '#0B0B0B'], signal: ['#FF5A1F', '#0B0B0B'] };
+    const dotsFor = (done, total) => {
+      const out = [];
+      for (let i = 0; i < Math.min(total, 8); i++) out.push({ op: i < done ? '1' : '.25', bg: i < done ? 'var(--text)' : 'var(--line2)' });
+      return out;
+    };
+    const allNotes = [
+      { t: 'Weekend groceries', k: 'CHECKLIST', sn: 'Olive oil, coffee, fresh fruit, bread, yogurt.', meta: '3/5', done: 3, total: 5, shade: 'signal', pin: 'PINNED', kind: 'Checklists' },
+      { t: 'Insurance renewal', k: 'NOTE · REMINDER', sn: 'Policy AX-2048-991. Call the agent before the 15th about the excess.', meta: '15 NOV', shade: 'sand', pin: 'PINNED', kind: 'Reminders' },
+      { t: 'Sousse trip', k: 'IMAGES', sn: 'Twelve photos — the beach at dawn, the medina, dinner by the port.', meta: '12 PHOTOS', shade: 'clay', pin: '', kind: 'Images' },
+      { t: 'Reading list', k: 'CHECKLIST', sn: 'The Creative Act · Slow Productivity · Four Thousand Weeks · Deep Work', meta: '2/8', done: 2, total: 8, shade: 'slate', pin: '', kind: 'Checklists' },
+      { t: 'Samir repayment plan', k: 'NOTE', sn: '30.000 a month from September. Next one due 12 Nov, in cash.', meta: '12 SEP', shade: 'plain', pin: '', kind: 'Notes' },
+      { t: 'Trip ideas', k: 'NOTE', sn: 'Tabarka in spring. Djerba for the holidays. Ask about the ferry times.', meta: '2H AGO', shade: 'sage', pin: '', kind: 'Notes' },
+      { t: 'Apartment — to fix', k: 'CHECKLIST', sn: 'Kitchen tap, balcony door seal, hallway light.', meta: '1/3', done: 1, total: 3, shade: 'plain', pin: '', kind: 'Checklists' },
+      { t: 'Gift ideas', k: 'NOTE', sn: 'A film camera for the trip. Prints of the Sousse photos.', meta: '03 OCT', shade: 'sage', pin: '', kind: 'Notes' }
+    ];
+    const nf = s.nf || 'All';
+    const noteChips = ['All', 'Checklists', 'Images', 'Reminders', 'Archived'].map((c) => chip(c, c === nf, () => set({ nf: c })));
+    const notes = allNotes.filter((n) => nf === 'All' || n.kind === nf).map((n) => Object.assign({}, n, {
+      bg: shades[n.shade][0], fg: shades[n.shade][1], dots: n.total ? dotsFor(n.done, n.total) : []
+    }));
+    const recentNotes = allNotes.slice(0, 2).map((n) => Object.assign({}, n, { dots: n.total ? dotsFor(n.done, n.total) : [{ bg: 'var(--accent)' }] }));
+
+    // ---------- money
+    const segs = [['expenses', 'SPENT'], ['people', 'PEOPLE'], ['recurring', 'REPEATS'], ['accounts', 'ACCOUNTS']].map((d) => ({
+      label: d[1], sel: d[0] === seg ? 'true' : 'false', go: () => set({ seg: d[0] }),
+      bg: d[0] === seg ? 'var(--text)' : 'transparent', color: d[0] === seg ? 'var(--bg)' : 'var(--dim)'
+    }));
+    const budgets = [
+      { n: 'Food', pct: 82 }, { n: 'Groceries', pct: 64 }, { n: 'Bills', pct: 65 }, { n: 'Transport', pct: 41 }
+    ].map((b) => {
+      const over = b.pct >= 80;
+      const cells = [];
+      for (let i = 0; i < 10; i++) cells.push({ bg: i < Math.round(b.pct / 10) ? (over ? 'var(--accent)' : 'var(--text)') : 'var(--line)' });
+      return Object.assign(b, { cells, tone: over ? 'var(--accentText)' : 'var(--dim)' });
+    });
+    const allDays = [
+      { num: '30', label: 'FRI · TODAY', rows: [
+        { t: 'Carrefour La Marsa', cat: 'Groceries', icon: I.cart, m: 'BIAT Bank', minor: 12500 },
+        { t: 'Café de la Place', cat: 'Food', icon: I.food, m: 'Cash', minor: 6000 }
+      ] },
+      { num: '29', label: 'THU', rows: [
+        { t: 'Netflix', cat: 'Subscriptions', icon: I.repeat, m: 'Rizon Card · 10.99 EUR', minor: 36240, est: true },
+        { t: 'Taxi', cat: 'Transport', icon: I.car, m: 'Cash', minor: 8000 }
+      ] },
+      { num: '28', label: 'WED', rows: [
+        { t: 'Internet — Topnet', cat: 'Bills', icon: I.bolt, m: 'BIAT Bank · repeats', minor: 65000 },
+        { t: 'Pharmacie Ennasr', cat: 'Other', icon: I.receipt, m: 'Cash', minor: 27400 }
+      ] },
+      { num: '26', label: 'MON', rows: [
+        { t: 'Monoprix', cat: 'Groceries', icon: I.cart, m: 'BIAT Bank', minor: 48350 },
+        { t: 'Bolt ride', cat: 'Transport', icon: I.car, m: 'Rizon Card', minor: 11200 }
+      ] }
+    ];
+    const fmt = (minor) => {
+      const str = String(minor).padStart(4, '0');
+      return str.slice(0, -3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + str.slice(-3);
+    };
+    const cat = s.cat || 'All';
+    const catChips = ['All', 'Food', 'Groceries', 'Transport', 'Bills', 'Subscriptions', 'Other'].map((c) => chip(c, c === cat, () => set({ cat: c })));
+    const days = allDays.map((d) => {
+      const rows = d.rows.filter((r) => cat === 'All' || r.cat === cat);
+      const anyEst = rows.some((r) => r.est);
+      return {
+        num: d.num, label: d.label,
+        total: (anyEst ? '≈ ' : '') + fmt(rows.reduce((sum, r) => sum + r.minor, 0)),
+        rows: rows.map((r) => Object.assign({}, r, { a: (r.est ? '≈ ' : '') + fmt(r.minor), tone: r.est ? 'var(--est)' : 'var(--text)', unit: r.est ? 'TND · ESTIMATE' : 'TND' }))
+      };
+    }).filter((d) => d.rows.length > 0);
+
+    const people = [
+      { n: 'Samir', ini: 'SA', rel: 'OWES YOU', amt: '+120.000', t: 'pos', meta: 'Lent 150.000 · repaid 30.000' },
+      { n: 'Amel', ini: 'AM', rel: 'YOU OWE', amt: '−65.000', t: 'neg', meta: 'Car repair · since 08 Sep' }
+    ].map((x, i) => Object.assign(x, { divider: div(i), tone: tone[x.t] }));
+    const loanCells = [];
+    for (let i = 0; i < 20; i++) loanCells.push({ bg: i < 4 ? 'var(--pos)' : 'var(--line)' });
+    const ledger = [
+      { d: '03 SEP', t: 'Lent for the car repair', a: '+150.000', tn: 'pos' },
+      { d: '12 SEP', t: 'Paid back · cash', a: '−30.000', tn: 'text' }
+    ].map((x) => Object.assign(x, { tone: tone[x.tn] }));
+
+    const recurring = [
+      { dd: '28', mm: 'NOV', n: 'Internet — Topnet', s: 'Monthly · BIAT Bank', a: '65.000', mode: 'REMIND', tn: 'text', hot: true },
+      { dd: '05', mm: 'NOV', n: 'Netflix', s: 'Monthly · Rizon Card · 10.99 EUR', a: '≈ 36.240', mode: 'AUTO', tn: 'est' },
+      { dd: '12', mm: 'NOV', n: 'Spotify', s: 'Monthly · Rizon Card', a: '18.000', mode: 'AUTO', tn: 'text' },
+      { dd: '—', mm: 'PAUSED', n: 'Gym membership', s: 'Was 45.000 a month', a: '45.000', mode: 'PAUSED', tn: 'dim', op: '.55' }
+    ].map((x, i) => Object.assign(x, {
+      divider: div(i), tone: tone[x.tn], op: x.op || '1',
+      tagBg: x.hot ? 'var(--accent)' : 'var(--tile2)', tagColor: x.hot ? 'var(--onAccent)' : 'var(--dim)'
+    }));
+
+    const accounts = [
+      { n: 'BIAT Bank', icon: I.bank, now: '≈981.500', unit: 'TND', said: '1,000.000', on: '12 OCT', t: 'est' },
+      { n: 'Cash', icon: I.cash, now: '≈44.000', unit: 'TND', said: '50.000', on: '29 OCT', t: 'est' },
+      { n: 'Rizon Card', icon: I.card, now: '≈−156.240', unit: 'TND', said: '−120.000', on: '12 SEP', t: 'neg', stale: true },
+      { n: 'Payoneer', icon: I.globe, now: '320.00', unit: 'USD', said: '320.00', on: '03 SEP', t: 'text', stale: true }
+    ].map((a) => Object.assign(a, { tone: tone[a.t], dot: a.stale ? 'var(--accent)' : 'var(--pos)', metaTone: a.stale ? 'var(--accentText)' : 'var(--faint)' }));
+
+    // ---------- documents
+    const docs = [
+      { t: 'Passport', k: 'ID', meta: '3 pages · text read', st: 'EXP 08.2028' },
+      { t: 'Apartment lease', k: 'HOME', meta: '8 pages · text read', st: 'EXP 06.2027' },
+      { t: 'National ID card', k: 'ID', meta: '2 pages · text read', st: 'EXP 02.2031' },
+      { t: 'Carrefour receipt', k: 'RECEIPT', meta: 'Linked to a 12.500 TND expense', st: '30.10.26' }
+    ];
+
+    // ---------- new expense: a POS-style keypad, digits fill the millimes
+    const minor = s.minor !== undefined ? s.minor : 18500;
+    const amountText = fmt(minor);
+    const press = (d) => () => set({ minor: Math.min(minor * 10 + d, 99999999) });
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '⌫'].map((k) => ({
+      label: k,
+      aria: k === '⌫' ? 'Delete a digit' : 'Digit ' + k,
+      go: k === '⌫' ? () => set({ minor: Math.floor(minor / 10) }) : (k === '00' ? () => set({ minor: Math.min(minor * 100, 99999999) }) : press(Number(k)))
+    }));
+    const fcat = s.fcat || 'Groceries';
+    const formCats = ['Groceries', 'Food', 'Transport', 'Bills', 'Subscriptions', 'Other'].map((c) => chip(c, c === fcat, () => set({ fcat: c })));
+    const what = s.what !== undefined ? s.what : 'Carrefour La Marsa';
+
+    // ---------- search
+    const q = s.q !== undefined ? s.q : 'samir';
+    const index = [
+      { g: 'PEOPLE', t: 'Samir', m: 'Lent 150.000 · repaid 30.000', v: '+120.000', tn: 'pos', icon: I.people, to: 'money', seg: 'people' },
+      { g: 'MONEY', t: 'Paid back by Samir', m: '12 Sep · cash · debt ledger', v: '30.000', icon: I.money, to: 'money', seg: 'people' },
+      { g: 'MONEY', t: 'Carrefour La Marsa', m: 'Groceries · BIAT Bank · today', v: '12.500', icon: I.cart, to: 'money', seg: 'expenses' },
+      { g: 'MONEY', t: 'Netflix', m: 'Subscriptions · Rizon Card', v: '≈ 36.240', tn: 'est', icon: I.repeat, to: 'money', seg: 'expenses' },
+      { g: 'NOTES', t: 'Samir repayment plan', m: '30.000 a month from September', v: '', icon: I.notes, to: 'notes' },
+      { g: 'NOTES', t: 'Weekend groceries', m: 'Checklist · olive oil, coffee, fresh fruit', v: '3/5', icon: I.checklist, to: 'notes' },
+      { g: 'DOCUMENTS', t: 'Car insurance', m: 'Found inside the scan: “Valid until 31 Dec 2026”', v: '62 D', tn: 'neg', icon: I.shield, to: 'docs' },
+      { g: 'DOCUMENTS', t: 'Passport', m: 'ID · 3 pages', v: '', icon: I.id, to: 'docs' }
+    ];
+    const needle = q.trim().toLowerCase();
+    const hits = needle ? index.filter((x) => (x.t + ' ' + x.m).toLowerCase().indexOf(needle) >= 0) : [];
+    const results = ['PEOPLE', 'MONEY', 'NOTES', 'DOCUMENTS'].map((g) => {
+      const items = hits.filter((h) => h.g === g);
+      return { label: g + ' · ' + items.length, items: items.map((h) => Object.assign({}, h, { tone: tone[h.tn || 'text'], go: go(h.to, h.seg ? { seg: h.seg } : {}) })) };
+    }).filter((g) => g.items.length > 0);
+
+    // ---------- vault
+    const settings = [
+      { g: 'PAIRED', t: 'DESKTOP-VAULT', m: 'Windows · by QR · Wi-Fi', v: 'ON', k: 'pos' },
+      { g: 'FOLDER', t: 'VaultP-sync', m: 'Ciphertext only', v: 'ACTIVE', k: 'pos' },
+      { g: 'DRIVE', t: 'Google Drive', m: 'Your own project', v: 'LINKED', k: 'plain' },
+      { g: 'UNLOCK', t: 'Fingerprint', m: 'Android Keystore', v: 'ON', k: 'pos' },
+      { g: 'AUTO-LOCK', t: 'After 5 minutes', m: 'When the app leaves the screen', v: '5 MIN', k: 'plain' },
+      { g: 'BACKUP', t: '48 days ago', m: 'Export an encrypted copy', v: 'DUE', k: 'hot' }
+    ].map((r) => Object.assign(r, {
+      tagBg: r.k === 'hot' ? 'var(--accent)' : 'var(--tile2)',
+      tagColor: r.k === 'hot' ? 'var(--onAccent)' : (r.k === 'pos' ? 'var(--pos)' : 'var(--dim)')
+    }));
+
+    // ---------- create sheet
+    const createItems = [
+      { t: 'Expense', m: 'Keypad, category, done', icon: I.receipt, go: go('add'), span: '1 / -1', bg: 'var(--accent)', fg: 'var(--onAccent)' },
+      { t: 'Note', m: 'Text, tables, images', icon: I.notes, go: go('notes') },
+      { t: 'Checklist', m: 'Ticks drop to the end', icon: I.checklist, go: go('notes', { nf: 'Checklists' }) },
+      { t: 'Debt', m: 'Lent or borrowed', icon: I.people, go: go('money', { seg: 'people' }) },
+      { t: 'Scan', m: 'Read on this device', icon: I.scan, go: go('docs') }
+    ].map((c) => Object.assign({ span: 'auto', bg: 'var(--tile)', fg: 'var(--text)' }, c));
+
+    return {
+      rootStyle, wide, phone: !wide, phoneTop: !wide && !sub, dir: wide ? 'row' : 'column',
+      ic: I, themeIcon: dark ? I.sun : I.moon,
+      headerPad: wide ? '28px 40px 20px' : '14px 16px 12px',
+      bodyPad: wide ? '0 40px 40px' : '0 12px 16px',
+      maxW: wide ? '1280px' : 'none', titleSize: wide ? '34px' : '26px',
+      heroSize: wide ? '112px' : '76px', heroPad: wide ? '26px' : '20px',
+      barsH: wide ? '120px' : '72px', barGap: wide ? '5px' : '3px',
+      kicker: titles[screen][0], title: titles[screen][1], showBack: sub,
+      nav, navLeft: nav.slice(0, 2), navRight: nav.slice(2),
+      toggleTheme: () => set({ dark: !dark }),
+      setLight: () => set({ dark: false }), setDark: () => set({ dark: true }),
+      isLight: dark ? 'false' : 'true', isDark: dark ? 'true' : 'false',
+      lightBg: dark ? 'transparent' : 'var(--text)', lightColor: dark ? 'var(--dim)' : 'var(--bg)',
+      darkBg: dark ? 'var(--text)' : 'transparent', darkColor: dark ? 'var(--bg)' : 'var(--dim)',
+      goSearch: go('search'), goSettings: go('settings'), goNotes: go('notes'),
+      goPeople: go('money', { seg: 'people' }), goRecurring: go('money', { seg: 'recurring' }),
+      goBack: () => set({ screen: s.prev && s.prev !== screen ? s.prev : 'home' }),
+      isHome: screen === 'home', isMoney: screen === 'money', isNotes: screen === 'notes', isDocs: screen === 'docs',
+      isAdd: screen === 'add', isSearch: screen === 'search', isSettings: screen === 'settings',
+      homeCols: wide ? 'repeat(4, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
+      moneyCols: wide ? 'minmax(0, 1.7fr) minmax(0, 1fr)' : 'minmax(0, 1fr)',
+      noteCols: wide ? 'repeat(4, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
+      docCols: wide ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)',
+      acctCols: 'repeat(2, minmax(0, 1fr))', setCols: 'repeat(2, minmax(0, 1fr))',
+      segMax: wide ? '560px' : 'none', btnW: wide ? 'auto' : '100%',
+      keyH: wide ? '60px' : '54px',
+      g: wide
+        ? { hero: '1 / span 2', heroRow: '1 / span 2', wide2: 'span 2', main: '1', mainRow: '1', side: '2', docHero: '1 / -1' }
+        : { hero: '1 / -1', heroRow: 'auto', wide2: '1 / -1', main: 'auto', mainRow: 'auto', side: 'auto', docHero: '1 / -1' },
+      bars, dial, attention, recentNotes,
+      segs, segExpenses: seg === 'expenses', segPeople: seg === 'people', segRecurring: seg === 'recurring', segAccounts: seg === 'accounts',
+      budgets, catChips, days, noDays: days.length === 0,
+      people, loanCells, ledger, recurring, accounts,
+      noteChips, notes, docs,
+      amountText, keys, formCats, what,
+      onWhat: (e) => set({ what: e.target.value }),
+      save: () => {
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => this.setState({ toast: false }), 4000);
+        set({ screen: 'money', seg: 'expenses', toast: true, toastText: amountText + ' TND saved' });
+      },
+      undo: () => set({ toast: false }),
+      toast: !!s.toast, toastText: s.toastText || '', toastBottom: wide ? '36px' : '100px',
+      q, onQ: (e) => set({ q: e.target.value }), results, noResults: needle.length > 0 && results.length === 0,
+      resultCount: needle ? hits.length + ' FOUND' : '',
+      settings,
+      sheet: !!s.sheet, openSheet: () => set({ sheet: true }), closeSheet: () => set({ sheet: false }),
+      sheetAlign: wide ? 'center' : 'flex-end', sheetW: wide ? '520px' : '100%', sheetPad: wide ? '0' : '0 8px 8px',
+      createItems
+    };
+  }
+}
+</script>
+</body>
+</html>
