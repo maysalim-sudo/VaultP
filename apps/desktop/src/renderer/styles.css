@@ -664,3 +664,77 @@ button.tile.signal:hover { background: var(--accent); opacity: 0.92; }
 .pips i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
 .pips i.on { background: var(--text); }
 .pips i.signal { background: var(--accent); }
+
+/* ---------------------------------------------------------------- money pages */
+
+/* The list on the left, its summary on the right; one column when narrow. */
+.split { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 10px; align-items: start; }
+.split-main { grid-column: 1; grid-row: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.split-side { grid-column: 2; grid-row: 1; position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 1000px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .split-side { grid-column: 1; grid-row: 1; position: static; }
+  .split-main { grid-row: 2; }
+}
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.tile.day { padding: 14px 20px 18px; gap: 6px; }
+.day-head { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
+.day-head .dots { font-size: 30px; line-height: 1; }
+.rows .disc {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-overlay);
+  color: var(--text-dim);
+}
+.rows .amt { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-family: var(--font-mono); white-space: nowrap; }
+.rows .amt > span { font-size: 15px; font-weight: 500; }
+.rows .amt small { font-size: 9px; letter-spacing: 0.14em; color: var(--text-faint); }
+.rows .amt small.est { color: var(--estimate); }
+
+.budget-rows { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--divider); }
+.budget-row { display: grid; grid-template-columns: 96px 1fr 40px; gap: 10px; align-items: center; font-size: var(--text-xs); }
+.budget-row .mono { text-align: right; }
+
+/* Two figures side by side: owed to you, you owe. */
+.pair-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.pair-tiles .tile { min-height: 132px; justify-content: space-between; }
+.pair-tiles .dots { font-size: 40px; }
+
+.initials {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-overlay);
+  font: 700 12px var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* A date as a block: the day big, the month small beneath. */
+.date-block { width: 52px; flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.date-block .dots { font-size: 24px; line-height: 1; }
+
+.badge {
+  font: 500 9px / 1 var(--font-mono);
+  letter-spacing: 0.14em;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-overlay);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.badge.signal { background: var(--accent); color: var(--on-accent); }
+
+.acct-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.acct-grid .tile { min-height: 150px; }
+.acct-grid .dots { font-size: 34px; }
+.acct-grid .stale { color: var(--accent-text); }
+.rows .amt > .badge { font-size: 9px; font-weight: 500; }

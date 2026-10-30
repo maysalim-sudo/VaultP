@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { formatAmount, money } from '@vaultp/core';
+
 import type { BalanceDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
 import { useIntent } from '../nav.js';
@@ -24,31 +26,77 @@ export function Debts() {
   const balanceOf = (personId: string): BalanceDto | undefined =>
     balances.data?.find((balance) => balance.id === personId);
 
+  const side = (owesYou: boolean) => {
+    const totals = new Map<string, number>();
+    for (const balance of balances.data ?? []) {
+      if (balance.owesYou !== owesYou || !balance.net) continue;
+      totals.set(balance.net.currency, (totals.get(balance.net.currency) ?? 0) + Math.abs(balance.net.amountMinor));
+    }
+    const count = (balances.data ?? []).filter((balance) => balance.owesYou === owesYou && balance.net).length;
+    const figure =
+      totals.size === 0
+        ? '0'
+        : [...totals].map(([currency, minor]) => formatAmount(money(minor, currency), { unit: 'none' })).join(' + ');
+    return { figure, count, unit: [...totals.keys()].join(' + ') };
+  };
+  const owed = side(true);
+  const owing = side(false);
+
   return (
     <>
       <div className="head">
-        <h2>Debts</h2>
+        <h2>People</h2>
         <button onClick={() => setAdding(true)}>Add a person</button>
       </div>
 
-      {people.data?.length === 0 ? (
-        <p className="muted small">Nobody here yet.</p>
-      ) : null}
-
-      <ul className="list">
-        {people.data?.map((person) => {
-          const balance = balanceOf(person.id);
-          return (
-            <li key={person.id} className="clickable" onClick={() => setOpen(person.id)}>
-              <span>
-                {person.name}
-                {person.contact ? <em className="muted"> · {person.contact}</em> : null}
+      <div className="split">
+        <aside className="split-side">
+          <div className="pair-tiles">
+            <div className="tile">
+              <span className="label">OWED TO YOU</span>
+              <span className="dots pos">{owed.figure}</span>
+              <span className="label">
+                {owed.unit || 'TND'} · {owed.count} {owed.count === 1 ? 'PERSON' : 'PEOPLE'}
               </span>
-              <span className="right">{summarise(balance)}</span>
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+            <div className="tile">
+              <span className="label">YOU OWE</span>
+              <span className="dots neg">{owing.figure}</span>
+              <span className="label">
+                {owing.unit || 'TND'} · {owing.count} {owing.count === 1 ? 'PERSON' : 'PEOPLE'}
+              </span>
+            </div>
+          </div>
+          <p className="label" style={{ lineHeight: 1.7 }}>
+            A LOAN AND EVERY REPAYMENT ARE SEPARATE ENTRIES. SETTLING KEEPS THE HISTORY.
+          </p>
+        </aside>
+
+        <div className="split-main">
+          {people.data?.length === 0 ? <div className="empty">Nobody here yet</div> : null}
+          {people.data && people.data.length > 0 ? (
+            <section className="tile" style={{ padding: '6px 20px 18px' }}>
+              <div className="rows" style={{ marginTop: 0 }}>
+                {people.data.map((person, index) => {
+                  const balance = balanceOf(person.id);
+                  return (
+                    <button
+                      key={person.id}
+                      style={index === 0 ? { borderTop: 0 } : undefined}
+                      onClick={() => setOpen(person.id)}
+                    >
+                      <span className="initials">{person.name.slice(0, 2).toUpperCase()}</span>
+                      <span className="what">
+                        <strong>{person.name}</strong>
+                        <span>{person.contact ?? person.note ?? 'Open the ledger'}</span>
+                      </span>
+                      {summarise(balance)}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
       <p className="small">
         <button className="link" onClick={() => setShowArchived((current) => !current)}>
@@ -71,6 +119,9 @@ export function Debts() {
         )
       ) : null}
 
+        </div>
+      </div>
+
       {adding ? <AddPerson onClose={() => setAdding(false)} /> : null}
       {open ? <PersonLedger personId={open} onClose={() => setOpen(null)} /> : null}
     </>
@@ -78,15 +129,34 @@ export function Debts() {
 }
 
 function summarise(balance: BalanceDto | undefined) {
-  if (!balance) return <em className="muted">settled</em>;
-  if (balance.net === null) return <em className="warn">mixed currencies</em>;
+  if (!balance) {
+    return (
+      <span className="amt">
+        <span className="muted">—</span>
+        <small>SETTLED</small>
+      </span>
+    );
+  }
+  if (balance.net === null) {
+    return (
+      <span className="amt">
+        <span className="warn">mixed</span>
+        <small>CURRENCIES</small>
+      </span>
+    );
+  }
 
-  // Direction in words, not a sign: "-200" reads as either the moment you stop
-  // concentrating.
+  // Direction in words, not only a sign: "-200" reads as either the moment you
+  // stop concentrating.
   return (
-    <span className={balance.owesYou ? 'owed' : 'owing'}>
-      {balance.owesYou ? 'owes you ' : 'you owe '}
-      {balance.net.figure.replace('−', '')} {balance.net.currency}
+    <span className="amt">
+      <span className={balance.owesYou ? 'owed' : 'owing'}>
+        {balance.owesYou ? '+' : '−'}
+        {balance.net.figure.replace('−', '')}
+      </span>
+      <small>
+        {balance.net.currency} · {balance.owesYou ? 'OWES YOU' : 'YOU OWE'}
+      </small>
     </span>
   );
 }

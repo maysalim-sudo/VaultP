@@ -26,6 +26,10 @@ export default defineConfig({
     plugins: [react()],
     build: {
       rollupOptions: { input: resolve(__dirname, 'src/renderer/index.html') },
+      // Fonts are emitted as files, never inlined as data: URLs: the window's
+      // security policy loads fonts from the app itself only, and a small
+      // subset inlined by size would be refused and fall back silently.
+      assetsInlineLimit: (file: string) => (/\.(woff2?|ttf|otf)$/.test(file) ? false : undefined),
     },
   },
 });

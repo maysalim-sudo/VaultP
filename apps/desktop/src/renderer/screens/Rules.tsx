@@ -8,7 +8,9 @@
 
 import { useState } from 'react';
 
-import type { RuleDto, RuleFormDto } from '../../shared/api.js';
+import { formatAmount, money } from '@vaultp/core';
+
+import type { DueChargeDto, RuleDto, RuleFormDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 
@@ -26,10 +28,20 @@ export function Rules() {
   const nameOf = (id: string | null) =>
     categories.data?.find((category) => category.id === id)?.name ?? 'Uncategorised';
 
+  const base = baseCurrency();
+  const ruleOf = (id: string) => rules.data?.find((rule) => rule.id === id);
+  const coming = upcoming.data ?? [];
+  let comingMinor = 0;
+  let comingForeign = 0;
+  for (const charge of coming) {
+    if (charge.amount.currency === base) comingMinor += charge.amount.amountMinor;
+    else comingForeign += 1;
+  }
+
   return (
     <>
       <div className="head">
-        <h2>Recurring</h2>
+        <h2>Repeats</h2>
         <div className="row">
           <button
             className="secondary"
@@ -54,58 +66,95 @@ export function Rules() {
         </p>
       ) : null}
 
-      {pending.data && pending.data.length > 0 ? (
-        <>
-          <h3>Due, not logged</h3>
-          <ul className="list">
-            {pending.data.map((charge) => (
-              <li key={`${charge.ruleId}:${charge.date}`}>
-                <span className="warn">{charge.name}</span>
-                <span className="right">
-                  {charge.amount.display}
-                  <em className="muted"> {charge.date}</em>
+      <div className="split">
+        <aside className="split-side">
+          <section className="tile">
+            <span className="label">
+              NEXT 30 DAYS · {coming.length} CHARGE{coming.length === 1 ? '' : 'S'}
+            </span>
+            <span className="monument">
+              <span className="dots" style={{ fontSize: 'var(--text-display)' }}>
+                {formatAmount(money(comingMinor, base), { unit: 'none' })}
+              </span>
+              <span className="unit">{base}</span>
+            </span>
+            {comingForeign > 0 ? (
+              <span className="sub est">
+                + {comingForeign} in another currency, valued when the statement lands
+              </span>
+            ) : null}
+            <span className="sub">Auto-logged charges become expenses. Reminders wait for you.</span>
+          </section>
+
+          {pending.data && pending.data.length > 0 ? (
+            <section className="tile signal">
+              <span className="label">DUE, NOT LOGGED</span>
+              {pending.data.map((charge) => (
+                <span key={`${charge.ruleId}:${charge.date}`} className="row" style={{ justifyContent: 'space-between' }}>
+                  <strong>{charge.name}</strong>
+                  <span className="mono small">
+                    {charge.amount.display} · {charge.date.slice(8, 10)}.{charge.date.slice(5, 7)}
+                  </span>
                 </span>
-              </li>
+              ))}
+              <span className="sub">These only remind. Log them as expenses when they land.</span>
+            </section>
+          ) : null}
+        </aside>
+
+        <div className="split-main">
+          {coming.length > 0 ? (
+            <section className="tile" style={{ padding: '14px 20px 18px' }}>
+              <span className="label">COMING UP</span>
+              <div className="rows">
+                {coming.map((charge) => (
+                  <Coming key={`${charge.ruleId}:${charge.date}`} charge={charge} rule={ruleOf(charge.ruleId)} base={base} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <h3 style={{ margin: '14px 0 0' }}>Rules</h3>
+          <ul className="list">
+            {rules.data?.map((rule) => (
+              <RuleRow
+                key={rule.id}
+                rule={rule}
+                categoryName={nameOf(rule.categoryId)}
+                onEdit={() => setEditing({ rule })}
+              />
             ))}
           </ul>
-          <p className="muted small">
-            These rules only remind. Log them from the Expenses screen when they land.
-          </p>
-        </>
-      ) : null}
-
-      <h3>Rules</h3>
-      <ul className="list">
-        {rules.data?.map((rule) => (
-          <RuleRow
-            key={rule.id}
-            rule={rule}
-            categoryName={nameOf(rule.categoryId)}
-            onEdit={() => setEditing({ rule })}
-          />
-        ))}
-      </ul>
-      {rules.data?.length === 0 ? <p className="muted small">No rules yet.</p> : null}
-
-      {upcoming.data && upcoming.data.length > 0 ? (
-        <>
-          <h3>Next 30 days</h3>
-          <ul className="list">
-            {upcoming.data.map((charge) => (
-              <li key={`${charge.ruleId}:${charge.date}`}>
-                <span>{charge.name}</span>
-                <span className="right">
-                  {charge.amount.display}
-                  <em className="muted"> {charge.date}</em>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
+          {rules.data?.length === 0 ? <div className="empty">No rules yet</div> : null}
+        </div>
+      </div>
 
       {editing ? <RuleForm rule={editing.rule} onClose={() => setEditing(null)} /> : null}
     </>
+  );
+}
+
+function Coming({ charge, rule, base }: { charge: DueChargeDto; rule: RuleDto | undefined; base: string }) {
+  const at = new Date(`${charge.date}T12:00:00`);
+  return (
+    <div>
+      <span className="date-block">
+        <span className="dots">{charge.date.slice(8, 10)}</span>
+        <span className="label">{at.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase()}</span>
+      </span>
+      <span className="what">
+        <strong>{charge.name}</strong>
+        <span>
+          {rule ? (rule.intervalN === 1 ? rule.frequency : `every ${rule.intervalN} ${rule.frequency}`) : ''}
+        </span>
+      </span>
+      <span className="amt">
+        <span className={charge.amount.currency === base ? '' : 'est'}>{charge.amount.figure}</span>
+        <span className={`badge ${rule && !rule.autoLog ? 'signal' : ''}`}>
+          {rule?.autoLog ? 'AUTO' : 'REMIND'} · {charge.amount.currency}
+        </span>
+      </span>
+    </div>
   );
 }
 

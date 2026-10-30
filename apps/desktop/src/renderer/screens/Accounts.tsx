@@ -9,6 +9,7 @@
 import { useState } from 'react';
 
 import type { AccountDto, AccountFormDto, AccountKindDto } from '../../shared/api.js';
+import { Icon, type IconName } from '../icons.js';
 import { Field, Modal } from '../Modal.js';
 import { useIntent } from '../nav.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
@@ -22,6 +23,14 @@ const KINDS: { value: AccountKindDto; label: string }[] = [
 ];
 
 const STALE_AFTER_DAYS = 30;
+
+const KIND_ICON: Record<AccountKindDto, IconName> = {
+  bank: 'bank',
+  cash: 'cash',
+  card: 'card',
+  savings: 'piggy',
+  other: 'globe',
+};
 
 function daysSince(isoDate: string): number {
   const then = Date.parse(`${isoDate}T00:00:00`);
@@ -62,52 +71,64 @@ export function Accounts() {
         </div>
       </div>
 
-      {totals.length > 0 ? (
-        <div className="cards">
-          {totals.map((total) => (
-            <div key={total.currency} className="card">
-              <span className="stat-label">Across your accounts</span>
-              <span className="stat-value">
-                {total.figure}
-                <span className="unit">{total.currency}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {data.data && accounts.length === 0 ? (
         <div className="empty">
-          <p>No accounts yet.</p>
-          <p className="muted small">
-            Add your bank, the cash in your wallet, a card or a savings pot, with the balance you see today. You type the
-            balance in; nothing here is connected to a bank.
-          </p>
+          No accounts yet. Add your bank, cash, a card or a savings pot with the balance you see today — you type it
+          in; nothing here is connected to a bank.
         </div>
       ) : null}
 
-      <ul className="list">
-        {accounts.map((account) => {
-          const age = daysSince(account.balanceOn);
-          return (
-            <li key={account.id} className="clickable" onClick={() => setEditing({ account })}>
-              <span>
-                {account.name}
-                <em className="muted"> · {KINDS.find((kind) => kind.value === account.kind)?.label}</em>
-                {account.archived ? <em className="muted"> · archived</em> : null}
-                <br />
-                <em className={`small ${age > STALE_AFTER_DAYS ? 'warn' : 'muted'}`}>
-                  {age === 0 ? 'checked today' : `checked ${account.balanceOn}`}
-                  {age > STALE_AFTER_DAYS ? ' — worth a fresh look' : ''}
-                </em>
+      {accounts.length > 0 ? (
+        <div className="split">
+          <aside className="split-side">
+            <section className="tile">
+              <span className="label">
+                ACROSS {accounts.length} ACCOUNT{accounts.length === 1 ? '' : 'S'} · AS CHECKED
               </span>
-              <span className="right">
-                {account.balance.display}
+              {totals.map((total, index) => (
+                <span key={total.currency} className="monument">
+                  <span className="dots" style={{ fontSize: index === 0 ? 'var(--text-display)' : '28px' }}>
+                    {total.figure}
+                  </span>
+                  <span className="unit">{total.currency}</span>
+                </span>
+              ))}
+              <span className="sub">
+                What each account said on the day you checked it. Typed in by you; nothing is connected to a bank.
               </span>
-            </li>
-          );
-        })}
-      </ul>
+            </section>
+          </aside>
+
+          <div className="split-main">
+            <div className="acct-grid">
+              {accounts.map((account) => {
+                const age = daysSince(account.balanceOn);
+                const stale = age > STALE_AFTER_DAYS;
+                const negative = account.balance.amountMinor < 0;
+                return (
+                  <button key={account.id} className="tile" onClick={() => setEditing({ account })}>
+                    <span className="row" style={{ alignSelf: 'stretch', flexWrap: 'nowrap' }}>
+                      <Icon name={KIND_ICON[account.kind]} size={18} />
+                      <strong>{account.name}</strong>
+                      <span className={`sync-dot ${stale ? '' : 'ok'}`} style={{ marginLeft: 'auto', background: stale ? 'var(--accent)' : undefined }} />
+                    </span>
+                    <span className="monument">
+                      <span className={`dots ${negative ? 'neg' : ''}`}>{account.balance.figure}</span>
+                      <span className="unit">{account.balance.currency}</span>
+                    </span>
+                    <span className={`label ${stale ? 'stale' : ''}`} style={{ marginTop: 'auto' }}>
+                      {KINDS.find((kind) => kind.value === account.kind)?.label.toUpperCase()}
+                      {account.archived ? ' · ARCHIVED' : ''} ·{' '}
+                      {age === 0 ? 'CHECKED TODAY' : age === 1 ? 'CHECKED YESTERDAY' : `CHECKED ${age} DAYS AGO`}
+                      {stale ? ' — WORTH A LOOK' : ''}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {error ? <p className="error">{error}</p> : null}
 
