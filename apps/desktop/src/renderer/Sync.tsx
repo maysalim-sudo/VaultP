@@ -37,7 +37,19 @@ function useSyncStatus() {
   const paired = pairing.data?.paired === true;
   const ready = target === 'drive' ? driveReady : target === 'pair' ? paired : folder !== undefined;
   const where = target === 'drive' ? 'DRIVE' : target === 'pair' ? 'PHONE' : 'FOLDER';
-  return { ready, where, driveReady, paired, driveFolder: drive.data?.folderName ?? '' };
+  // A pairing exists as soon as the code is shown; the phone may never have
+  // scanned it. Only a phone that has been in touch counts as in sync.
+  const lastPhone = pairing.data?.lastPhoneActivity ?? null;
+  const state =
+    target !== 'pair' || !paired
+      ? ready
+        ? 'READY'
+        : 'NOT SET UP'
+      : lastPhone
+        ? `SEEN ${new Date(lastPhone).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+        : 'WAITING FOR THE PHONE';
+  const live = ready && (target !== 'pair' || lastPhone !== null);
+  return { ready, live, where, state, driveReady, paired, driveFolder: drive.data?.folderName ?? '' };
 }
 
 function useSyncNow() {
@@ -59,13 +71,13 @@ function useSyncNow() {
 
 export function SyncPill() {
   const nav = useNav();
-  const { ready, where } = useSyncStatus();
+  const { ready, live, where, state } = useSyncStatus();
   const { busy, error, report, syncNow } = useSyncNow();
 
   return (
     <div className="sync-pill" title={error ?? report ?? undefined}>
-      <span className={`sync-dot ${ready ? 'ok' : ''}`} />
-      <span className="label">{ready ? `${where} · READY` : 'SYNC NOT SET UP'}</span>
+      <span className={`sync-dot ${live ? 'ok' : ''}`} />
+      <span className="label">{ready ? `${where} · ${state}` : 'SYNC NOT SET UP'}</span>
       {ready ? (
         <button disabled={busy} onClick={syncNow}>
           {busy ? 'Syncing…' : 'Sync'}

@@ -195,7 +195,7 @@ export function ExpenseEditor({
           <button className="tag icon-tag on">{created.name}</button>
         ) : null}
         <button className="tag" onClick={() => setAdding(true)}>
-          + Other
+          + New category
         </button>
       </div>
 

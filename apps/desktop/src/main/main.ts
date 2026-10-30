@@ -87,6 +87,12 @@ function createWindow(): void {
   }
 }
 
+// The window's own formats — date fields above all — follow Chromium's locale,
+// which comes from the system's. A system set to US English, or with LC_TIME
+// in another language, gave "10/31/2026" or Arabic dates beside the "31 Oct"
+// the rest of the app writes. The app's text is English, so its formats are too.
+app.commandLine.appendSwitch('lang', 'en-GB');
+
 app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => {
