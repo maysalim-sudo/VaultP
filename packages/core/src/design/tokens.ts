@@ -11,17 +11,18 @@
  * lets it live in core beside the money logic without breaking the rule that
  * core knows nothing about UI — these are values, not components.
  *
- * THE PALETTE IS CALM ON PURPOSE. A muted steel-blue accent, sage for money
- * coming back, and ochre for money going out or a date coming up. Nothing that
- * needs attention is red: a finance app that flashes red at every debt teaches
- * dread, and dread makes people stop opening it. Red-ish clay is kept for one
- * job only — destructive actions like delete — and even that is muted.
+ * THE LOOK IS INDUSTRIAL (approved 2026-10-30, docs/ux/industrial/). Black or
+ * warm paper, soft-cornered tiles, figures on a dot-matrix face, and one safety
+ * orange that is spent only where something wants you: the create button, the
+ * next bill, money you owe, a budget past 80%, today. Everything else is ink.
+ * Green is money coming back; a cool blue-grey marks an estimate. Nothing about
+ * money is red — orange is a nudge, not an alarm — and red is kept for the one
+ * job of destructive actions.
  *
- * Every text colour here has been checked against the surface it sits on: body
- * and figure colours clear WCAG AA (4.5:1) in both themes; only `textFaint`,
- * used for placeholders, sits lower (~3.5:1). The light theme uses darker cuts
- * of the same hues, because the dark theme's ochre on white would be
- * unreadable.
+ * Every text colour here is checked against the surfaces it sits on, in both
+ * themes, by design/tokens.test.ts: WCAG AA (4.5:1) for all of them, faint
+ * captions included. The orange is too light to read as small text on paper, so
+ * the light theme prints it through `accentText`, a burnt cut of the same hue.
  */
 
 /** A complete set of colour roles for one theme. Every field is required in both. */
@@ -42,15 +43,18 @@ export interface ColorRoles {
   readonly border: string;
   readonly divider: string;
 
+  /** The safety orange, as a fill: the create button, today, the next bill. */
   readonly accent: string;
   /** Text/icons printed on top of the accent. */
   readonly onAccent: string;
+  /** The orange as text or a thin stroke on the ground or a tile. */
+  readonly accentText: string;
 
   // The money meanings, named rather than signed — "-200" reads as either the
   // moment attention lapses.
   /** Owed to you; money coming back. */
   readonly positive: string;
-  /** You owe; overspent. Cautionary, not alarming — ochre, never red. */
+  /** You owe; overspent. Cautionary, not alarming — orange, never red. */
   readonly negative: string;
   /**
    * The `≈` state: a value derived from a past rate, not a fact and not an
@@ -86,66 +90,66 @@ export interface Theme {
 }
 
 export const darkColors: ColorRoles = {
-  bg: '#0B0E12',
-  surfaceRaised: '#191C20',
-  surfaceOverlay: '#1D2024',
+  bg: '#000000',
+  surfaceRaised: '#111111',
+  surfaceOverlay: '#1C1C1C',
 
-  text: '#E6E8EB',
-  textDim: '#9BA3AC',
-  textFaint: '#6E7680',
+  text: '#F4F4F1',
+  textDim: '#A6A6A2',
+  textFaint: '#8C8C88',
 
-  border: '#282B30',
-  divider: '#1F2226',
+  border: '#262626',
+  divider: '#262626',
 
-  accent: '#7EA0B8',
-  onAccent: '#0B0E12',
+  accent: '#FF5A1F',
+  onAccent: '#000000',
+  accentText: '#FF6D38',
 
-  positive: '#68A37F',
-  negative: '#D49D42',
-  // A dusty violet: reads as its own "provisional" state, apart from both the
-  // steel accent and the ochre of money owed.
-  estimate: '#A59CC8',
+  positive: '#3FD68F',
+  negative: '#FF6D38',
+  estimate: '#A3BCE0',
 
-  success: '#68A37F',
-  warning: '#D49D42',
-  danger: '#C9826B',
+  success: '#3FD68F',
+  warning: '#FF6D38',
+  danger: '#FF7A6B',
 };
 
 export const lightColors: ColorRoles = {
-  bg: '#F3F4F5',
-  surfaceRaised: '#FFFFFF',
+  bg: '#E9E7E1',
+  surfaceRaised: '#F7F6F2',
   surfaceOverlay: '#FFFFFF',
 
-  text: '#15181C',
-  textDim: '#5A626C',
-  textFaint: '#858C95',
+  text: '#0B0B0B',
+  textDim: '#4C4C49',
+  textFaint: '#5E5E5A',
 
-  border: '#E1E4E8',
-  divider: '#ECEEF0',
+  border: '#DAD7CF',
+  divider: '#DAD7CF',
 
-  accent: '#3F6178',
-  onAccent: '#FFFFFF',
+  accent: '#FF5A1F',
+  onAccent: '#0B0B0B',
+  accentText: '#B33A08',
 
-  positive: '#2F7350',
-  negative: '#8F5E12',
-  estimate: '#655C8F',
+  positive: '#17724E',
+  negative: '#B33A08',
+  estimate: '#3E5A80',
 
-  success: '#2F7350',
-  warning: '#8F5E12',
-  danger: '#A24E36',
+  success: '#17724E',
+  warning: '#B33A08',
+  danger: '#B3261E',
 };
 
 const darkDepth: Depth = {
-  // A faint lift only; on dark, the surface step above does most of the work.
-  shadowCard: '0 1px 2px rgba(0, 0, 0, 0.4)',
+  // Tiles sit flat on black; the step in surface carries depth, not a shadow.
+  shadowCard: 'none',
   shadowOverlay: '0 12px 32px rgba(0, 0, 0, 0.55)',
   rnElevationCard: 0,
   rnElevationOverlay: 8,
 };
 
 const lightDepth: Depth = {
-  shadowCard: '0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.10)',
-  shadowOverlay: '0 12px 32px rgba(16, 24, 40, 0.18)',
+  shadowCard: 'none',
+  shadowOverlay: '0 16px 40px rgba(11, 11, 11, 0.18)',
   rnElevationCard: 1,
   rnElevationOverlay: 8,
 };
@@ -168,6 +172,10 @@ export const typeScale = {
   lg: 20,
   xl: 28,
   hero: 40,
+  /** The dot-matrix figure a tile exists to show. */
+  display: 56,
+  /** The month's spend on the overview: the one number the window leads with. */
+  monument: 112,
 } as const;
 
 export const weights = {
@@ -189,10 +197,10 @@ export const spacing = {
 
 export const radii = {
   sm: 8,
-  md: 12,
-  lg: 16,
-  /** The generous, friendly rounding of the money screens. */
-  xl: 24,
+  md: 14,
+  lg: 18,
+  /** Tiles: every grouped surface on both apps. */
+  xl: 22,
   pill: 999,
 } as const;
 
@@ -250,8 +258,15 @@ export const categoryPalette: readonly string[] = [
   '#7D5F4B',
 ];
 
+/**
+ * Three faces, all SIL OFL and shipped inside the apps (never fetched):
+ * Inter Tight for words, JetBrains Mono for labels and small figures, Doto — a
+ * dot-matrix face — for the large figures a tile exists to show.
+ */
 export const fontStacks = {
-  ui: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  ui: '"Inter Tight", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: '"JetBrains Mono", ui-monospace, Consolas, monospace',
+  display: 'Doto, "JetBrains Mono", ui-monospace, monospace',
 } as const;
 
 /**

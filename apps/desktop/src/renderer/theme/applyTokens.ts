@@ -13,6 +13,7 @@
 
 import {
   darkTheme,
+  fontStacks,
   lightTheme,
   noteShades,
   numericFeatures,
@@ -42,6 +43,7 @@ function applyTheme(theme: Theme): void {
   set('--divider', colors.divider);
   set('--accent', colors.accent);
   set('--on-accent', colors.onAccent);
+  set('--accent-text', colors.accentText);
   set('--positive', colors.positive);
   set('--negative', colors.negative);
   set('--estimate', colors.estimate);
@@ -58,6 +60,9 @@ function applyTheme(theme: Theme): void {
   for (const [name, value] of Object.entries(spacing)) set(`--space-${name}`, `${value}px`);
   for (const [name, value] of Object.entries(radii)) set(`--radius-${name}`, `${value}px`);
   set('--numeric', numericFeatures);
+  set('--font-ui', fontStacks.ui);
+  set('--font-mono', fontStacks.mono);
+  set('--font-display', fontStacks.display);
 
   // Note card shades, by the names notes store: each theme has its own cut, so a
   // yellow note reads on both a light and a dark window.
@@ -69,14 +74,44 @@ function applyTheme(theme: Theme): void {
   root.style.colorScheme = theme === darkTheme ? 'dark' : 'light';
 }
 
+export type ThemeChoice = 'auto' | 'light' | 'dark';
+
+const CHOICE_KEY = 'vaultp.theme';
+
+/** What the person picked in the rail; 'auto' follows the operating system. */
+export function themeChoice(): ThemeChoice {
+  try {
+    const stored = localStorage.getItem(CHOICE_KEY);
+    return stored === 'light' || stored === 'dark' ? stored : 'auto';
+  } catch {
+    return 'auto';
+  }
+}
+
+const query = window.matchMedia('(prefers-color-scheme: dark)');
+
+function paint(): void {
+  const choice = themeChoice();
+  const dark = choice === 'auto' ? query.matches : choice === 'dark';
+  applyTheme(dark ? darkTheme : lightTheme);
+}
+
+/** Remember a choice and repaint now. A window preference, so it stays on this computer. */
+export function setThemeChoice(choice: ThemeChoice): void {
+  try {
+    if (choice === 'auto') localStorage.removeItem(CHOICE_KEY);
+    else localStorage.setItem(CHOICE_KEY, choice);
+  } catch {
+    // Storage refused: the choice lasts until the window closes.
+  }
+  paint();
+}
+
 /**
- * Apply the OS theme now and whenever it changes. Returns a disposer, though in
- * practice this lives for the life of the window.
+ * Apply the chosen theme now, and follow the OS whenever the choice is 'auto'.
+ * Returns a disposer, though in practice this lives for the life of the window.
  */
 export function installTheme(): () => void {
-  const query = window.matchMedia('(prefers-color-scheme: dark)');
-  const paint = () => applyTheme(query.matches ? darkTheme : lightTheme);
-
   paint();
   query.addEventListener('change', paint);
   return () => query.removeEventListener('change', paint);
