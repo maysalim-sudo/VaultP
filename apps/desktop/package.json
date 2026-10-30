@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "main": "out/main/main.js",
+  "license": "MIT",
+  "homepage": "https://github.com/maysalim-sudo/VaultP",
+  "desktopName": "vaultp.desktop",
   "scripts": {
     "build": "electron-vite build",
     "dev": "electron-vite dev",

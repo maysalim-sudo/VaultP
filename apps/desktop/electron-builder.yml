@@ -65,10 +65,35 @@ nsis:
 portable:
   artifactName: VaultP-portable.exe
 
+# Linux: an AppImage, which runs on any distribution and is the one Linux format
+# electron-updater can replace in place, and a .deb for Ubuntu and its family.
+# The vault lives in ~/.config/@vaultp/desktop, Electron's userData there.
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  icon: build/icon.png
+  category: Office
+  synopsis: Expenses, debts, documents and notes, encrypted on your own devices.
+  executableName: vaultp
+  # The window's app id must match vaultp.desktop, or Plasma's task manager
+  # shows a generic icon instead of linking the window to the launcher.
+  syncDesktopName: true
+  # dpkg refuses a package without a maintainer.
+  maintainer: Salim May <maysalim-sudo@users.noreply.github.com>
+
+appImage:
+  artifactName: VaultP.AppImage
+
+deb:
+  artifactName: VaultP.deb
+
 # Where installed copies look for updates (see src/main/updates.ts). The release
 # workflow publishes here; packaging on a laptop only writes the files.
 publish:
   provider: github
-  owner: salimmay
+  owner: maysalim-sudo
   repo: VaultP
   releaseType: release

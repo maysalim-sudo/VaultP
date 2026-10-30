@@ -5,6 +5,7 @@
 #   git tag v0.2.0 && git push origin v0.2.0
 #
 # Produces one GitHub release holding the Windows installer and portable .exe,
+# the Linux AppImage and .deb,
 # the files installed copies read to update themselves, the Android APK for the
 # website and the AAB for the Play Store, and a SHA-256 list for all of them.
 #
@@ -61,8 +62,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  android:
+  linux:
+    # After the Windows job, which creates the release; this adds to it. Its own
+    # latest-linux.yml is what an installed AppImage reads to update itself.
     needs: desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build and publish the AppImage and .deb
+        run: npm run package --workspace @vaultp/desktop -- --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  android:
+    needs: [desktop, linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -127,8 +145,8 @@ jobs:
           cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab dist/VaultP.aab
           gh release upload "$GITHUB_REF_NAME" dist/VaultP.apk dist/VaultP.aab --clobber
           # One list covering everything in the release, desktop files included.
-          gh release download "$GITHUB_REF_NAME" --dir dist --pattern '*.exe' --clobber
-          (cd dist && sha256sum VaultP.apk VaultP.aab *.exe > SHA256SUMS.txt && cat SHA256SUMS.txt)
+          gh release download "$GITHUB_REF_NAME" --dir dist --pattern '*.exe' --pattern '*.AppImage' --pattern '*.deb' --clobber
+          (cd dist && sha256sum VaultP.apk VaultP.aab *.exe *.AppImage *.deb > SHA256SUMS.txt && cat SHA256SUMS.txt)
           gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber
 
       - name: Use the CHANGELOG entry as the release notes

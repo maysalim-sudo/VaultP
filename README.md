@@ -3,7 +3,7 @@
 **Your money, your papers, your debts — encrypted, on your own devices, and yours alone.**
 
 A personal vault for expenses, debts, documents and notes, running on an Android phone
-and a Windows desktop that share one encrypted database. No server, no account, no
+and a Windows or Linux desktop that share one encrypted database. No server, no account, no
 subscription. Every feature works with the network off, forever.
 
 ---
@@ -13,7 +13,7 @@ subscription. Every feature works with the network off, forever.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-500%20passing-brightgreen.svg)](#-getting-started)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows-blue.svg)](#-tech-stack)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Windows%20%7C%20Linux-blue.svg)](#-tech-stack)
 
 ---
 
@@ -311,6 +311,26 @@ Both open the same vault, kept in `%APPDATA%\@vaultp\desktop`.
 > The executables are not code-signed. Windows SmartScreen will warn on first run —
 > *More info → Run anyway*. Signing needs a certificate that costs money and identifies
 > a publisher, which is a decision for whoever ships this, not a build setting.
+
+**On Linux**, package on a Linux machine:
+
+```bash
+npm run package --workspace @vaultp/desktop -- --linux
+```
+
+| File | For |
+|---|---|
+| `VaultP.AppImage` | Runs on any distribution, nothing installed. Updates itself. |
+| `VaultP.deb` | Ubuntu, Kubuntu, Debian: `sudo apt install ./VaultP.deb`. Adds the menu entry and an AppArmor profile for the sandbox. Updated by installing the next `.deb`. |
+
+Both open the vault in `~/.config/@vaultp/desktop`.
+
+> On Ubuntu 24.04 and later (Kubuntu included) unprivileged user namespaces are restricted by
+> AppArmor by default, and an AppImage cannot bring its own profile. If it closes at once
+> with a sandbox error, use the `.deb`, or run the AppImage with `--no-sandbox`.
+
+> Pairing with the phone listens on TCP 47821 (the next free port up if that one is taken).
+> With `ufw` enabled, allow it from your network: `sudo ufw allow from 192.168.0.0/16 to any port 47821 proto tcp`.
 
 ### 7. Back up to Google Drive (optional)
 

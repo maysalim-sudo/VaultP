@@ -46,6 +46,12 @@ function unsupportedReason(): string | null {
     return 'The portable version does not update itself. Download the new one from the website when you want it.';
   }
   if (!app.isPackaged) return 'Development run — updates apply to installed copies only.';
+  // On Linux only the AppImage can be replaced in place (its runtime sets
+  // APPIMAGE). A .deb belongs to the package manager, and installing over it
+  // would need root.
+  if (process.platform === 'linux' && !process.env.APPIMAGE) {
+    return 'Installed from the .deb, which the package manager owns. Download the new .deb from the website to update.';
+  }
   return null;
 }
 
