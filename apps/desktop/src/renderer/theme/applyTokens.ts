@@ -105,7 +105,12 @@ export function setThemeChoice(choice: ThemeChoice): void {
     // Storage refused: the choice lasts until the window closes.
   }
   paint();
+  // The rail and Settings both offer the choice; each follows the other.
+  window.dispatchEvent(new CustomEvent(THEME_EVENT));
 }
+
+/** Fired on the window whenever the theme choice changes. */
+export const THEME_EVENT = 'vaultp-theme';
 
 /**
  * Apply the chosen theme now, and follow the OS whenever the choice is 'auto'.

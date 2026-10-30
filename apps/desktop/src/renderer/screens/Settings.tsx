@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import type { CategoryDto, CategoryFormDto, UpdateStatusDto } from '../../shared/api.js';
 import { Field, Modal } from '../Modal.js';
+import { SyncSetup } from '../Sync.js';
+import { THEME_EVENT, setThemeChoice, themeChoice, type ThemeChoice } from '../theme/applyTokens.js';
 import { api, baseCurrency, useRunner, useVaultQuery } from '../vault.js';
 import { DriveSettings } from './Drive.js';
 
@@ -16,94 +18,154 @@ export function Settings() {
   return (
     <>
       <div className="head">
-        <h2>Settings</h2>
-        <button onClick={() => setEditing({ category: null })}>New category</button>
+        <h2>Vault</h2>
       </div>
 
       {error ? <p className="error">{error}</p> : null}
       {message ? <p className="muted small">{message}</p> : null}
       {editing ? <CategoryForm category={editing.category} onClose={() => setEditing(null)} /> : null}
 
-      <h3>Categories</h3>
-      <ul className="list">
-        {categories.data?.map((category) => (
-          <li key={category.id}>
-            <span>
-              {category.name}
-              {category.monthlyLimit ? (
-                <em className="muted">
-                  {' '}
-                  · {category.monthlyLimit.display} a month
-                  {category.rollover ? ', unspent carries over' : ''}
-                </em>
-              ) : (
-                <em className="muted"> · no budget</em>
-              )}
-            </span>
-            <span className="right">
-              <button className="link" disabled={busy} onClick={() => setEditing({ category })}>
-                edit
-              </button>
-              <button
-                className="link"
-                disabled={busy}
-                onClick={() => void run(() => api().archiveCategory(category.id))}
-              >
-                archive
-              </button>
-            </span>
-          </li>
-        ))}
-      </ul>
-      {categories.data?.length === 0 ? <p className="muted small">No categories yet.</p> : null}
-      <p className="muted small">
-        Archiving hides a category from new entries. It is never deleted, so past
-        expenses keep a readable heading.
-      </p>
+      <div className="settings-grid">
+        <section className="tile wide">
+          <SyncSetup />
+        </section>
 
-      <DriveSettings />
+        <section className="tile">
+          <Appearance />
+        </section>
 
-      <UpdateSettings />
+        <section className="tile">
+          <div className="label-row">
+            <span className="label">CATEGORIES</span>
+            <button className="secondary" onClick={() => setEditing({ category: null })}>
+              New category
+            </button>
+          </div>
+          <ul className="list">
+            {categories.data?.map((category) => (
+              <li key={category.id}>
+                <span>
+                  {category.name}
+                  {category.monthlyLimit ? (
+                    <em className="muted">
+                      {' '}
+                      · {category.monthlyLimit.display} a month
+                      {category.rollover ? ', unspent carries over' : ''}
+                    </em>
+                  ) : (
+                    <em className="muted"> · no budget</em>
+                  )}
+                </span>
+                <span className="right">
+                  <button className="link" disabled={busy} onClick={() => setEditing({ category })}>
+                    edit
+                  </button>
+                  <button
+                    className="link"
+                    disabled={busy}
+                    onClick={() => void run(() => api().archiveCategory(category.id))}
+                  >
+                    archive
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {categories.data?.length === 0 ? <p className="muted small">No categories yet.</p> : null}
+          <p className="muted small">
+            Archiving hides a category from new entries. It is never deleted, so past
+            expenses keep a readable heading.
+          </p>
+        </section>
 
-      <h3>Backup</h3>
-      <div className="row">
-        <button
-          className="secondary"
-          disabled={busy}
-          onClick={() =>
-            void run(async () => {
-              const path = await api().exportBackup();
-              setMessage(path ? `Written to ${path}` : null);
-            })
-          }
-        >
-          Export the vault
-        </button>
-        <button
-          className="secondary"
-          disabled={busy}
-          onClick={() =>
-            void run(async () => {
-              const result = await api().restoreBackup();
-              setMessage(
-                result
-                  ? `${result.applied} of ${result.total} changes were new to this vault.`
-                  : null,
-              );
-            })
-          }
-        >
-          Restore from a backup
-        </button>
+        <section className="tile">
+          <DriveSettings />
+        </section>
+
+        <section className="tile">
+          <UpdateSettings />
+        </section>
+
+        <section className="tile">
+          <h3>Backup</h3>
+          <div className="row">
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  const path = await api().exportBackup();
+                  setMessage(path ? `Written to ${path}` : null);
+                })
+              }
+            >
+              Export the vault
+            </button>
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() =>
+                void run(async () => {
+                  const result = await api().restoreBackup();
+                  setMessage(
+                    result
+                      ? `${result.applied} of ${result.total} changes were new to this vault.`
+                      : null,
+                  );
+                })
+              }
+            >
+              Restore from a backup
+            </button>
+          </div>
+          <p className="warn small">
+            An exported backup is the whole vault in the clear — every expense, document
+            record, debt and note, unencrypted. Put it somewhere you would be willing to
+            keep the vault itself.
+          </p>
+          <p className="muted small">
+            Restoring merges rather than replaces, and is safe to run twice: changes carry
+            their own ordering, so nothing already here is lost.
+          </p>
+        </section>
       </div>
-      <p className="warn small">
-        An exported backup is the whole vault in the clear — every expense, document
-        record, debt and note, unencrypted. Put it somewhere you would be willing to
-        keep the vault itself.
-      </p>
-      <p className="muted small">
-        Restoring merges rather than replaces, and is safe to run twice: changes carry
-        their own ordering, so nothing already here is lost.
+    </>
+  );
+}
+
+const THEMES: ReadonlyArray<readonly [ThemeChoice, string]> = [
+  ['auto', 'AUTO'],
+  ['light', 'LIGHT'],
+  ['dark', 'DARK'],
+];
+
+/** Light, dark, or whatever the system is set to. Remembered on this computer. */
+function Appearance() {
+  const [choice, setChoice] = useState<ThemeChoice>(themeChoice);
+  useEffect(() => {
+    const follow = () => setChoice(themeChoice());
+    window.addEventListener(THEME_EVENT, follow);
+    return () => window.removeEventListener(THEME_EVENT, follow);
+  }, []);
+
+  return (
+    <>
+      <span className="label">APPEARANCE</span>
+      <div className="seg" role="radiogroup" aria-label="Theme" style={{ margin: 0 }}>
+        {THEMES.map(([value, label]) => (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={value === choice}
+            aria-selected={value === choice}
+            onClick={() => setThemeChoice(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="sub" style={{ margin: 0 }}>
+        Auto follows the system. The choice is kept on this computer only.
       </p>
     </>
   );

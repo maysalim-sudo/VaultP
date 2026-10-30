@@ -8,10 +8,10 @@
  * at the foot; search is not a place, it is the bar above every page (Ctrl+K).
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Icon, type IconName } from './icons.js';
-import { setThemeChoice, themeChoice, type ThemeChoice } from './theme/applyTokens.js';
+import { THEME_EVENT, setThemeChoice, themeChoice, type ThemeChoice } from './theme/applyTokens.js';
 
 export const SCREENS = [
   { id: 'dashboard', label: 'Overview' },
@@ -52,6 +52,11 @@ export function Sidebar({
   onCreate: () => void;
 }) {
   const [theme, setTheme] = useState<ThemeChoice>(themeChoice);
+  useEffect(() => {
+    const follow = () => setTheme(themeChoice());
+    window.addEventListener(THEME_EVENT, follow);
+    return () => window.removeEventListener(THEME_EVENT, follow);
+  }, []);
   const inMoney = MONEY.includes(current);
 
   return (
@@ -89,9 +94,7 @@ export function Sidebar({
           aria-label={`Theme: ${theme}. Switch to ${NEXT_THEME[theme]}`}
           title={`Theme: ${theme}`}
           onClick={() => {
-            const next = NEXT_THEME[theme];
-            setThemeChoice(next);
-            setTheme(next);
+            setThemeChoice(NEXT_THEME[theme]);
           }}
         >
           <Icon name={THEME_ICON[theme]} size={18} />

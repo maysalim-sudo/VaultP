@@ -49,7 +49,14 @@ export function Lock({
   return (
     <main className="centre">
       <div className="panel">
-        <h1>VaultP</h1>
+        <h1 className="lock-mark">
+          <span className="mark" aria-hidden="true">
+            {Array.from({ length: 9 }, (_, index) => (
+              <span key={index} className={index === 4 ? 'on' : ''} />
+            ))}
+          </span>
+          <span className="name">VAULTP</span>
+        </h1>
         <p className="muted">
           {status.exists
             ? 'Unlock with your passphrase, or with your phone.'

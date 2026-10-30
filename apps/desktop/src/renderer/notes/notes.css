@@ -294,7 +294,10 @@ button.chip:hover { filter: none; background: var(--wash); outline: 1px solid va
 .block-quote textarea { font-style: italic; }
 .block-gutter { min-width: 16px; text-align: center; line-height: 1.55; font-size: var(--text-md); padding-top: 3px; }
 .block-gutter.num { min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
-.block-check { flex: 0 0 auto; width: 17px; height: 17px; margin-top: 7px; accent-color: var(--text-dim); }
+/* The checkbox only: a checklist row's own container is also "block-check"
+   (block-${style}), and an unscoped rule shrank the row to 17px wide, leaving
+   its text no room at all. */
+input.block-check { flex: 0 0 auto; width: 17px; height: 17px; margin-top: 7px; padding: 0; accent-color: var(--text-dim); }
 .block textarea.checked { text-decoration: line-through; color: var(--text-dim); }
 .block-divider { padding-top: 10px; padding-bottom: 10px; }
 .block-divider hr { flex: 1; border: 0; border-top: 1px solid var(--text-faint); opacity: 0.6; }

@@ -11,10 +11,9 @@
 
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { SyncTarget, VaultStatus } from '../shared/api.js';
+import type { VaultStatus } from '../shared/api.js';
 import { Lock } from './Lock.js';
 import { NavContext, type Intent, type Navigation } from './nav.js';
-import { PairDialog } from './Pairing.js';
 import { GlobalSearch } from './GlobalSearch.js';
 import { Icon, type IconName } from './icons.js';
 import { Modal } from './Modal.js';
@@ -27,7 +26,8 @@ import { Expenses } from './screens/Expenses.js';
 import { Notes } from './screens/Notes.js';
 import { Rules } from './screens/Rules.js';
 import { Settings } from './screens/Settings.js';
-import { api, invalidate, useRunner, useVaultQuery } from './vault.js';
+import { SyncContext, SyncPill, type SyncState } from './Sync.js';
+import { api } from './vault.js';
 
 const SCREEN_BODIES: Record<ScreenId, () => React.ReactElement> = {
   dashboard: Dashboard,
@@ -102,32 +102,36 @@ export function App() {
   const synced =
     status.syncTarget === 'folder' ? status.syncFolder !== undefined : status.syncTarget !== undefined;
 
+  const sync: SyncState = {
+    folder: status.syncFolder,
+    target: status.syncTarget,
+    setFolder: (folder) => setStatus({ ...status, syncFolder: folder }),
+    setTarget: (syncTarget) => setStatus({ ...status, syncTarget }),
+  };
+
   return (
     <NavContext.Provider value={nav}>
-      <div className="shell">
-        <Sidebar
-          current={screen}
-          synced={synced}
-          onSelect={(next) => nav.go(next)}
-          onCreate={() => setCreating(true)}
-        />
-        <main className="page">
-          <div className="page-inner">
-            <div className="topbar">
-              <GlobalSearch />
-              <SyncBar
-                folder={status.syncFolder}
-                target={status.syncTarget}
-                onFolder={(folder) => setStatus({ ...status, syncFolder: folder })}
-                onTarget={(syncTarget) => setStatus({ ...status, syncTarget })}
-              />
+      <SyncContext.Provider value={sync}>
+        <div className="shell">
+          <Sidebar
+            current={screen}
+            synced={synced}
+            onSelect={(next) => nav.go(next)}
+            onCreate={() => setCreating(true)}
+          />
+          <main className="page">
+            <div className="page-inner">
+              <div className="topbar">
+                <GlobalSearch />
+                <SyncPill />
+              </div>
+              {MONEY.includes(screen) ? <MoneyTabs current={screen} onSelect={(next) => nav.go(next)} /> : null}
+              <Body />
             </div>
-            {MONEY.includes(screen) ? <MoneyTabs current={screen} onSelect={(next) => nav.go(next)} /> : null}
-            <Body />
-          </div>
-        </main>
-      </div>
-      {creating ? <CreateSheet onClose={() => setCreating(false)} /> : null}
+          </main>
+        </div>
+        {creating ? <CreateSheet onClose={() => setCreating(false)} /> : null}
+      </SyncContext.Provider>
     </NavContext.Provider>
   );
 }
@@ -180,111 +184,5 @@ function CreateSheet({ onClose }: { onClose: () => void }) {
         ))}
       </div>
     </Modal>
-  );
-}
-
-function SyncBar({
-  folder,
-  target,
-  onFolder,
-  onTarget,
-}: {
-  folder: string | undefined;
-  target: SyncTarget;
-  onFolder: (folder: string | undefined) => void;
-  onTarget: (target: SyncTarget) => void;
-}) {
-  const { busy, error, run } = useRunner();
-  const drive = useVaultQuery(() => api().driveStatus());
-  const pairing = useVaultQuery(() => api().pairingStatus());
-  const [report, setReport] = useState<string | null>(null);
-  const [pairingOpen, setPairingOpen] = useState(false);
-
-  const driveReady = drive.data?.connected === true;
-  const paired = pairing.data?.paired === true;
-  const ready = target === 'drive' ? driveReady : target === 'pair' ? paired : folder !== undefined;
-
-  return (
-    <div className="syncbar">
-      <select
-        value={target}
-        onChange={(event) =>
-          void run(async () => {
-            const chosen = event.target.value as SyncTarget;
-            await api().setSyncTarget(chosen);
-            onTarget(chosen);
-          })
-        }
-      >
-        <option value="pair">Sync with my phone</option>
-        <option value="folder">Sync to a folder</option>
-        <option value="drive">Sync to Google Drive</option>
-      </select>
-
-      {target === 'pair' ? (
-        <button className="secondary" onClick={() => setPairingOpen(true)}>
-          {paired ? 'Pairing code' : 'Pair a phone'}
-        </button>
-      ) : null}
-
-      {target === 'folder' ? (
-        <button
-          className="secondary"
-          onClick={() => void run(async () => onFolder(await api().chooseSyncFolder()))}
-        >
-          {folder ? 'Change folder' : 'Choose sync folder'}
-        </button>
-      ) : null}
-      <button
-        disabled={busy || !ready}
-        onClick={() =>
-          void run(async () => {
-            const result = await api().sync();
-            const files =
-              result.uploadedFiles + result.downloadedFiles + result.removedFiles > 0
-                ? `, files ↑${result.uploadedFiles} ↓${result.downloadedFiles}`
-                : '';
-            setReport(
-              `pushed ${result.pushedEvents}, pulled ${result.pulledEvents}, new ${result.appliedEvents}${files}`,
-            );
-            // A sync can bring in anything the phone did, so every screen is stale.
-            invalidate();
-          })
-        }
-      >
-        Sync
-      </button>
-      {target === 'folder' && folder ? (
-        <span className="muted small path">{folder}</span>
-      ) : null}
-      {target === 'drive' ? (
-        <span className="muted small">
-          {driveReady
-            ? `Drive · ${drive.data?.folderName ?? ''}`
-            : 'Connect an account in Settings'}
-        </span>
-      ) : null}
-      {target === 'pair' ? (
-        <span className="muted small">
-          {paired ? 'Paired — syncs by itself while both are on the same Wi-Fi' : 'Scan a code with the phone to pair'}
-        </span>
-      ) : null}
-      {report ? <span className="muted small">{report}</span> : null}
-      {error ? <span className="error small">{error}</span> : null}
-
-      {pairingOpen ? (
-        <PairDialog
-          mode="pair"
-          onClose={() => {
-            setPairingOpen(false);
-            // Pairing also makes the phone the sync target; reflect it here.
-            void api()
-              .status()
-              .then((next) => onTarget(next.syncTarget));
-            invalidate();
-          }}
-        />
-      ) : null}
-    </div>
   );
 }

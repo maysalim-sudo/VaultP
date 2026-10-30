@@ -101,13 +101,21 @@ export function PersonLedger({
         <p className="warn small">{data.mixedCurrencies}</p>
       ) : data ? (
         <>
-          <div className="net">
-            <span className="muted small">As of {data.asOf}</span>
-            <strong className={`figure ${data.owesYou ? 'owed' : 'owing'}`}>
-              {data.net.amountMinor === 0
-                ? 'Settled'
-                : `${data.owesYou ? 'owes you' : 'you owe'} ${data.net.figure.replace('−', '')} ${data.net.currency}`}
-            </strong>
+          <div className="ledger-net">
+            <span className="label">AS OF {data.asOf}</span>
+            {data.net.amountMinor === 0 ? (
+              <span className="dots ledger-figure">SETTLED</span>
+            ) : (
+              <span className="monument">
+                <span className={`dots ledger-figure ${data.owesYou ? 'owed' : 'owing'}`}>
+                  {data.net.figure.replace('−', '')}
+                </span>
+                <span className="unit">
+                  {data.net.currency} · {data.owesYou ? 'OWES YOU' : 'YOU OWE'}
+                </span>
+              </span>
+            )}
+            <Repaid entries={data.entries} owesYou={data.owesYou} />
           </div>
 
           <Side title="They owe you" side={data.owedToMe} />
@@ -228,6 +236,36 @@ function EditPerson({ person, onClose }: { person: PersonDto; onClose: () => voi
       <p className="muted small">Their loans and repayments stay exactly as they are.</p>
       {error ? <p className="error">{error}</p> : null}
     </Modal>
+  );
+}
+
+/**
+ * How much of what was lent has come back, as twenty cells. Read from the
+ * entries on the side the balance is on, in the balance's own currency.
+ */
+function Repaid({ entries, owesYou }: { entries: readonly DebtEntryDto[]; owesYou: boolean }) {
+  let lent = 0;
+  let back = 0;
+  let currency = '';
+  for (const entry of entries) {
+    if (entry.owedToMe !== owesYou) continue;
+    if (currency === '') currency = entry.amount.currency;
+    if (entry.amount.currency !== currency) return null;
+    if (entry.kind === 'loan') lent += Math.abs(entry.amount.amountMinor);
+    if (entry.kind === 'payment') back += Math.abs(entry.amount.amountMinor);
+  }
+  if (lent === 0) return null;
+  const share = Math.min(1, back / lent);
+  const cells = Math.round(share * 20);
+  return (
+    <>
+      <span className="meter loan" aria-label={`${Math.round(share * 100)}% paid back`}>
+        {Array.from({ length: 20 }, (_, index) => (
+          <span key={index} className={index < cells ? 'on' : ''} />
+        ))}
+      </span>
+      <span className="label">{Math.round(share * 100)}% PAID BACK</span>
+    </>
   );
 }
 

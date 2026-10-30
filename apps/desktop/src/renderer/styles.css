@@ -798,3 +798,48 @@ button.icon-tag { display: inline-flex; align-items: center; gap: 6px; }
 }
 .keypad button:hover { opacity: 1; background: var(--border); }
 .doc-hero { width: 100%; }
+
+/* ---------------------------------------------------------------- sync + vault settings */
+
+.sync-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding: 5px 5px 5px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+}
+.sync-pill button { padding: 8px 16px; }
+.sync-pill .error { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+@media (max-width: 1000px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } }
+.settings-grid .tile.wide { grid-column: 1 / -1; }
+.settings-grid .tile { gap: 14px; }
+.settings-grid .tile > h3 { margin: 0; }
+.settings-grid .label-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.settings-grid .label-row button { padding: 8px 16px; }
+.settings-grid p { margin: 0; }
+/* A list inside a tile is part of it, not a tile of its own. */
+.tile .list { background: transparent; border-radius: 0; margin: 0 -20px; padding: 0; }
+.tile .list li { padding: 10px 20px; }
+.sync-setup { display: flex; flex-direction: column; gap: 14px; }
+.sync-setup .label-row { display: flex; justify-content: space-between; align-items: center; }
+.sync-setup .seg { max-width: 520px; }
+
+/* ---------------------------------------------------------------- ledger */
+
+.ledger-net { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; border-radius: var(--radius-lg); background: var(--surface-overlay); }
+.ledger-net .ledger-figure { font-size: 52px; }
+.meter.loan span { height: 16px; border-radius: 3px; }
+.meter.loan span.on { background: var(--positive); }
+.side { border-top: 0; padding: 4px 0; }
+.side > .muted.small:first-child { font: 500 10px / 1.4 var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); }
+.modal .list { background: transparent; margin: 0 -24px; padding: 0; border-radius: 0; }
+.modal .list li { padding: 10px 24px; }
+
+/* The lock screen's mark: the rail's, larger, with the name in mono. */
+.lock-mark { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.lock-mark .mark { margin: 0; width: 48px; height: 48px; border-radius: 14px; grid-template-columns: repeat(3, 7px); grid-auto-rows: 7px; }
+.lock-mark span.name { font: 700 15px var(--font-mono); letter-spacing: 0.24em; }
