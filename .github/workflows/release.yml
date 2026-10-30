@@ -136,7 +136,7 @@ jobs:
             exit 1
           fi
 
-      - name: Attach to the release, with checksums
+      - name: Attach to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -144,9 +144,29 @@ jobs:
           cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk dist/VaultP.apk
           cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab dist/VaultP.aab
           gh release upload "$GITHUB_REF_NAME" dist/VaultP.apk dist/VaultP.aab --clobber
-          # One list covering everything in the release, desktop files included.
-          gh release download "$GITHUB_REF_NAME" --dir dist --pattern '*.exe' --pattern '*.AppImage' --pattern '*.deb' --clobber
-          (cd dist && sha256sum VaultP.apk VaultP.aab *.exe *.AppImage *.deb > SHA256SUMS.txt && cat SHA256SUMS.txt)
+
+      - name: Remove the key from the runner
+        if: always()
+        run: rm -f apps/mobile/android/app/vaultp-release.keystore apps/mobile/android/keystore.properties
+
+  # Notes and checksums, once whatever could be built is up. Its own job so a
+  # release without the Android signing secrets still gets both: the Android
+  # job refusing to sign with the debug key must not take the desktop's
+  # release notes down with it.
+  finish:
+    needs: [desktop, linux, android]
+    if: ${{ !cancelled() && needs.desktop.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checksums of everything in the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir dist
+          gh release download "$GITHUB_REF_NAME" --dir dist --pattern '*.exe' --pattern '*.AppImage' --pattern '*.deb' --pattern '*.apk' --pattern '*.aab' --clobber
+          (cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
           gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS.txt --clobber
 
       - name: Use the CHANGELOG entry as the release notes
@@ -157,7 +177,3 @@ jobs:
           # Everything under "## <version>" up to the next "## ".
           awk -v v="$version" '$0 ~ "^## \\[?"v"\\]?" {on=1; next} /^## / && on {exit} on' CHANGELOG.md > notes.md
           if [ -s notes.md ]; then gh release edit "$GITHUB_REF_NAME" --notes-file notes.md; fi
-
-      - name: Remove the key from the runner
-        if: always()
-        run: rm -f apps/mobile/android/app/vaultp-release.keystore apps/mobile/android/keystore.properties
