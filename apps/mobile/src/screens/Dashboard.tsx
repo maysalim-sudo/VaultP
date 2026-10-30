@@ -25,19 +25,18 @@ import {
 import {
   BASE_CURRENCY,
   budgetForMonth,
+  type Category,
+  type CategoryBudget,
   exponentOf,
   forecastAllowance,
   forecastMonth,
-  formatMoney,
+  formatAmount,
   isAllowanceConfigured,
   loadAllowanceConfig,
-  monthKey,
   money,
+  monthKey,
   saveAllowanceConfig,
   todayIn,
-  toDecimalString,
-  type Category,
-  type CategoryBudget,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
@@ -109,15 +108,15 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
           {/* ---------------------------------------------------- forecast */}
           <Section title="Heading for" palette={palette}>
             <Text style={[styles.big, { color: palette.text }]}>
-              {formatMoney(forecast.projectedTotal, 'fr-TN')}
+              {formatAmount(forecast.projectedTotal)}
             </Text>
             <Text style={[styles.caption, { color: palette.dim }]}>
-              {toDecimalString(forecast.spentSoFar.total)} spent
+              {formatAmount(forecast.spentSoFar.total, { unit: 'none' })} spent
               {forecast.committed.amountMinor > 0
-                ? ` · ${toDecimalString(forecast.committed)} already committed`
+                ? ` · ${formatAmount(forecast.committed, { unit: 'none' })} already committed`
                 : ''}
               {forecast.variable.amountMinor > 0
-                ? ` · ${toDecimalString(forecast.variable)} projected`
+                ? ` · ${formatAmount(forecast.variable, { unit: 'none' })} projected`
                 : ''}
             </Text>
             <Text style={[styles.caption, { color: palette.dim }]}>
@@ -129,7 +128,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
               // one day of entries and one built from three weeks look identical
               // as a number, and are worth very different amounts of trust.
               <Note palette={palette} tone={forecast.variableUnreliable ? 'warning' : 'dim'}>
-                Projected from {toDecimalString(forecast.dailyAverage)} a day across{' '}
+                Projected from {formatAmount(forecast.dailyAverage, { unit: 'none' })} a day across{' '}
                 {forecast.daysWithSpending} day
                 {forecast.daysWithSpending === 1 ? '' : 's'} of spending.
                 {forecast.variableUnreliable
@@ -188,7 +187,7 @@ export function Dashboard({ onClose }: { onClose?: () => void }) {
                     <Text style={{ color: palette.text }}>
                       {budget.category.icon ?? ''} {budget.category.name}
                       {budget.spend.total.amountMinor > 0
-                        ? `  ${toDecimalString(budget.spend.total)}`
+                        ? `  ${formatAmount(budget.spend.total, { unit: 'none' })}`
                         : ''}
                     </Text>
                   </Pressable>
@@ -380,13 +379,13 @@ function BudgetRow({
           {budget.category.icon ?? ''} {budget.category.name}
         </Text>
         <Text style={[styles.budgetNumbers, { color: budget.overspent ? palette.negative : palette.dim }]}>
-          {toDecimalString(budget.spend.total)} / {toDecimalString(budget.available!)}
+          {formatAmount(budget.spend.total, { unit: 'none' })} / {formatAmount(budget.available!)}
         </Text>
       </View>
       <Meter ratio={budget.ratioUsed ?? 0} palette={palette} colour={colour} />
       {budget.carriedIn.amountMinor > 0 ? (
         <Text style={[styles.note, { color: palette.dim }]}>
-          includes {toDecimalString(budget.carriedIn)} carried over
+          includes {formatAmount(budget.carriedIn)} carried over
         </Text>
       ) : null}
     </Pressable>

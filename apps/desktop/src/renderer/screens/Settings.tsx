@@ -33,7 +33,7 @@ export function Settings() {
               {category.monthlyLimit ? (
                 <em className="muted">
                   {' '}
-                  · {category.monthlyLimit.text} {category.monthlyLimit.currency} a month
+                  · {category.monthlyLimit.display} a month
                   {category.rollover ? ', unspent carries over' : ''}
                 </em>
               ) : (

@@ -11,17 +11,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
+  type Account,
   ACCOUNT_KINDS,
+  type AccountKind,
   BASE_CURRENCY,
   daysBetween,
+  formatAmount,
   money,
   radii,
   spacing,
   todayIn,
-  toDecimalString,
   typeScale,
-  type Account,
-  type AccountKind,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
@@ -98,7 +98,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
                   key={total.currency}
                   style={[index === 0 ? styles.totalValue : styles.totalSecond, { color: palette.text }]}
                 >
-                  {toDecimalString(total)}
+                  {formatAmount(total, { unit: 'none' })}
                   <Text style={[styles.totalUnit, { color: palette.dim }]}> {total.currency}</Text>
                 </Text>
               ))}
@@ -291,10 +291,10 @@ function AccountCard({
       </View>
       <View style={styles.cardRight}>
         <Text style={[styles.cardAmount, { color: negative ? palette.negative : palette.text }]}>
-          {toDecimalString(account.balance)}
+          {formatAmount(account.balance, { unit: 'none' })}
         </Text>
         <Text style={[styles.cardCurrency, { color: palette.dim }]}>
-          {account.balance.currency === BASE_CURRENCY ? 'DT' : account.balance.currency}
+          {account.balance.currency}
         </Text>
       </View>
       <Pressable onPress={onEdit} hitSlop={10} style={styles.more} accessibilityLabel={`Edit ${account.name}`}>

@@ -107,7 +107,61 @@ export function toDecimalString(m: Money): string {
   return `${negative ? '-' : ''}${whole}${frac}`;
 }
 
-/** Localised display string, e.g. "68,400 DT" or "$20.00". For the UI only. */
+/** An amount split into the parts a screen lays out separately. */
+export interface FormattedAmount {
+  /** '−' (U+2212) for a negative amount, '+' only when asked for, else ''. */
+  readonly sign: '' | '+' | '−';
+  /** Grouped digits with every decimal the currency has: "1,240.500". */
+  readonly figure: string;
+  /** The ISO code ("TND"), or '' when the caller shows the unit elsewhere. */
+  readonly unit: string;
+  /** True when the value is derived from a past rate rather than a fact. */
+  readonly estimated: boolean;
+  /** Everything on one line: "≈ −1,240.500 TND". */
+  readonly text: string;
+}
+
+export interface FormatAmountOptions {
+  /** Mark the value as an estimate with a leading "≈". */
+  readonly estimated?: boolean;
+  /** Show '+' on positive amounts, for ledgers where direction matters. */
+  readonly signed?: boolean;
+  /** 'none' drops the currency code, for a column that already states it. */
+  readonly unit?: 'code' | 'none';
+}
+
+/**
+ * The one way an amount is shown, on every screen of both apps.
+ *
+ * Deliberately not `Intl`: Hermes on the phone and Chromium on the desktop
+ * group and label currencies differently ("128,250 DT" against "128.250 TND"),
+ * and one figure printed two ways reads as two figures. Dot for decimals, comma
+ * for thousands, the ISO code after, and every decimal the currency has.
+ */
+export function formatAmount(m: Money, options: FormatAmountOptions = {}): string {
+  return formatAmountParts(m, options).text;
+}
+
+export function formatAmountParts(m: Money, options: FormatAmountOptions = {}): FormattedAmount {
+  const exponent = exponentOf(m.currency);
+  const digits = Math.abs(m.amountMinor).toString().padStart(exponent + 1, '0');
+  const whole = digits.slice(0, digits.length - exponent).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const figure = exponent > 0 ? `${whole}.${digits.slice(digits.length - exponent)}` : whole;
+
+  const sign = m.amountMinor < 0 ? '−' : options.signed && m.amountMinor > 0 ? '+' : '';
+  const unit = options.unit === 'none' ? '' : m.currency;
+  const estimated = options.estimated === true;
+  const text = `${estimated ? '≈ ' : ''}${sign}${figure}${unit ? ` ${unit}` : ''}`;
+
+  return { sign, figure, unit, estimated, text };
+}
+
+/**
+ * Localised display string, e.g. "68,400 DT" or "$20.00".
+ *
+ * Kept for exports that want a locale's own conventions. Screens use
+ * `formatAmount`, so the phone and the computer print the same thing.
+ */
 export function formatMoney(m: Money, locale = 'en'): string {
   const exponent = exponentOf(m.currency);
   return new Intl.NumberFormat(locale, {

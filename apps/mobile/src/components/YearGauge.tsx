@@ -11,14 +11,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import {
+  type AllowanceForecast,
   daysBetween,
-  formatMoney,
+  formatAmount,
+  type IsoDate,
   money,
   radii,
   spacing,
   typeScale,
-  type AllowanceForecast,
-  type IsoDate,
 } from '@vaultp/core';
 
 import { describeDate } from './DateField.js';
@@ -65,17 +65,17 @@ export function YearGauge({
       <Text style={[styles.eyebrow, { color: palette.dim }]}>Foreign-currency ceiling · {label}</Text>
       {remaining >= 0 ? (
         <Text style={[styles.hero, { color: palette.text }]}>
-          {formatMoney(allowance.remaining, 'fr-TN')}
+          {formatAmount(allowance.remaining)}
           <Text style={[styles.heroUnit, { color: palette.dim }]}> left</Text>
         </Text>
       ) : (
         <Text style={[styles.hero, { color: palette.negative }]}>
-          {formatMoney(money(-remaining, currency), 'fr-TN')}
+          {formatAmount(money(-remaining, currency))}
           <Text style={[styles.heroUnit, { color: palette.dim }]}> over</Text>
         </Text>
       )}
       <Text style={[styles.caption, { color: palette.dim }]}>
-        of {formatMoney(allowance.ceiling, 'fr-TN')} · {daysLeft} day{daysLeft === 1 ? '' : 's'} to go
+        of {formatAmount(allowance.ceiling)} · {daysLeft} day{daysLeft === 1 ? '' : 's'} to go
       </Text>
 
       <View style={styles.gauge}>
@@ -96,13 +96,13 @@ export function YearGauge({
       </View>
 
       <View style={styles.legend}>
-        <LegendRow colour={palette.accent} label="Spent" value={formatMoney(allowance.used, 'fr-TN')} palette={palette} />
+        <LegendRow colour={palette.accent} label="Spent" value={formatAmount(allowance.used)} palette={palette} />
         {committed > 0 ? (
           <LegendRow
             colour={palette.warning}
             faded
             label="Subscriptions still to come"
-            value={`≈ ${formatMoney(allowance.committedTotal, 'fr-TN')}`}
+            value={formatAmount(allowance.committedTotal, { estimated: true })}
             palette={palette}
           />
         ) : null}
@@ -121,7 +121,7 @@ export function YearGauge({
         </View>
       ) : committed > 0 ? (
         <Text style={[styles.caption, { color: palette.dim, marginTop: spacing.md }]}>
-          With the subscriptions to come, the year ends on {formatMoney(allowance.projectedTotal, 'fr-TN')} — within the
+          With the subscriptions to come, the year ends on {formatAmount(allowance.projectedTotal)} — within the
           ceiling.
         </Text>
       ) : null}

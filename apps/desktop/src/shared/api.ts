@@ -16,8 +16,15 @@
 import type { NoteColour, NoteContent } from '@vaultp/core';
 
 export interface MoneyDto {
-  /** Already formatted for display, decimal point, correct number of places. */
+  /**
+   * The plain decimal ("1240.500", "-30.000"): what an edit field starts from,
+   * because it parses back. Never shown as a figure; use `display` or `figure`.
+   */
   readonly text: string;
+  /** The amount as every screen shows it: "−1,240.500 TND". */
+  readonly display: string;
+  /** The same without the currency, for a unit set beside it: "−1,240.500". */
+  readonly figure: string;
   readonly amountMinor: number;
   readonly currency: string;
 }

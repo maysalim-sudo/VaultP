@@ -173,7 +173,7 @@ export function GlobalSearch() {
                         {result.detail ? <em className="muted"> · {result.detail}</em> : null}
                       </span>
                       <span className="gsearch-meta">
-                        {result.amount ? `${result.amount.text} ${result.amount.currency}` : (result.date ?? '')}
+                        {result.amount ? result.amount.display : (result.date ?? '')}
                       </span>
                     </button>
                   );

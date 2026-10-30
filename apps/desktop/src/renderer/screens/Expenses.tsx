@@ -77,13 +77,13 @@ export function Expenses() {
               ) : null}
             </span>
             <span className="right">
-              {expense.amount.text} {expense.amount.currency}
+              {expense.amount.display}
               {expense.amount.currency !== baseCurrency() ? (
                 // Three states, kept apart: a real debited figure, an estimate
                 // marked as one, or nothing at all — never a zero standing in.
                 <em className="muted">
                   {expense.base
-                    ? ` ${expense.baseEstimated ? '≈' : ''}${expense.base.text} ${expense.base.currency}`
+                    ? ` ${expense.baseEstimated ? '≈ ' : ''}${expense.base.display}`
                     : ' awaiting statement'}
                 </em>
               ) : null}

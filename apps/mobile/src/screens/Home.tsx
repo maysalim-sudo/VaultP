@@ -17,16 +17,21 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
-  BASE_CURRENCY,
   addDays,
   autoLogId,
+  BASE_CURRENCY,
+  type Category,
   categoryColourFor,
   daysBetween,
-  exponentOf,
+  type DueOccurrence,
+  type Expense,
   forecastAllowance,
+  formatAmount,
+  formatAmountParts,
   isAllowanceConfigured,
+  type LedgerBalance,
   loadAllowanceConfig,
-  minorUnitsPerMajor,
+  type Money,
   money,
   monthKey,
   monthTotal,
@@ -37,11 +42,6 @@ import {
   todayIn,
   typeScale,
   upcomingCharges,
-  type Category,
-  type DueOccurrence,
-  type Expense,
-  type LedgerBalance,
-  type Money,
 } from '@vaultp/core';
 
 import { describeDate } from '../components/DateField.js';
@@ -49,33 +49,10 @@ import { paletteFor, type Palette } from '../components/theme.js';
 import type { Navigate } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
-const LOCALE = 'fr-TN';
-
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
-
-/**
- * An amount split into its figure and its unit, so the figure can be set large
- * and the unit small beside it.
- *
- * The exponent is looked up, never assumed: the dinar has three decimals, and a
- * formatter that defaulted to two would quietly drop the millimes.
- */
-function amountParts(amount: Money): { figure: string; unit: string } {
-  const exponent = exponentOf(amount.currency);
-  const figure = new Intl.NumberFormat(LOCALE, {
-    minimumFractionDigits: exponent,
-    maximumFractionDigits: exponent,
-  }).format(amount.amountMinor / minorUnitsPerMajor(amount.currency));
-  return { figure, unit: amount.currency === BASE_CURRENCY ? 'DT' : amount.currency };
-}
-
-function formatAmount(amount: Money): string {
-  const { figure, unit } = amountParts(amount);
-  return `${figure} ${unit}`;
-}
 
 /** A colour at low opacity, for tinted fills. Tokens are six-digit hex. */
 function tint(hex: string, alpha = '26'): string {
@@ -233,7 +210,7 @@ export function Home({
     return groups;
   }, [recent]);
 
-  const hero = amountParts(month.total);
+  const hero = formatAmountParts(month.total);
   const [year, monthNumber] = monthKey(today).split('-');
 
   return (
@@ -375,7 +352,7 @@ export function Home({
             glyph="💳"
             colour={palette.accent}
             label={accountCount > 0 ? `In ${accountCount} account${accountCount === 1 ? '' : 's'}` : 'Accounts'}
-            value={accountTotals.length > 0 ? accountTotals.map(formatAmount).join('  ·  ') : 'Add your balances'}
+            value={accountTotals.length > 0 ? accountTotals.map((total) => formatAmount(total)).join('  ·  ') : 'Add your balances'}
             palette={palette}
             onPress={() => onNavigate('accounts')}
           />
@@ -763,7 +740,7 @@ function TransactionRow({
     ? null
     : expense.base
       ? {
-          text: `${expense.baseEstimated ? '≈ ' : ''}${formatAmount(expense.base)}`,
+          text: formatAmount(expense.base, { estimated: expense.baseEstimated }),
           colour: expense.baseEstimated ? palette.estimate : palette.dim,
         }
       : { text: 'awaiting statement', colour: palette.textFaint };

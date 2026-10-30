@@ -62,7 +62,7 @@ export function Rules() {
               <li key={`${charge.ruleId}:${charge.date}`}>
                 <span className="warn">{charge.name}</span>
                 <span className="right">
-                  {charge.amount.text} {charge.amount.currency}
+                  {charge.amount.display}
                   <em className="muted"> {charge.date}</em>
                 </span>
               </li>
@@ -95,7 +95,7 @@ export function Rules() {
               <li key={`${charge.ruleId}:${charge.date}`}>
                 <span>{charge.name}</span>
                 <span className="right">
-                  {charge.amount.text} {charge.amount.currency}
+                  {charge.amount.display}
                   <em className="muted"> {charge.date}</em>
                 </span>
               </li>
@@ -132,7 +132,7 @@ function RuleRow({ rule, categoryName, onEdit }: { rule: RuleDto; categoryName: 
           <>
             <br />
             <em className="warn small">
-              price changed by {rule.priceChange.difference.text}{' '}
+              price changed by {rule.priceChange.difference.figure}{' '}
               {rule.priceChange.difference.currency}
             </em>
           </>
@@ -143,7 +143,7 @@ function RuleRow({ rule, categoryName, onEdit }: { rule: RuleDto; categoryName: 
         {amount === null ? (
           <>
             <span>
-              {rule.amount.text} {rule.amount.currency}
+              {rule.amount.display}
             </span>
             <button className="link" onClick={() => setAmount(rule.amount.text)}>
               reprice

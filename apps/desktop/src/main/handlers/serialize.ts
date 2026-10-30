@@ -6,13 +6,15 @@
  * which currencies have two decimal places and which have three.
  */
 
-import { toDecimalString, type Money } from '@vaultp/core';
+import { formatAmount, toDecimalString, type Money } from '@vaultp/core';
 
 import type { MoneyDto } from '../../shared/api.js';
 
 export function toMoneyDto(amount: Money): MoneyDto {
   return {
     text: toDecimalString(amount),
+    display: formatAmount(amount),
+    figure: formatAmount(amount, { unit: 'none' }),
     amountMinor: amount.amountMinor,
     currency: amount.currency,
   };

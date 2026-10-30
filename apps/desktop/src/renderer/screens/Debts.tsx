@@ -86,7 +86,7 @@ function summarise(balance: BalanceDto | undefined) {
   return (
     <span className={balance.owesYou ? 'owed' : 'owing'}>
       {balance.owesYou ? 'owes you ' : 'you owe '}
-      {balance.net.text.replace('-', '')} {balance.net.currency}
+      {balance.net.figure.replace('−', '')} {balance.net.currency}
     </span>
   );
 }

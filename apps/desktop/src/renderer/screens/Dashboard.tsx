@@ -99,7 +99,7 @@ export function Dashboard() {
           <strong className="stat-value hero">
             {data ? (
               <>
-                {data.month.total.text}
+                {data.month.total.figure}
                 <span className="unit">{data.month.total.currency}</span>
               </>
             ) : (
@@ -123,7 +123,7 @@ export function Dashboard() {
           <strong className="stat-value hero">
             {data ? (
               <>
-                {data.forecast.projectedTotal.text}
+                {data.forecast.projectedTotal.figure}
                 <span className="unit">{data.forecast.projectedTotal.currency}</span>
               </>
             ) : (
@@ -133,7 +133,7 @@ export function Dashboard() {
           {data ? (
             <>
               <span className="stat-note">
-                {data.forecast.committed.text} already scheduled ·{' '}
+                {data.forecast.committed.figure} already scheduled ·{' '}
                 {data.forecast.daysRemaining} day
                 {data.forecast.daysRemaining === 1 ? '' : 's'} left
               </span>
@@ -148,7 +148,7 @@ export function Dashboard() {
                 </span>
               ) : (
                 <span className="stat-note">
-                  {data.forecast.dailyAverage.text} a day so far
+                  {data.forecast.dailyAverage.figure} a day so far
                 </span>
               )}
               {data.forecast.rulesWithoutRate > 0 ? (
@@ -167,7 +167,7 @@ export function Dashboard() {
           {accounts.data && accounts.data.totals.length > 0 ? (
             accounts.data.totals.map((total, index) => (
               <strong key={total.currency} className={`stat-value ${index === 0 ? '' : 'secondary-figure'}`}>
-                {total.text}
+                {total.figure}
                 <span className="unit">{total.currency}</span>
               </strong>
             ))
@@ -223,7 +223,7 @@ export function Dashboard() {
               <li key={`${charge.ruleId}:${charge.date}`}>
                 <span className="warn">{charge.name}</span>
                 <span className="right">
-                  {charge.amount.text} {charge.amount.currency}
+                  {charge.amount.display}
                   <em className="muted"> {charge.date}</em>
                 </span>
               </li>
@@ -240,7 +240,7 @@ export function Dashboard() {
               <li key={`${charge.ruleId}:${charge.date}`}>
                 <span>{charge.name}</span>
                 <span className="right">
-                  {charge.amount.text} {charge.amount.currency}
+                  {charge.amount.display}
                   <em className="muted"> {charge.date}</em>
                 </span>
               </li>
@@ -296,16 +296,16 @@ function Budget({ budget }: { budget: BudgetDto }) {
           />
         </div>
         {budget.carriedIn.amountMinor > 0 ? (
-          <em className="muted small">{budget.carriedIn.text} carried in</em>
+          <em className="muted small">{budget.carriedIn.figure} carried in</em>
         ) : null}
       </span>
       <span className="right">
-        {budget.spent.text} / {budget.available.text} {budget.available.currency}
+        {budget.spent.figure} / {budget.available.display}
         <br />
         <em className={budget.overspent ? 'warn' : 'muted'}>
           {budget.overspent
-            ? `${budget.remaining.text.replace('-', '')} over`
-            : `${budget.remaining.text} left`}
+            ? `${budget.remaining.figure.replace('−', '')} over`
+            : `${budget.remaining.figure} left`}
         </em>
       </span>
     </li>
@@ -320,9 +320,9 @@ function Allowance({ data }: { data: AllowanceDto }) {
         <div className="card">
           <span className="stat-label">Used</span>
           <strong className="figure">
-            {data.used.text} / {data.ceiling.text} {data.ceiling.currency}
+            {data.used.figure} / {data.ceiling.display}
           </strong>
-          <span className="stat-note">{data.remaining.text} remaining</span>
+          <span className="stat-note">{data.remaining.figure} remaining</span>
           {data.unvaluedCount > 0 ? (
             // The used figure skips these rather than counting them as zero,
             // so it is a floor, and saying so is the difference between a
@@ -336,12 +336,12 @@ function Allowance({ data }: { data: AllowanceDto }) {
         <div className="card">
           <span className="stat-label">Projected</span>
           <strong className={`figure ${data.projectedOverrun.amountMinor > 0 ? 'owing' : ''}`}>
-            {data.projectedTotal.text} {data.projectedTotal.currency}
+            {data.projectedTotal.display}
           </strong>
           {data.projectedOverrun.amountMinor > 0 ? (
-            <span className="warn small">{data.projectedOverrun.text} over the ceiling</span>
+            <span className="warn small">{data.projectedOverrun.figure} over the ceiling</span>
           ) : (
-            <span className="muted small">{data.committedTotal.text} still scheduled</span>
+            <span className="muted small">{data.committedTotal.figure} still scheduled</span>
           )}
           {data.exhaustionDate ? (
             // The date the card starts being declined, which is worth knowing
@@ -373,11 +373,11 @@ function Allowance({ data }: { data: AllowanceDto }) {
                 </em>
               </span>
               <span className="right">
-                {usage.billed.text} {usage.currency}
+                {usage.billed.figure} {usage.currency}
                 {usage.charged ? (
                   <em className="muted">
                     {' '}
-                    → {usage.charged.text} {usage.charged.currency}
+                    → {usage.charged.display}
                   </em>
                 ) : (
                   <em className="warn"> awaiting statement</em>

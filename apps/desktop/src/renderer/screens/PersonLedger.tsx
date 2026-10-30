@@ -106,7 +106,7 @@ export function PersonLedger({
             <strong className={`figure ${data.owesYou ? 'owed' : 'owing'}`}>
               {data.net.amountMinor === 0
                 ? 'Settled'
-                : `${data.owesYou ? 'owes you' : 'you owe'} ${data.net.text.replace('-', '')} ${data.net.currency}`}
+                : `${data.owesYou ? 'owes you' : 'you owe'} ${data.net.figure.replace('−', '')} ${data.net.currency}`}
             </strong>
           </div>
 
@@ -125,7 +125,7 @@ export function PersonLedger({
               {item.note ? <em className="muted"> · {item.note}</em> : null}
             </span>
             <span className="right">
-              {item.amount.text} {item.amount.currency}
+              {item.amount.display}
               <em className="muted"> {item.occurredOn}</em>
               {correctionOf(item) ? (
                 <button
@@ -238,22 +238,22 @@ function Side({ title, side }: { title: string; side: SideBalanceDto }) {
     <div className="side">
       <span className="muted small">{title}</span>
       <span>
-        {side.total.text} {side.total.currency}
+        {side.total.display}
         {side.interest.amountMinor !== 0 ? (
           <em className="muted small">
             {' '}
-            ({side.principal.text} principal + {side.interest.text} interest)
+            ({side.principal.figure} principal + {side.interest.figure} interest)
           </em>
         ) : null}
       </span>
       {side.unapplied.amountMinor !== 0 ? (
         <span className="muted small">
-          {side.unapplied.text} paid beyond what was owed, held as credit
+          {side.unapplied.figure} paid beyond what was owed, held as credit
         </span>
       ) : null}
       {side.loans.map((loan) => (
         <span key={loan.id} className="muted small">
-          {loan.occurredOn}: {loan.total.text}
+          {loan.occurredOn}: {loan.total.figure}
           {loan.interestTerms ? ` — ${loan.interestTerms}` : ''}
           {loan.closed ? ' — closed' : ''}
         </span>

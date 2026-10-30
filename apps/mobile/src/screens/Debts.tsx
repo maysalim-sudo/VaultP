@@ -12,15 +12,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'r
 
 import {
   BASE_CURRENCY,
+  formatAmount,
+  type LedgerBalance,
   money,
+  type Person,
   radii,
   repaymentProgress,
   spacing,
   todayIn,
-  toDecimalString,
   typeScale,
-  type LedgerBalance,
-  type Person,
 } from '@vaultp/core';
 
 import { Avatar } from '../components/Avatar.js';
@@ -183,8 +183,8 @@ function Total({ label, minor, colour, palette }: { label: string; minor: number
     <View style={[styles.total, { backgroundColor: palette.surface, borderColor: palette.border }]}>
       <Text style={[styles.totalLabel, { color: palette.dim }]}>{label}</Text>
       <Text style={[styles.totalValue, { color: minor > 0 ? colour : palette.dim }]}>
-        {toDecimalString(money(minor, BASE_CURRENCY))}
-        <Text style={[styles.totalUnit, { color: palette.dim }]}> DT</Text>
+        {formatAmount(money(minor, BASE_CURRENCY), { unit: 'none' })}
+        <Text style={[styles.totalUnit, { color: palette.dim }]}> {BASE_CURRENCY}</Text>
       </Text>
     </View>
   );
@@ -224,7 +224,7 @@ function PersonCard({
           </Text>
           {real && net !== 0 ? (
             <Text style={[styles.cardAmount, { color: tone }]}>
-              {toDecimalString(money(Math.abs(net), real.currency))} {real.currency}
+              {formatAmount(money(Math.abs(net), real.currency))}
             </Text>
           ) : null}
         </View>

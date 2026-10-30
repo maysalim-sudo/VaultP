@@ -21,9 +21,9 @@ import {
 } from 'react-native';
 
 import {
+  formatAmount,
   groupResults,
   searchEverything,
-  toDecimalString,
   type SearchResult,
   type SearchResultKind,
 } from '@vaultp/core';
@@ -156,7 +156,7 @@ function ResultRow({
       <View style={styles.rowRight}>
         {result.amount ? (
           <Text style={[styles.amount, { color: palette.text }]}>
-            {toDecimalString(result.amount)} {result.amount.currency}
+            {formatAmount(result.amount)}
           </Text>
         ) : null}
         {result.date ? (

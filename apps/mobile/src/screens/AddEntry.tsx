@@ -22,18 +22,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'r
 
 import {
   BASE_CURRENCY,
+  type Category,
   categoryColourFor,
+  type Expense,
   exponentOf,
+  formatAmount,
+  type IsoDate,
   money,
+  type Person,
   radii,
   spacing,
   todayIn,
-  toDecimalString,
   typeScale,
-  type Category,
-  type Expense,
-  type IsoDate,
-  type Person,
 } from '@vaultp/core';
 
 import { AmountPad } from '../components/AmountPad.js';
@@ -157,7 +157,7 @@ export function AddEntry() {
           ...(trimmedNote ? { note: trimmedNote } : {}),
         }),
       );
-      if (expense) flash(`${toDecimalString(expense.amount)} ${expense.amount.currency} saved`, expense);
+      if (expense) flash(`${formatAmount(expense.amount)} saved`, expense);
     } else {
       mutate((v) => {
         const input = {
@@ -170,8 +170,8 @@ export function AddEntry() {
       });
       flash(
         mode === 'lent'
-          ? `Lent ${toDecimalString(amount)} ${amount.currency} to ${person!.name}`
-          : `Borrowed ${toDecimalString(amount)} ${amount.currency} from ${person!.name}`,
+          ? `Lent ${formatAmount(amount)} to ${person!.name}`
+          : `Borrowed ${formatAmount(amount)} from ${person!.name}`,
         null,
       );
     }

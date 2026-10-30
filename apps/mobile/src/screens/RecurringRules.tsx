@@ -24,14 +24,14 @@ import {
 
 import {
   BASE_CURRENCY,
+  type Category,
   exponentOf,
+  formatAmount,
+  type Frequency,
   money,
   nextOccurrenceOnOrAfter,
-  todayIn,
-  toDecimalString,
-  type Category,
-  type Frequency,
   type RecurringRule,
+  todayIn,
 } from '@vaultp/core';
 
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
@@ -159,7 +159,7 @@ export function RecurringRules({
                 ],
               },
             ]}
-            footnote={`Costs ${toDecimalString(editing.amount)} ${editing.amount.currency}. Expenses it already logged stay as they are.`}
+            footnote={`Costs ${formatAmount(editing.amount)}. Expenses it already logged stay as they are.`}
             actions={[
               {
                 label: 'Change price',
@@ -251,7 +251,7 @@ function RuleRow({
           {rule.name}
         </Text>
         <Text style={[styles.ruleMeta, { color: palette.dim }]}>
-          {toDecimalString(rule.amount)} {rule.amount.currency}
+          {formatAmount(rule.amount)}
           {'  ·  '}
           {paused ? 'paused' : `next ${next}`}
           {rule.autoLog && !paused ? '  ·  auto' : ''}

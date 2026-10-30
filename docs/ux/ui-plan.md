@@ -40,10 +40,11 @@ Today there are three paths:
 - `mobile/screens/Home.tsx` own `Intl.NumberFormat` + hard-coded `'DT'` (also `Accounts.tsx:297`, `Debts.tsx:187`)
 - desktop main sends `toDecimalString` (`1921.850`, no grouping) via `handlers/serialize.ts`
 
-- [ ] Add `formatAmount(m, opts)` in core returning `{ sign, figure, unit, text }`. Options: `estimated` (prefix `≈`), `signed`, `unit: 'code' | 'none'`. Exponent always from `currency.ts`.
-- [ ] Tests: TND 3 decimals, JPY 0, negatives, `≈`, grouping, a large figure.
-- [ ] Replace every local formatter on the phone. Desktop: serialize `{figure, unit}` parts from main, never a bare decimal string for display.
-- [ ] Grep guard in a test: no `'DT'` and no `Intl.NumberFormat` outside core.
+- [x] Add `formatAmount(m, opts)` in core returning `{ sign, figure, unit, text }`. Options: `estimated` (prefix `≈`), `signed`, `unit: 'code' | 'none'`. Exponent always from `currency.ts`.
+- [x] Tests: TND 3 decimals, JPY 0, negatives, `≈`, grouping, a large figure.
+- [x] Replace every local formatter on the phone. Desktop: serialize `{figure, unit}` parts from main, never a bare decimal string for display.
+- [x] Grep guard in a test: no `'DT'` and no `Intl.NumberFormat` outside core.
+- Done 2026-10-30: `formatAmount` / `formatAmountParts` in `core/money/money.ts` (no `Intl`, so Hermes and Chromium print the same). Desktop `MoneyDto` gained `display` and `figure`; `text` stays the plain decimal that edit fields start from. Guard: `core/money/formatGuard.test.ts`. Core 479, desktop 42 tests pass.
 
 ### 1.2 Amount colour rule
 - [ ] One `amountTone(kind)` helper: `positive` (coming back), `negative` (owed / overspent), `estimate` (≈), `text` (an ordinary expense). `danger` stays for destructive buttons only (as `tokens.ts` already says).

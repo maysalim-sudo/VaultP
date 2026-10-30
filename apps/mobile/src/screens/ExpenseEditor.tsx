@@ -23,11 +23,11 @@ import {
 
 import {
   BASE_CURRENCY,
-  exponentOf,
-  money,
-  toDecimalString,
   type Category,
   type Expense,
+  exponentOf,
+  formatAmount,
+  money,
 } from '@vaultp/core';
 
 import { AmountDisplay, AmountPad } from '../components/AmountPad.js';
@@ -230,7 +230,7 @@ export function ExpenseEditor({
             {confirmingDelete ? (
               <View style={styles.confirmRow}>
                 <Text style={[styles.confirmText, { color: palette.text }]}>
-                  Delete {toDecimalString(expense.amount)} {expense.amount.currency}?
+                  Delete {formatAmount(expense.amount)}?
                 </Text>
                 <View style={styles.confirmButtons}>
                   <Pressable

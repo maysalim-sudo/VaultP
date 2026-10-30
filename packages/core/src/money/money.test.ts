@@ -4,6 +4,8 @@ import {
   add,
   convert,
   deriveRate,
+  formatAmount,
+  formatAmountParts,
   formatMoney,
   money,
   multiply,
@@ -162,5 +164,44 @@ describe('deriveRate — the foreign subscription path', () => {
 
   it('refuses a zero billed amount', () => {
     expect(() => deriveRate(money(0, 'USD'), money(1000, 'TND'))).toThrow();
+  });
+});
+
+describe('formatAmount — one figure, printed one way everywhere', () => {
+  it('keeps all three dinar decimals and groups thousands', () => {
+    expect(formatAmount(money(1240500, 'TND'))).toBe('1,240.500 TND');
+    expect(formatAmount(money(128250, 'TND'))).toBe('128.250 TND');
+    expect(formatAmount(money(1921850, 'TND'))).toBe('1,921.850 TND');
+  });
+
+  it('pads small amounts instead of dropping leading zeros', () => {
+    expect(formatAmount(money(5, 'TND'))).toBe('0.005 TND');
+    expect(formatAmount(money(0, 'TND'))).toBe('0.000 TND');
+  });
+
+  it('looks the exponent up for every currency', () => {
+    expect(formatAmount(money(2999, 'USD'))).toBe('29.99 USD');
+    expect(formatAmount(money(1500000, 'JPY'))).toBe('1,500,000 JPY');
+    expect(formatAmount(money(1234567, 'KWD'))).toBe('1,234.567 KWD');
+  });
+
+  it('uses a real minus sign, and a plus only when asked', () => {
+    expect(formatAmount(money(-120000, 'TND'))).toBe('−120.000 TND');
+    expect(formatAmount(money(150000, 'TND'), { signed: true })).toBe('+150.000 TND');
+    expect(formatAmount(money(0, 'TND'), { signed: true })).toBe('0.000 TND');
+  });
+
+  it('marks an estimate before the sign', () => {
+    expect(formatAmount(money(-981500, 'TND'), { estimated: true })).toBe('≈ −981.500 TND');
+  });
+
+  it('splits into parts for a hero figure with a smaller unit', () => {
+    const parts = formatAmountParts(money(428750, 'TND'));
+    expect(parts).toMatchObject({ sign: '', figure: '428.750', unit: 'TND', estimated: false });
+    expect(formatAmount(money(428750, 'TND'), { unit: 'none' })).toBe('428.750');
+  });
+
+  it('never writes DT, whatever the device locale', () => {
+    expect(formatAmount(money(68400, 'TND'))).not.toMatch(/DT/);
   });
 });

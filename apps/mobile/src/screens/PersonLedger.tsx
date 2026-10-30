@@ -21,16 +21,16 @@ import { useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
+  type DebtEntry,
+  formatAmount,
+  type LedgerBalance,
   money,
+  type Person,
   radii,
   repaymentProgress,
   spacing,
   todayIn,
-  toDecimalString,
   typeScale,
-  type DebtEntry,
-  type LedgerBalance,
-  type Person,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
@@ -66,7 +66,7 @@ export function PersonLedger({ person: opened, onClose }: { person: Person; onCl
     if (entry.kind !== 'loan' && entry.kind !== 'payment') return;
     Alert.alert(
       describeEntry(entry),
-      `${toDecimalString(entry.amount)} ${entry.amount.currency} on ${entry.occurredOn}. ` +
+      `${formatAmount(entry.amount)} on ${entry.occurredOn}. ` +
         'Past entries are never changed in place: a correction records the right one and voids this, and both stay in the history.',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -197,7 +197,7 @@ export function PersonLedger({ person: opened, onClose }: { person: Person; onCl
               </Text>
               <Text style={[styles.hero, { color: tone }]}>
                 {net !== 0 && balance
-                  ? `${toDecimalString(money(Math.abs(net), balance.currency))} ${balance.currency}`
+                  ? formatAmount(money(Math.abs(net), balance.currency))
                   : '—'}
               </Text>
               {progress && balance ? (
@@ -207,14 +207,14 @@ export function PersonLedger({ person: opened, onClose }: { person: Person; onCl
                   </View>
                   <Text style={[styles.caption, { color: palette.dim }]}>
                     {progress.direction === 'owed_to_me' ? 'paid back' : 'you have paid back'}{' '}
-                    {toDecimalString(money(progress.repaidMinor, balance.currency))} of{' '}
-                    {toDecimalString(money(progress.lentMinor, balance.currency))}
+                    {formatAmount(money(progress.repaidMinor, balance.currency), { unit: 'none' })} of{' '}
+                    {formatAmount(money(progress.lentMinor, balance.currency))}
                   </Text>
                 </>
               ) : null}
               {interest > 0 && balance ? (
                 <Text style={[styles.caption, { color: palette.dim }]}>
-                  includes {toDecimalString(money(interest, balance.currency))} interest to today
+                  includes {formatAmount(money(interest, balance.currency))} interest to today
                 </Text>
               ) : null}
             </>
@@ -393,7 +393,7 @@ function EntryRow({
         </Text>
       </View>
       <Text style={[styles.entryAmount, { color: palette.text }]}>
-        {toDecimalString(entry.amount)} {entry.amount.currency}
+        {formatAmount(entry.amount)}
       </Text>
     </Pressable>
   );

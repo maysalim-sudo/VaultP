@@ -68,7 +68,7 @@ export function Accounts() {
             <div key={total.currency} className="card">
               <span className="stat-label">Across your accounts</span>
               <span className="stat-value">
-                {total.text}
+                {total.figure}
                 <span className="unit">{total.currency}</span>
               </span>
             </div>
@@ -102,7 +102,7 @@ export function Accounts() {
                 </em>
               </span>
               <span className="right">
-                {account.balance.text} {account.balance.currency}
+                {account.balance.display}
               </span>
             </li>
           );

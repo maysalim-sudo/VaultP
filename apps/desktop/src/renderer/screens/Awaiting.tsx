@@ -47,9 +47,9 @@ function SettleRow({ expense }: { expense: ExpenseDto }) {
         <em className="muted"> {expense.occurredOn}</em>
         <br />
         <em className="muted small">
-          {expense.amount.text} {expense.amount.currency} —{' '}
+          {expense.amount.display} —{' '}
           {expense.base
-            ? `estimated ≈${expense.base.text} ${expense.base.currency}`
+            ? `estimated ≈ ${expense.base.display}`
             : 'no value known'}
         </em>
       </span>
