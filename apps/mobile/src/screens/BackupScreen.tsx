@@ -35,6 +35,7 @@ import { Screen } from '../components/Screen.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { Sync } from './Sync.js';
+import { Glyph } from '../components/icons.js';
 
 function ago(iso: string): string {
   const days = Math.floor((Date.now() - Date.parse(iso)) / 86_400_000);
@@ -256,14 +257,14 @@ function ActionCard({
       {busy ? (
         <ActivityIndicator color={primary ? palette.onAccent : palette.text} />
       ) : (
-        <Text style={[styles.cardGlyph, { color: primary ? palette.onAccent : palette.text }]}>{glyph}</Text>
+        <Glyph glyph={glyph} color={primary ? palette.onAccent : palette.text} size={22} />
       )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 48 },
+  screen: { flex: 1, paddingTop: 4 },
   pressed: { transform: [{ scale: 0.97 }] },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   back: { fontSize: 24, fontWeight: '600' },

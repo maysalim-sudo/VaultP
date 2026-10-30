@@ -7,7 +7,17 @@
  * and the Shell forgets it — returning to the screen later opens nothing.
  */
 
-import type { ViewName } from './components/Sidebar.js';
+/** Every screen the shell can show. Money is four of them under one tab. */
+export type ViewName =
+  | 'home'
+  | 'add'
+  | 'recurring'
+  | 'debts'
+  | 'accounts'
+  | 'documents'
+  | 'notes'
+  | 'insights'
+  | 'backup';
 
 export type Intent =
   | { readonly kind: 'note'; readonly id: string }

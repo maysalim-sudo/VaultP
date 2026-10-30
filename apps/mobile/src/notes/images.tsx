@@ -221,7 +221,7 @@ export function NoteImage({
       ) : (
         <View style={[frame, styles.placeholder]}>
           {state.status === 'missing' ? (
-            <Text style={[styles.placeholderText, { color: textColour }]}>🖼 {state.reason}</Text>
+            <Text style={[styles.placeholderText, { color: textColour }]}>{state.reason}</Text>
           ) : null}
         </View>
       )}

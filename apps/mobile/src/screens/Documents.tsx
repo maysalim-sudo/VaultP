@@ -307,7 +307,7 @@ function DocumentRow({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 52 },
+  screen: { flex: 1, paddingTop: 4 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -23,9 +23,9 @@ import { BackHandler, StyleSheet, View, useColorScheme } from 'react-native';
 
 import type { Category, Expense, SearchResult } from '@vaultp/core';
 
-import { COLLAPSED_WIDTH, Sidebar, type ViewName } from '../components/Sidebar.js';
+import { CreateSheet, MONEY, MoneyTabs, TabBar, TopBar } from '../components/Chrome.js';
 import { paletteFor } from '../components/theme.js';
-import type { Intent, IntentProps, Navigate } from '../navigation.js';
+import type { Intent, IntentProps, Navigate, ViewName } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 import { Accounts } from './Accounts.js';
@@ -45,7 +45,7 @@ export function Shell() {
   const palette = paletteFor(useColorScheme());
 
   const [view, setView] = useState<ViewName>('home');
-  const [expanded, setExpanded] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [searching, setSearching] = useState(false);
   const [pending, setPending] = useState<{ view: ViewName; intent: Intent } | null>(null);
@@ -57,7 +57,6 @@ export function Shell() {
 
   const navigate = useCallback<Navigate>((next, intent) => {
     setView(next);
-    setExpanded(false);
     setPending(intent ? { view: next, intent } : null);
   }, []);
 
@@ -90,10 +89,6 @@ export function Shell() {
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (expanded) {
-        setExpanded(false);
-        return true;
-      }
       if (view !== 'home') {
         setView('home');
         return true;
@@ -103,33 +98,16 @@ export function Shell() {
     });
 
     return () => subscription.remove();
-  }, [expanded, view]);
+  }, [view]);
 
   return (
     <View style={[styles.shell, { backgroundColor: palette.background }]}>
-      {/*
-        Content first, drawer second: React Native paints later siblings on top,
-        and the drawer has to slide over the content rather than under it.
-
-        The content sits beside the collapsed strip and does not reflow when the
-        drawer expands. Relaying out a whole screen on every toggle is both
-        visible and slow, and the drawer is only open long enough for one tap.
-      */}
+      <TopBar palette={palette} onSearch={() => setSearching(true)} onVault={() => navigate('backup')} />
+      {MONEY.includes(view) ? <MoneyTabs palette={palette} active={view} onSelect={navigate} /> : null}
       <View style={styles.content}>{renderView()}</View>
+      <TabBar palette={palette} active={view} onSelect={navigate} onCreate={() => setCreating(true)} />
 
-      <View style={styles.drawer}>
-        <Sidebar
-          active={view}
-          expanded={expanded}
-          onSelect={navigate}
-          onToggle={() => setExpanded((current) => !current)}
-          onSearch={() => {
-            setExpanded(false);
-            setSearching(true);
-          }}
-          palette={palette}
-        />
-      </View>
+      <CreateSheet palette={palette} visible={creating} onClose={() => setCreating(false)} onGo={navigate} />
 
       {searching ? <Search onClose={() => setSearching(false)} onOpen={openResult} /> : null}
 
@@ -169,8 +147,5 @@ export function Shell() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  // Both children are absolute, so neither is squeezed by the other as the
-  // drawer widens.
-  content: { position: 'absolute', left: COLLAPSED_WIDTH, right: 0, top: 0, bottom: 0 },
-  drawer: { position: 'absolute', left: 0, top: 0, bottom: 0 },
+  content: { flex: 1 },
 });

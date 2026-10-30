@@ -26,6 +26,7 @@ import {
 import { Avatar } from '../components/Avatar.js';
 import { Screen } from '../components/Screen.js';
 import { TextPrompt } from '../components/TextPrompt.js';
+import { Icon } from '../components/icons.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
@@ -120,7 +121,7 @@ export function Debts({ onClose, intent, onIntentHandled }: { onClose?: () => vo
 
           {people.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>🤝</Text>
+              <Icon name="people" size={52} color={palette.textFaint} />
               <Text style={[styles.emptyText, { color: palette.dim }]}>
                 Nobody yet. Add someone you have lent money to, or borrowed from — or record it straight from the ＋
                 on the home screen.
@@ -251,7 +252,7 @@ function PersonCard({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 48 },
+  screen: { flex: 1, paddingTop: 4 },
   pressed: { transform: [{ scale: 0.97 }] },
   archivedToggle: { alignItems: 'center', paddingVertical: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },

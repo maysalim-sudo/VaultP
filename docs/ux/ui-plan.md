@@ -139,3 +139,21 @@ Fix in the UI kit first, then build. Each item is an artboard edit, light and da
 | 3 Phone build | 4–6 days | after 1 and 2 |
 | 4 Desktop build | 3–5 days | after 1 and 2.3; parallel with 3 |
 | 5 Verify | 1 day | at the end |
+
+---
+
+## Progress, 2026-10-30 (night)
+
+The industrial design (`docs/ux/industrial/`) replaced the FigCraft pass, so Phase 2 is superseded.
+
+- **Phase 1.2–1.3 done through the tokens:** the new palette in `core/design/tokens.ts`, an `accentText` role,
+  and `tokens.test.ts` holding every text colour to WCAG AA on every surface in both themes.
+- **Phase 4 (desktop) done:** rail, Money tabs, create sheet (Ctrl+N), theme choice, bento overview with daily bars,
+  Spent by day, People, Repeats, Accounts, Documents, the till-style expense keypad, Notes and the editor in icons,
+  Vault settings with sync moved out of the header, ledger and lock screen. Fonts bundled offline.
+  Fixed on the way: checklist text invisible in the desktop note editor (since 5962a70).
+- **Phase 3 (phone) started, not yet seen on a device:** fonts and icons (react-native-svg, expo-font), the
+  floating tab bar (Home, Money, +, Notes, Docs), Money tabs, top bar with search and Vault, the create sheet,
+  the Home hero with daily bars, and emoji replaced by icons across Home, Notes, the editor, Accounts and Debts.
+  Next: build a debug APK (needs the Android SDK and NDK on this machine), install over USB, screenshot with adb,
+  then rebuild the Money pages and the expense entry to match the desktop.

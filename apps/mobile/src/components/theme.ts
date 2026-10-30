@@ -27,6 +27,8 @@ export interface Palette {
   readonly accent: string;
   /** Text/icons printed on the accent. */
   readonly onAccent: string;
+  /** The orange as text or a thin stroke on the ground or a tile. */
+  readonly accentText: string;
   readonly danger: string;
   readonly success: string;
   readonly warning: string;
@@ -56,6 +58,7 @@ function paletteFromTheme(theme: Theme): Palette {
     divider: c.divider,
     accent: c.accent,
     onAccent: c.onAccent,
+    accentText: c.accentText,
     danger: c.danger,
     success: c.success,
     warning: c.warning,
@@ -79,3 +82,26 @@ export const darkPalette: Palette = paletteFromTheme(darkTheme);
 export function paletteFor(scheme: string | null | undefined): Palette {
   return scheme === 'dark' ? darkPalette : lightPalette;
 }
+
+/**
+ * The three faces, by the names expo-font registers them under in App.tsx:
+ * Inter Tight for words, JetBrains Mono for labels and small figures, and Doto,
+ * the dot-matrix face, for the figure a tile exists to show.
+ */
+export const fonts = {
+  ui: 'InterTight_400Regular',
+  uiMedium: 'InterTight_500Medium',
+  uiSemibold: 'InterTight_600SemiBold',
+  uiBold: 'InterTight_700Bold',
+  mono: 'JetBrainsMono_400Regular',
+  monoMedium: 'JetBrainsMono_500Medium',
+  monoBold: 'JetBrainsMono_700Bold',
+  display: 'Doto_800ExtraBold',
+} as const;
+
+/** The label grammar: small spaced mono capitals. */
+export const labelStyle = {
+  fontFamily: fonts.monoMedium,
+  fontSize: 10,
+  letterSpacing: 1.6,
+} as const;

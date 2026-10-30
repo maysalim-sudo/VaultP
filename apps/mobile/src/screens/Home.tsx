@@ -45,7 +45,8 @@ import {
 } from '@vaultp/core';
 
 import { describeDate } from '../components/DateField.js';
-import { paletteFor, type Palette } from '../components/theme.js';
+import { Icon, categoryIcon, type IconName } from '../components/icons.js';
+import { fonts, labelStyle, paletteFor, type Palette } from '../components/theme.js';
 import type { Navigate } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
@@ -57,6 +58,35 @@ const MONTHS = [
 /** A colour at low opacity, for tinted fills. Tokens are six-digit hex. */
 function tint(hex: string, alpha = '26'): string {
   return /^#[0-9a-f]{6}$/i.test(hex) ? `${hex}${alpha}` : hex;
+}
+
+/**
+ * Home used emoji throughout; each one it draws maps to a stroke icon here. A
+ * category's own glyph is a person's choice and may be anything, so an emoji
+ * not in the map falls back to an icon guessed from the category's name.
+ */
+const GLYPH_ICONS: Readonly<Record<string, IconName>> = {
+  '🔁': 'repeat',
+  '🔔': 'bolt',
+  '📝': 'notes',
+  '📄': 'docs',
+  '💳': 'money',
+  '🗓️': 'receipt',
+  '🤝': 'people',
+  '☑️': 'checklist',
+  '📷': 'camera',
+  '🍽️': 'food',
+  '🍽': 'food',
+  '🚕': 'car',
+  '🛒': 'cart',
+  '💻': 'repeat',
+  '🧾': 'receipt',
+  '💊': 'heart',
+  '🏠': 'home',
+};
+
+function iconFor(glyph: string, hint?: string | null): IconName {
+  return GLYPH_ICONS[glyph] ?? categoryIcon(hint ?? null);
 }
 
 export function Home({
@@ -94,6 +124,22 @@ export function Home({
   }, [vault, version, today]);
 
   const recent = useMemo(() => vault.expenses.listExpenses({ limit: 12 }), [vault, version]);
+
+  /**
+   * One bar per day of the month, in the base currency. A foreign charge with
+   * no value yet adds nothing rather than a guessed amount.
+   */
+  const perDay = useMemo(() => {
+    const [y, m] = monthKey(today).split('-').map(Number);
+    const daysInMonth = new Date(y!, m!, 0).getDate();
+    const totals = new Array<number>(daysInMonth).fill(0);
+    for (const expense of vault.expenses.listExpenses({ from: `${monthKey(today)}-01`, to: today })) {
+      if (!expense.base || expense.base.currency !== BASE_CURRENCY) continue;
+      const day = Number(expense.occurredOn.slice(8, 10));
+      if (day >= 1 && day <= daysInMonth) totals[day - 1]! += expense.base.amountMinor;
+    }
+    return totals;
+  }, [vault, version, today]);
 
   /** Pinned first, then the latest touched: what you were in the middle of. */
   const recentNotes = useMemo(
@@ -211,23 +257,64 @@ export function Home({
   }, [recent]);
 
   const hero = formatAmountParts(month.total);
+  const dayOfMonth = Number(today.slice(8, 10));
+  const peak = Math.max(1, ...perDay);
   const [year, monthNumber] = monthKey(today).split('-');
 
   return (
     <View style={[styles.root, { backgroundColor: palette.background }]}>
       <ScrollView contentContainerStyle={styles.body}>
-        {/* ---------------------------------------------------------- search */}
+        {/* ------------------------------------------------------------ hero */}
         <Pressable
-          onPress={onSearch}
-          accessibilityLabel="Search everything"
-          style={({ pressed }) => [
-            styles.searchBar,
-            { backgroundColor: palette.surface, borderColor: palette.border },
-            pressed ? styles.pressed : null,
-          ]}
+          onPress={() => onNavigate('insights')}
+          style={({ pressed }) => [styles.heroTile, { backgroundColor: palette.surface }, pressed ? styles.pressed : null]}
         >
-          <Text style={styles.searchGlyph}>🔎</Text>
-          <Text style={[styles.searchText, { color: palette.dim }]}>Search notes, people, expenses…</Text>
+          <View style={styles.labelRow}>
+            <Text style={[labelStyle, { color: palette.textFaint }]}>
+              SPENT · {MONTHS[Number(monthNumber) - 1]!.toUpperCase()}
+            </Text>
+            <Text style={[labelStyle, { color: palette.textFaint }]}>
+              DAY {String(dayOfMonth).padStart(2, '0')} / {perDay.length}
+            </Text>
+          </View>
+          <View style={styles.heroFigureRow}>
+            <Text
+              style={[styles.heroFigure, { color: palette.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+            >
+              {hero.figure}
+            </Text>
+            <Text style={[styles.heroUnit, { color: palette.dim }]}>{hero.unit}</Text>
+          </View>
+          <View style={styles.bars} accessibilityLabel="Spending per day this month">
+            {perDay.map((value, index) => {
+              const day = index + 1;
+              const future = day > dayOfMonth;
+              return (
+                <View
+                  key={day}
+                  style={[
+                    styles.bar,
+                    future
+                      ? { height: '100%', borderWidth: 1, borderColor: palette.border }
+                      : {
+                          height: `${Math.max(4, Math.round((value / peak) * 100))}%`,
+                          backgroundColor:
+                            day === dayOfMonth ? palette.accent : value === 0 ? palette.border : palette.text,
+                        },
+                  ]}
+                />
+              );
+            })}
+          </View>
+          {month.unvaluedCount > 0 ? (
+            // Never let an unknown amount hide inside a total.
+            <Text style={[styles.heroNote, { color: palette.estimate }]}>
+              + {month.unvaluedCount} amount{month.unvaluedCount === 1 ? '' : 's'} not yet known
+            </Text>
+          ) : null}
         </Pressable>
 
         {/* ----------------------------------------------- quick create: notes */}
@@ -275,12 +362,10 @@ export function Home({
               >
                 {note.title ? (
                   <Text style={[styles.noteTitle, { color: palette.text }]} numberOfLines={1}>
-                    {note.pinned ? '📌 ' : ''}
                     {note.title}
                   </Text>
                 ) : null}
                 <Text style={[styles.noteBody, { color: palette.dim }]} numberOfLines={note.title ? 3 : 4}>
-                  {!note.title && note.pinned ? '📌 ' : ''}
                   {note.body || 'Empty note'}
                 </Text>
               </Pressable>
@@ -288,43 +373,6 @@ export function Home({
           </ScrollView>
         ) : null}
 
-        <View style={styles.chipRow}>
-          <QuickChip label="＋ Expense" palette={palette} onPress={() => onNavigate('add')} />
-          <QuickChip label="＋ Person" palette={palette} onPress={() => onNavigate('debts', { kind: 'newPerson' })} />
-          <QuickChip label="＋ Account" palette={palette} onPress={() => onNavigate('accounts', { kind: 'newAccount' })} />
-        </View>
-
-        {/* ------------------------------------------------------------ hero */}
-        <View style={styles.heroBlock}>
-          <View style={[styles.period, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-            <Text style={[styles.periodText, { color: palette.text }]}>
-              {MONTHS[Number(monthNumber) - 1]} {year}
-            </Text>
-          </View>
-
-          <Text style={[styles.heroLabel, { color: palette.dim }]}>Spent this month</Text>
-          <Pressable
-            onPress={() => onNavigate('insights')}
-            style={({ pressed }) => [styles.heroFigureRow, pressed ? styles.pressed : null]}
-          >
-            <Text
-              style={[styles.heroFigure, { color: palette.text }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.55}
-            >
-              {hero.figure}
-            </Text>
-            <Text style={[styles.heroUnit, { color: palette.dim }]}>{hero.unit}</Text>
-          </Pressable>
-
-          {month.unvaluedCount > 0 ? (
-            // Never let an unknown amount hide inside a total.
-            <Text style={[styles.heroNote, { color: palette.warning }]}>
-              + {month.unvaluedCount} amount{month.unvaluedCount === 1 ? '' : 's'} not yet known
-            </Text>
-          ) : null}
-        </View>
 
         {/* ------------------------------------------------------- stat tiles */}
         <View style={styles.tiles}>
@@ -481,9 +529,9 @@ export function Home({
 
         {days.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyGlyph}>🧾</Text>
+            <Icon name="receipt" size={40} color={palette.textFaint} />
             <Text style={[styles.emptyText, { color: palette.dim }]}>
-              No expenses yet. Tap + to add your first.
+              No expenses yet. The orange + below adds the first.
             </Text>
           </View>
         ) : null}
@@ -565,18 +613,7 @@ function QuickIcon({
         pressed ? styles.pressed : null,
       ]}
     >
-      <Text style={styles.quickGlyph}>{glyph}</Text>
-    </Pressable>
-  );
-}
-
-function QuickChip({ label, palette, onPress }: { label: string; palette: Palette; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.quickChip, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
-    >
-      <Text style={[styles.quickChipText, { color: palette.text }]}>{label}</Text>
+      <Icon name={iconFor(glyph)} size={20} color={palette.text} />
     </Pressable>
   );
 }
@@ -609,8 +646,8 @@ function StatTile({
         pressed ? styles.pressed : null,
       ]}
     >
-      <View style={[styles.tileIcon, { backgroundColor: tint(colour, '33') }]}>
-        <Text style={styles.tileGlyph}>{glyph}</Text>
+      <View style={[styles.tileIcon, { backgroundColor: palette.surfaceOverlay }]}>
+        <Icon name={iconFor(glyph)} size={18} color={colour} />
       </View>
       <Text style={[styles.tileLabel, { color: palette.dim }]}>{label}</Text>
       <Text style={[styles.tileValue, { color: palette.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -637,7 +674,7 @@ function Section({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <Text style={[styles.sectionTitle, { color: palette.text }]}>{title}</Text>
+        <Text style={[labelStyle, { color: palette.textFaint }]}>{title.toUpperCase()}</Text>
         <View style={[styles.badge, { backgroundColor: tint(countColour, '2E') }]}>
           <Text style={[styles.badgeText, { color: countColour }]}>{count}</Text>
         </View>
@@ -656,10 +693,10 @@ function Section({
 }
 
 /** A round tile with a glyph: solid for a category, tinted for everything else. */
-function Dot({ glyph, colour, solid }: { glyph: string; colour: string; solid: boolean }) {
+function Dot({ glyph, colour, hint }: { glyph: string; colour: string; solid?: boolean; hint?: string | null }) {
   return (
-    <View style={[styles.dot, { backgroundColor: solid ? colour : tint(colour, '33') }]}>
-      <Text style={[styles.dotGlyph, { color: solid ? '#FFFFFF' : colour }]}>{glyph}</Text>
+    <View style={[styles.dot, { backgroundColor: tint(colour, '1F') }]}>
+      <Icon name={iconFor(glyph, hint)} size={18} color={colour} />
     </View>
   );
 }
@@ -748,7 +785,7 @@ function TransactionRow({
   return (
     <Pressable onPress={onPress} style={styles.transaction} android_ripple={{ color: palette.ripple }}>
       {category ? (
-        <Dot glyph={glyph} colour={categoryColourFor(category.id, category.color)} solid />
+        <Dot glyph={glyph} colour={palette.dim} hint={category.name} />
       ) : (
         <View style={[styles.dot, { backgroundColor: palette.key }]}>
           <Text style={[styles.dotGlyph, { color: palette.dim }]}>•</Text>
@@ -776,62 +813,34 @@ function TransactionRow({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  body: { paddingHorizontal: spacing.lg, paddingTop: 40, paddingBottom: 120 },
+  body: { paddingHorizontal: spacing.lg, paddingTop: 8, paddingBottom: 32 },
 
-  heroBlock: { alignItems: 'center', paddingVertical: spacing.lg },
-  period: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-    marginBottom: spacing.lg,
-  },
-  periodText: { fontSize: typeScale.sm, fontWeight: '600' },
-  heroLabel: { fontSize: typeScale.sm, fontWeight: '500' },
-  heroFigureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: spacing.xs },
-  heroFigure: {
-    fontSize: 46,
-    fontWeight: '800',
-    letterSpacing: -1,
-    fontVariant: ['tabular-nums'],
-    flexShrink: 1,
-  },
-  heroUnit: { fontSize: typeScale.lg, fontWeight: '700' },
-  heroNote: { fontSize: typeScale.xs, marginTop: spacing.xs, fontWeight: '500' },
+  // The month: the figure in dot-matrix, and one bar per day with today in orange.
+  heroTile: { borderRadius: radii.xl, padding: 20, gap: 16 },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  heroFigureRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  heroFigure: { fontFamily: fonts.display, fontSize: 72, lineHeight: 72, flexShrink: 1 },
+  heroUnit: { fontFamily: fonts.monoMedium, fontSize: 13, letterSpacing: 1, paddingBottom: 8 },
+  heroNote: { fontFamily: fonts.mono, fontSize: 11 },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 72 },
+  bar: { flex: 1, minHeight: 3, borderRadius: 3 },
 
   tiles: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
 
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 12,
-  },
-  searchGlyph: { fontSize: 15 },
-  searchText: { fontSize: typeScale.base },
-
   // Notes first: a blank note is one tap from opening the app.
   quickRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  takeNote: { flex: 1, borderWidth: 1, borderRadius: radii.lg, paddingHorizontal: spacing.lg, paddingVertical: 15 },
-  takeNoteText: { fontSize: typeScale.md, fontWeight: '500' },
-  quickIcon: { width: 52, borderWidth: 1, borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
-  quickGlyph: { fontSize: 20 },
+  takeNote: { flex: 1, borderRadius: radii.xl, paddingHorizontal: spacing.lg, paddingVertical: 16 },
+  takeNoteText: { fontFamily: fonts.uiMedium, fontSize: typeScale.md },
+  quickIcon: { width: 54, borderRadius: radii.xl, alignItems: 'center', justifyContent: 'center' },
   notesStripOuter: { marginHorizontal: -spacing.lg, marginTop: spacing.md },
   notesStrip: { paddingHorizontal: spacing.lg, gap: spacing.sm },
-  noteCard: { width: 150, minHeight: 92, borderWidth: 1, borderRadius: radii.lg, padding: spacing.md, gap: 4 },
-  noteTitle: { fontSize: typeScale.base, fontWeight: '700' },
-  noteBody: { fontSize: typeScale.sm, lineHeight: 18 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
-  quickChip: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radii.pill },
-  quickChipText: { fontSize: typeScale.sm, fontWeight: '700' },
+  noteCard: { width: 156, minHeight: 104, borderRadius: radii.lg, padding: 14, gap: 6 },
+  noteTitle: { fontFamily: fonts.uiSemibold, fontSize: typeScale.base, letterSpacing: -0.1 },
+  noteBody: { fontFamily: fonts.ui, fontSize: typeScale.sm, lineHeight: 18 },
   tile: {
     flex: 1,
     borderRadius: radii.xl,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: spacing.lg,
+    padding: 18,
     gap: 4,
   },
   tileIcon: {
@@ -842,10 +851,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  tileGlyph: { fontSize: 18 },
-  tileLabel: { fontSize: typeScale.xs, fontWeight: '600' },
-  tileValue: { fontSize: typeScale.md, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  tileNote: { fontSize: 11, fontWeight: '500' },
+  tileLabel: { ...labelStyle },
+  tileValue: { fontFamily: fonts.monoMedium, fontSize: typeScale.md, fontVariant: ['tabular-nums'] },
+  tileNote: { fontFamily: fonts.mono, fontSize: 11 },
 
   section: { marginTop: spacing.xl },
   sectionHead: {
@@ -855,13 +863,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     marginLeft: spacing.xs,
   },
-  sectionTitle: { fontSize: typeScale.md, fontWeight: '800' },
+  sectionTitle: { ...labelStyle },
   transactionsTitle: { marginTop: spacing.xl, marginBottom: spacing.xs, marginLeft: spacing.xs },
   badge: { minWidth: 24, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radii.pill, alignItems: 'center' },
-  badgeText: { fontSize: typeScale.xs, fontWeight: '800' },
+  badgeText: { fontFamily: fonts.monoBold, fontSize: typeScale.xs },
   card: {
     borderRadius: radii.xl,
-    borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: spacing.xs,
     overflow: 'hidden',
   },
@@ -909,7 +916,6 @@ const styles = StyleSheet.create({
   dayTotal: { fontSize: typeScale.sm, fontWeight: '600', fontVariant: ['tabular-nums'] },
 
   empty: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
-  emptyGlyph: { fontSize: 44, opacity: 0.5 },
   emptyText: { fontSize: typeScale.sm },
 
   fabDock: { position: 'absolute', left: 0, right: 0, bottom: 28, alignItems: 'center' },

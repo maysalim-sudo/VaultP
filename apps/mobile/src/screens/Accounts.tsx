@@ -27,16 +27,17 @@ import {
 import { AmountSheet } from '../components/AmountSheet.js';
 import { FieldsSheet } from '../components/FieldsSheet.js';
 import { Screen } from '../components/Screen.js';
+import { Icon, type IconName } from '../components/icons.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
-const KIND_LABELS: Record<AccountKind, { label: string; icon: string }> = {
-  bank: { label: 'Bank', icon: '🏦' },
-  cash: { label: 'Cash', icon: '💵' },
-  card: { label: 'Card', icon: '💳' },
-  savings: { label: 'Savings', icon: '🐷' },
-  other: { label: 'Other', icon: '•' },
+const KIND_LABELS: Record<AccountKind, { label: string; icon: IconName }> = {
+  bank: { label: 'Bank', icon: 'bank' },
+  cash: { label: 'Cash', icon: 'cash' },
+  card: { label: 'Card', icon: 'card' },
+  savings: { label: 'Savings', icon: 'piggy' },
+  other: { label: 'Other', icon: 'globe' },
 };
 
 const STALE_AFTER_DAYS = 30;
@@ -107,7 +108,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
 
           {accounts.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>💳</Text>
+              <Icon name="card" size={40} color={palette.textFaint} />
               <Text style={[styles.emptyText, { color: palette.dim }]}>
                 Add your bank, the cash in your wallet, a card or a savings pot, with the balance you see today. You type
                 it in — nothing here talks to a bank.
@@ -278,7 +279,9 @@ function AccountCard({
         pressed ? styles.pressed : null,
       ]}
     >
-      <Text style={styles.cardIcon}>{KIND_LABELS[account.kind].icon}</Text>
+      <View style={styles.cardIcon}>
+        <Icon name={KIND_LABELS[account.kind].icon} size={20} color={palette.dim} />
+      </View>
       <View style={styles.cardMain}>
         <Text style={[styles.cardName, { color: palette.text }]} numberOfLines={1}>
           {account.name}
@@ -305,7 +308,7 @@ function AccountCard({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 48 },
+  screen: { flex: 1, paddingTop: 4 },
   pressed: { transform: [{ scale: 0.97 }] },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   title: { flex: 1, fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },

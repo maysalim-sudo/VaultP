@@ -58,6 +58,7 @@ import { NoteEditor, wash, type EditorStart } from '../notes/NoteEditor.js';
 import { Sheet, SheetRow } from '../notes/sheet.js';
 import type { OpenVault } from '../vault/open.js';
 import type { IntentProps } from '../navigation.js';
+import { Glyph } from '../components/icons.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 type Scheme = 'light' | 'dark';
@@ -488,17 +489,17 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
     { key: 'all', label: 'All notes', filter: { kind: 'all' } },
     ...folders.map((folder) => ({
       key: `folder:${folder.id}`,
-      label: `📁 ${folder.name}`,
+      label: folder.name,
       filter: { kind: 'folder', id: folder.id } as Filter,
       folder,
     })),
     ...labels.map((label) => ({
       key: `label:${label.id}`,
-      label: `🏷 ${label.name}`,
+      label: `#${label.name}`,
       filter: { kind: 'label', id: label.id } as Filter,
     })),
-    { key: 'archive', label: '🗄 Archive', filter: { kind: 'archive' } },
-    { key: 'done', label: '✓ Done', filter: { kind: 'done' } },
+    { key: 'archive', label: 'Archive', filter: { kind: 'archive' } },
+    { key: 'done', label: 'Done', filter: { kind: 'done' } },
   ];
   const isActive = (f: Filter) =>
     f.kind === filter.kind && (!('id' in f) || ('id' in filter && filter.id === f.id));
@@ -529,7 +530,7 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
           />
           {query !== '' ? (
             <Pressable onPress={() => setQuery('')} hitSlop={10}>
-              <Text style={[styles.barGlyph, { color: palette.dim }]}>✕</Text>
+              <Glyph glyph="✕" color={palette.dim} size={18} />
             </Pressable>
           ) : null}
           <Pressable
@@ -538,7 +539,7 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
             accessibilityLabel={layout === 'grid' ? 'Show as a list' : 'Show as a grid'}
             style={({ pressed }) => [styles.layoutButton, pressed ? styles.pressed : null]}
           >
-            <Text style={[styles.barGlyph, { color: palette.text }]}>{layout === 'grid' ? '☰' : '▦'}</Text>
+            <Glyph glyph={layout === 'grid' ? '☰' : '▦'} color={palette.text} size={20} />
           </Pressable>
         </View>
 
@@ -640,9 +641,11 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
 
             {notes.length === 0 ? (
               <View style={styles.empty}>
-                <Text style={styles.emptyIcon}>
-                  {searching ? '🔍' : filter.kind === 'archive' ? '🗄' : filter.kind === 'done' ? '✓' : filter.kind === 'folder' ? '📁' : '💡'}
-                </Text>
+                <Glyph
+                  glyph={searching ? '🔍' : filter.kind === 'archive' ? '🗄' : filter.kind === 'done' ? '✓' : filter.kind === 'folder' ? '📁' : '💡'}
+                  color={palette.textFaint}
+                  size={52}
+                />
                 <Text style={[styles.emptyText, { color: palette.dim }]}>
                   {searching
                     ? 'No note has that in it'
@@ -882,7 +885,7 @@ function TakeButton({
       accessibilityLabel={label}
       style={({ pressed }) => [styles.takeButton, pressed ? styles.pressed : null]}
     >
-      <Text style={[styles.takeGlyph, { color: colour }]}>{glyph}</Text>
+      <Glyph glyph={glyph} color={colour} size={20} />
     </Pressable>
   );
 }
@@ -944,7 +947,12 @@ function NoteCard({
               case 'check':
                 return (
                   <View key={block.id} style={styles.cardCheck}>
-                    <Text style={[styles.cardBox, { color: palette.dim }]}>{block.checked ? '☑' : '☐'}</Text>
+                    <View
+                      style={[
+                        styles.cardTick,
+                        { borderColor: palette.dim, backgroundColor: block.checked ? palette.dim : 'transparent' },
+                      ]}
+                    />
                     <Text
                       numberOfLines={2}
                       style={[
@@ -1010,7 +1018,7 @@ function NoteCard({
                   // on the note's own shade, and ochre on a yellow card is unreadable.
                   style={[styles.chipText, { color: palette.text, fontWeight: overdue ? '700' : '500' }]}
                 >
-                  {note.notify ? '🔔 ' : '🕒 '}
+                  {note.notify ? 'REMIND ' : 'DUE '}
                   {describeDate(note.dueOn)}
                 </Text>
               </View>
@@ -1018,14 +1026,14 @@ function NoteCard({
             {note.checklist && !note.content.checkedLast ? (
               <View style={[styles.chip, { backgroundColor: fill }]}>
                 <Text style={[styles.chipText, { color: palette.text }]}>
-                  ☑ {note.checklist.done}/{note.checklist.total}
+                  {note.checklist.done}/{note.checklist.total} DONE
                 </Text>
               </View>
             ) : null}
             {folderName ? (
               <View style={[styles.chip, { backgroundColor: fill }]}>
                 <Text numberOfLines={1} style={[styles.chipText, { color: palette.text }]}>
-                  📁 {folderName}
+                  {folderName}
                 </Text>
               </View>
             ) : null}
@@ -1044,7 +1052,7 @@ function NoteCard({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 48 },
+  screen: { flex: 1, paddingTop: 4 },
 
   bar: {
     flexDirection: 'row',
@@ -1112,6 +1120,7 @@ const styles = StyleSheet.create({
   italic: { fontStyle: 'italic' },
   cardCheck: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
   cardBox: { fontSize: typeScale.base, lineHeight: 20 },
+  cardTick: { width: 12, height: 12, borderRadius: 3, borderWidth: 1.5, opacity: 0.8, marginTop: 4 },
   cardMeta: { fontSize: typeScale.sm, lineHeight: 20 },
   cardDivider: { height: StyleSheet.hairlineWidth * 2, opacity: 0.4, marginVertical: 4 },
   struck: { textDecorationLine: 'line-through' },

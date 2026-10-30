@@ -67,6 +67,7 @@ import {
   useNoteImage,
   type ImageSource,
 } from './images.js';
+import { Glyph } from '../components/icons.js';
 
 type Scheme = 'light' | 'dark';
 type Textual = TextBlock | ListBlock | CheckBlock;
@@ -565,7 +566,7 @@ export function NoteEditor({
               {dueOn !== '' ? (
                 <Pressable onPress={() => setSheet('reminder')} style={[styles.chip, { backgroundColor: fill }]}>
                   <Text style={[styles.chipText, { color: palette.text }]}>
-                    {notify ? '🔔' : '🕒'} {dueOn}
+                    {notify ? 'REMIND' : 'DUE'} {dueOn}
                   </Text>
                 </Pressable>
               ) : null}
@@ -964,7 +965,7 @@ function IconButton({
         pressed ? styles.pressed : null,
       ]}
     >
-      <Text style={[styles.iconGlyph, { color: colour, opacity: faded ? 0.45 : 1 }]}>{glyph}</Text>
+      <Glyph glyph={glyph} color={colour} size={20} opacity={faded ? 0.45 : 1} />
     </Pressable>
   );
 }
@@ -1067,8 +1068,8 @@ function LabelPicker({
           .filter((label) => name.trim() === '' || label.name.toLowerCase().includes(name.trim().toLowerCase()))
           .map((label) => (
             <Pressable key={label.id} onPress={() => onToggle(label.id)} style={styles.labelRow}>
-              <Text style={{ color: palette.text, fontSize: typeScale.md }}>🏷  {label.name}</Text>
-              <Text style={{ color: palette.accent, fontSize: typeScale.lg }}>{selected.has(label.id) ? '☑' : '☐'}</Text>
+              <Text style={{ color: palette.text, fontSize: typeScale.md }}>#{label.name}</Text>
+              <Glyph glyph={selected.has(label.id) ? '✓' : '☐'} color={palette.text} size={20} />
             </Pressable>
           ))}
         {labels.length === 0 ? (

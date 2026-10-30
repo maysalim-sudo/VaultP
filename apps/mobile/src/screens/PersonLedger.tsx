@@ -39,6 +39,7 @@ import { describeDate } from '../components/DateField.js';
 import { FieldsSheet } from '../components/FieldsSheet.js';
 import { paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
+import { Glyph } from '../components/icons.js';
 
 type Action = 'lend' | 'borrow' | 'repaid_to_me' | 'repaid_by_me';
 
@@ -382,7 +383,7 @@ function EntryRow({
       style={({ pressed }) => [styles.entry, pressed ? { opacity: 0.6 } : null]}
     >
       <View style={[styles.dot, { backgroundColor: palette.background, borderColor: colour }]}>
-        <Text style={[styles.dotGlyph, { color: colour }]}>{glyph}</Text>
+        <Glyph glyph={glyph} color={colour} size={18} />
       </View>
       <View style={styles.entryMain}>
         <Text style={[styles.entryTitle, { color: palette.text }]}>{text}</Text>

@@ -12,6 +12,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typeScale } from '@vaultp/core';
 
 import type { Palette } from '../components/theme.js';
+import { Glyph } from '../components/icons.js';
 
 export function Sheet({
   palette,
@@ -64,7 +65,7 @@ export function SheetRow({
       disabled={disabled}
       style={({ pressed }) => [styles.row, pressed ? { backgroundColor: palette.key } : null]}
     >
-      <Text style={[styles.glyph, { color: colour, opacity: disabled ? 0.4 : 1 }]}>{glyph}</Text>
+      <Glyph glyph={glyph} color={colour} size={20} opacity={disabled ? 0.4 : 1} />
       <Text style={[styles.label, { color: colour, opacity: disabled ? 0.4 : 1 }]}>{label}</Text>
       {trailing ? <Text style={[styles.trailing, { color: palette.accent }]}>{trailing}</Text> : null}
     </Pressable>

@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ scale: 0.97 }] },
 
   band: {
-    paddingTop: 48,
+    paddingTop: 4,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     borderBottomLeftRadius: radii.xl,
