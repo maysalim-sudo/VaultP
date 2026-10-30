@@ -1,0 +1,1004 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 24,
+      "y": 42,
+      "width": 220,
+      "height": 32,
+      "text": "Notes",
+      "name": "Notes title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 23,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 24,
+      "y": 78,
+      "width": 300,
+      "height": 18,
+      "text": "12 notes · 3 checklists · 2 pinned",
+      "name": "Notes subtitle",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 619,
+      "x": 330,
+      "y": 38,
+      "width": 34,
+      "height": 34,
+      "name": "New note button",
+      "props": {
+        "fill": "#246BCE"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 339,
+      "y": 41,
+      "width": 18,
+      "height": 22,
+      "text": "+",
+      "name": "New note plus",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 22,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 112,
+      "width": 342,
+      "height": 42,
+      "name": "Notes search field",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 619,
+      "x": 39,
+      "y": 124,
+      "width": 12,
+      "height": 12,
+      "name": "Notes search lens",
+      "props": {
+        "fills": [],
+        "stroke": "#63738A",
+        "strokeWeight": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 50,
+      "y": 135,
+      "width": 2,
+      "height": 7,
+      "rotation": -45,
+      "name": "Notes search handle",
+      "props": {
+        "fill": "#63738A",
+        "cornerRadius": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 67,
+      "y": 126,
+      "width": 250,
+      "height": 18,
+      "text": "Search notes, checklists, labels…",
+      "name": "Notes search placeholder",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fill": "#94A3B8"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 170,
+      "width": 52,
+      "height": 30,
+      "name": "All notes filter",
+      "props": {
+        "fill": "#246BCE",
+        "cornerRadius": 10
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 38,
+      "y": 179,
+      "width": 28,
+      "height": 14,
+      "text": "All",
+      "name": "All notes filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 84,
+      "y": 170,
+      "width": 92,
+      "height": 30,
+      "name": "Checklists filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 10,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 98,
+      "y": 179,
+      "width": 70,
+      "height": 14,
+      "text": "Checklists",
+      "name": "Checklists filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 184,
+      "y": 170,
+      "width": 76,
+      "height": 30,
+      "name": "Images filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 10,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 198,
+      "y": 179,
+      "width": 55,
+      "height": 14,
+      "text": "Images",
+      "name": "Images filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 268,
+      "y": 170,
+      "width": 82,
+      "height": 30,
+      "name": "Archived notes filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 10,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 281,
+      "y": 179,
+      "width": 62,
+      "height": 14,
+      "text": "Archived",
+      "name": "Archived filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 24,
+      "y": 222,
+      "width": 120,
+      "height": 14,
+      "text": "PINNED",
+      "name": "Pinned heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 244,
+      "width": 342,
+      "height": 86,
+      "name": "Pinned groceries note",
+      "props": {
+        "fill": "#2B2A25",
+        "cornerRadius": 14,
+        "strokes": [
+          "#4D4636"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 258,
+      "width": 230,
+      "height": 19,
+      "text": "Weekend groceries",
+      "name": "Groceries note title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 13,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 282,
+      "width": 250,
+      "height": 17,
+      "text": "Olive oil, coffee, fresh fruit, bread…",
+      "name": "Groceries note preview",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fill": "#788294"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 304,
+      "width": 150,
+      "height": 14,
+      "text": "Checklist · 3 of 5",
+      "name": "Groceries note meta",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#8EC5A1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 316,
+      "y": 258,
+      "width": 34,
+      "height": 14,
+      "text": "PIN",
+      "name": "Groceries pinned badge",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 8,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.5,
+        "fill": "#8A7B55"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 24,
+      "y": 354,
+      "width": 120,
+      "height": 14,
+      "text": "ALL NOTES",
+      "name": "All notes heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 304,
+      "y": 354,
+      "width": 62,
+      "height": 14,
+      "text": "12 notes",
+      "name": "All notes count",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 380,
+      "width": 342,
+      "height": 76,
+      "name": "Trip ideas note",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 14,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 394,
+      "width": 230,
+      "height": 18,
+      "text": "Trip ideas",
+      "name": "Trip note title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 416,
+      "width": 250,
+      "height": 16,
+      "text": "Sousse in October · places to visit…",
+      "name": "Trip note preview",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fill": "#788294"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 436,
+      "width": 160,
+      "height": 14,
+      "text": "Note · edited 2h ago",
+      "name": "Trip note meta",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 304,
+      "y": 396,
+      "width": 44,
+      "height": 44,
+      "name": "Trip image badge",
+      "props": {
+        "fill": "#21344D",
+        "cornerRadius": 10
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 318,
+      "y": 409,
+      "width": 16,
+      "height": 18,
+      "text": "▧",
+      "name": "Trip image glyph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 15,
+        "fill": "#9CC4FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 468,
+      "width": 342,
+      "height": 76,
+      "name": "Insurance renewal note",
+      "props": {
+        "fill": "#352B1D",
+        "cornerRadius": 14,
+        "strokes": [
+          "#51432B"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 482,
+      "width": 230,
+      "height": 18,
+      "text": "Insurance renewal",
+      "name": "Insurance note title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 504,
+      "width": 260,
+      "height": 16,
+      "text": "Policy number, renewal date and the agent…",
+      "name": "Insurance note preview",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fill": "#788294"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 524,
+      "width": 180,
+      "height": 14,
+      "text": "Reminder · 30 Sep",
+      "name": "Insurance note meta",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 556,
+      "width": 342,
+      "height": 76,
+      "name": "Reading list note",
+      "props": {
+        "fill": "#2B2540",
+        "cornerRadius": 14,
+        "strokes": [
+          "#40385C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 570,
+      "width": 230,
+      "height": 18,
+      "text": "Reading list",
+      "name": "Reading note title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 592,
+      "width": 260,
+      "height": 16,
+      "text": "The Creative Act · Slow Productivity…",
+      "name": "Reading note preview",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fill": "#788294"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 612,
+      "width": 180,
+      "height": 14,
+      "text": "8 items · books",
+      "name": "Reading note meta",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#B2A4E0"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 24,
+      "y": 644,
+      "width": 342,
+      "height": 76,
+      "name": "Sousse trip image note",
+      "props": {
+        "fill": "#38222C",
+        "cornerRadius": 14,
+        "strokes": [
+          "#5C3A49"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 658,
+      "width": 230,
+      "height": 18,
+      "text": "Sousse trip",
+      "name": "Sousse note title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 680,
+      "width": 260,
+      "height": 16,
+      "text": "12 photos · beach, medina, dinner…",
+      "name": "Sousse note preview",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fill": "#788294"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 40,
+      "y": 700,
+      "width": 180,
+      "height": 14,
+      "text": "Image note · 12 photos",
+      "name": "Sousse note meta",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#E89AB4"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 0,
+      "y": 774,
+      "width": 390,
+      "height": 70,
+      "name": "Notes bottom navigation",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 44,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "⌂",
+      "name": "Notes nav home icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fontStyle": "Bold",
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 39,
+      "y": 805,
+      "width": 38,
+      "height": 14,
+      "text": "Home",
+      "name": "Notes nav home label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 619,
+      "x": 96,
+      "y": 781,
+      "width": 66,
+      "height": 42,
+      "name": "Notes selected navigation item",
+      "props": {
+        "fill": "#203450",
+        "cornerRadius": 14
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 117,
+      "y": 784,
+      "width": 24,
+      "height": 22,
+      "text": "▤",
+      "name": "Notes nav notes icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 110,
+      "y": 805,
+      "width": 42,
+      "height": 14,
+      "text": "Notes",
+      "name": "Notes nav notes label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 619,
+      "x": 174,
+      "y": 777,
+      "width": 44,
+      "height": 44,
+      "name": "Notes create action",
+      "props": {
+        "fill": "#246BCE"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 185,
+      "y": 781,
+      "width": 24,
+      "height": 28,
+      "text": "+",
+      "name": "Notes create action icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 28,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 251,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "↗",
+      "name": "Notes nav expenses icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 237,
+      "y": 805,
+      "width": 52,
+      "height": 14,
+      "text": "Expenses",
+      "name": "Notes nav expenses label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 326,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "•••",
+      "name": "Notes nav more icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 16,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 619,
+      "x": 319,
+      "y": 805,
+      "width": 38,
+      "height": 14,
+      "text": "More",
+      "name": "Notes nav more label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  }
+]

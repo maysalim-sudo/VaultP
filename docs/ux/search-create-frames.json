@@ -1,0 +1,6 @@
+[
+ {"command":"frame.create","params":{"x":4920,"y":0,"width":390,"height":844,"name":"Quick create","props":{"fill":"#F5F7FB","clip":true}}},
+ {"command":"frame.create","params":{"x":5330,"y":0,"width":390,"height":844,"name":"Quick create — dark mode","props":{"fill":"#101721","clip":true}}},
+ {"command":"frame.create","params":{"x":5740,"y":0,"width":390,"height":844,"name":"Global search results","props":{"fill":"#F5F7FB","clip":true}}},
+ {"command":"frame.create","params":{"x":6150,"y":0,"width":390,"height":844,"name":"Global search results — dark mode","props":{"fill":"#101721","clip":true}}}
+]

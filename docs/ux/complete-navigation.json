@@ -1,0 +1,860 @@
+[
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 626,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 620
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 642,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 622
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 649,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 620
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 628,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 476
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 667,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 674,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 902
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 676,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1684
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 672,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 910,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 114
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 927,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 904
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 958,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 960,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 967,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1684
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 962,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1186,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1182
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1194,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1180
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1228,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1230,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1232,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1234,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 902
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1414,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2126
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1451,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1453,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1455,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1457,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 902
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1464,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2128
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1479,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1410
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1509,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1511,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1513,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1515,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 902
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1699,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1178
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1705,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1406
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1711,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 294
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1717,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 194
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1724,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1408
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1730,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2132
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1737,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1688
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1740,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1686
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1744,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1746,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1748,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 474
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1750,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 902
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1755,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1684
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1783,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 194
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1798,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1684
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1814,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1688
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1994,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 1996,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2023,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2022,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2134
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2025,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 296
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2053,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 296
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2136,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 294
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2168,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 294
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2170,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1406
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2207,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1406
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2209,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1408
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2234,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1408
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2235,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2268,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2132
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2272,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 618
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2301,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1688
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 2324,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1688
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 333,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 2124
+      }
+    }
+  },
+  {
+    "command": "proto.interaction.add",
+    "params": {
+      "id": 422,
+      "trigger": {
+        "type": "onClick"
+      },
+      "action": {
+        "type": "navigate",
+        "dest": 1984
+      }
+    }
+  }
+]

@@ -1,0 +1,17 @@
+[
+ {"command":"proto.interaction.clear","params":{"ids":[56,57]}},
+ {"command":"proto.interaction.add","params":{"id":22,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":618}}},
+ {"command":"proto.interaction.add","params":{"id":23,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":622}}},
+ {"command":"proto.interaction.add","params":{"id":24,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":622}}},
+ {"command":"proto.interaction.add","params":{"id":26,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":620}}},
+ {"command":"proto.interaction.add","params":{"id":27,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":620}}},
+ {"command":"proto.interaction.add","params":{"id":38,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":906}}},
+ {"command":"proto.interaction.add","params":{"id":39,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":1178}}},
+ {"command":"proto.interaction.add","params":{"id":44,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":1406}}},
+ {"command":"proto.interaction.add","params":{"id":50,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":618}}},
+ {"command":"proto.interaction.add","params":{"id":51,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":618}}},
+ {"command":"proto.interaction.add","params":{"id":54,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":902}}},
+ {"command":"proto.interaction.add","params":{"id":55,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":902}}},
+ {"command":"proto.interaction.add","params":{"id":56,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":1684}}},
+ {"command":"proto.interaction.add","params":{"id":57,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":1684}}}
+]

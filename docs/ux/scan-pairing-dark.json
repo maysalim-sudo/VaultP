@@ -1,0 +1,465 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 2135,
+      "x": 24,
+      "y": 38,
+      "width": 36,
+      "height": 36,
+      "name": "Pairing back button",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 35,
+      "y": 44,
+      "width": 18,
+      "height": 24,
+      "text": "‹",
+      "name": "Pairing back icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 25,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 73,
+      "y": 43,
+      "width": 250,
+      "height": 24,
+      "text": "Scan pairing code",
+      "name": "Pairing title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 24,
+      "y": 90,
+      "width": 342,
+      "height": 36,
+      "text": "Point the camera at the code on your computer.",
+      "name": "Pairing subtitle",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "lineHeight": "140%",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 24,
+      "y": 142,
+      "width": 342,
+      "height": 400,
+      "name": "Pairing camera view",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 18
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 94,
+      "y": 226,
+      "width": 202,
+      "height": 202,
+      "name": "Pairing code area",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 124,
+      "y": 256,
+      "width": 40,
+      "height": 40,
+      "name": "Pairing qr block one",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 4
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 226,
+      "y": 256,
+      "width": 40,
+      "height": 40,
+      "name": "Pairing qr block two",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 4
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 124,
+      "y": 358,
+      "width": 40,
+      "height": 40,
+      "name": "Pairing qr block three",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 4
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 182,
+      "y": 268,
+      "width": 26,
+      "height": 26,
+      "name": "Pairing qr block four",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 3
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 182,
+      "y": 304,
+      "width": 26,
+      "height": 26,
+      "name": "Pairing qr block five",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 3
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 226,
+      "y": 316,
+      "width": 26,
+      "height": 26,
+      "name": "Pairing qr block six",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 3
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 182,
+      "y": 350,
+      "width": 26,
+      "height": 26,
+      "name": "Pairing qr block seven",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 3
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 226,
+      "y": 370,
+      "width": 26,
+      "height": 26,
+      "name": "Pairing qr block eight",
+      "props": {
+        "fill": "#172337",
+        "cornerRadius": 3
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 74,
+      "y": 194,
+      "width": 34,
+      "height": 4,
+      "name": "Pairing corner top left h",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 74,
+      "y": 194,
+      "width": 4,
+      "height": 34,
+      "name": "Pairing corner top left v",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 282,
+      "y": 194,
+      "width": 34,
+      "height": 4,
+      "name": "Pairing corner top right h",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 312,
+      "y": 194,
+      "width": 4,
+      "height": 34,
+      "name": "Pairing corner top right v",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 74,
+      "y": 488,
+      "width": 34,
+      "height": 4,
+      "name": "Pairing corner bottom left h",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 74,
+      "y": 458,
+      "width": 4,
+      "height": 34,
+      "name": "Pairing corner bottom left v",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 282,
+      "y": 488,
+      "width": 34,
+      "height": 4,
+      "name": "Pairing corner bottom right h",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 312,
+      "y": 458,
+      "width": 4,
+      "height": 34,
+      "name": "Pairing corner bottom right v",
+      "props": {
+        "fill": "#6DA5FF",
+        "cornerRadius": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 84,
+      "y": 570,
+      "width": 220,
+      "height": 18,
+      "text": "Waiting for the computer…",
+      "name": "Pairing status",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC",
+        "textAlign": "center"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 92,
+      "y": 672,
+      "width": 206,
+      "height": 18,
+      "text": "Enter a code instead",
+      "name": "Pairing enter code",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF",
+        "textAlign": "center"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2135,
+      "x": 24,
+      "y": 710,
+      "width": 342,
+      "height": 88,
+      "name": "Pairing tips card",
+      "props": {
+        "fill": "#352B1D",
+        "cornerRadius": 14,
+        "strokes": [
+          "#51432B"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 42,
+      "y": 724,
+      "width": 220,
+      "height": 14,
+      "text": "ONLY PAIR YOUR OWN COMPUTER",
+      "name": "Pairing tips label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.6,
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2135,
+      "x": 42,
+      "y": 746,
+      "width": 300,
+      "height": 42,
+      "text": "The code expires in 5 minutes. Nothing about the vault leaves either device until you confirm.",
+      "name": "Pairing tips text",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "lineHeight": "140%",
+        "fill": "#D9BB7F"
+      }
+    }
+  }
+]

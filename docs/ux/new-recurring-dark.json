@@ -1,0 +1,738 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 2127,
+      "x": 24,
+      "y": 38,
+      "width": 36,
+      "height": 36,
+      "name": "New recurring back button",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 35,
+      "y": 44,
+      "width": 18,
+      "height": 24,
+      "text": "‹",
+      "name": "New recurring back icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 25,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 73,
+      "y": 43,
+      "width": 250,
+      "height": 24,
+      "text": "New recurring charge",
+      "name": "New recurring title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 24,
+      "y": 90,
+      "width": 342,
+      "height": 18,
+      "text": "A subscription or bill that repeats",
+      "name": "New recurring subtitle",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 24,
+      "y": 136,
+      "width": 120,
+      "height": 14,
+      "text": "NAME",
+      "name": "New recurring name label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 156,
+      "width": 342,
+      "height": 50,
+      "name": "New recurring name field",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 172,
+      "width": 260,
+      "height": 18,
+      "text": "Internet",
+      "name": "New recurring name value",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 220,
+      "width": 342,
+      "height": 112,
+      "name": "New recurring amount card",
+      "props": {
+        "fill": "#352B1D",
+        "cornerRadius": 16,
+        "strokes": [
+          "#51432B"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 42,
+      "y": 236,
+      "width": 200,
+      "height": 14,
+      "text": "AMOUNT",
+      "name": "New recurring amount label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 42,
+      "y": 258,
+      "width": 220,
+      "height": 38,
+      "text": "65.000",
+      "name": "New recurring amount value",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 30,
+        "fontStyle": "Bold",
+        "fill": "#5E4515"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 184,
+      "y": 274,
+      "width": 60,
+      "height": 20,
+      "text": "TND  ▾",
+      "name": "New recurring currency",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fontStyle": "Bold",
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 42,
+      "y": 304,
+      "width": 280,
+      "height": 15,
+      "text": "The first charge is not logged until it happens",
+      "name": "New recurring amount detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 24,
+      "y": 356,
+      "width": 120,
+      "height": 14,
+      "text": "CATEGORY",
+      "name": "New recurring category label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 376,
+      "width": 70,
+      "height": 32,
+      "name": "New recurring bills chip selected",
+      "props": {
+        "fill": "#246BCE",
+        "cornerRadius": 10
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 38,
+      "y": 385,
+      "width": 44,
+      "height": 14,
+      "text": "Bills",
+      "name": "New recurring bills chip label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 102,
+      "y": 376,
+      "width": 108,
+      "height": 32,
+      "name": "New recurring subscriptions chip",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 10,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 114,
+      "y": 385,
+      "width": 86,
+      "height": 14,
+      "text": "Subscriptions",
+      "name": "New recurring subscriptions chip label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 218,
+      "y": 376,
+      "width": 64,
+      "height": 32,
+      "name": "New recurring other chip",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 10,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 232,
+      "y": 385,
+      "width": 40,
+      "height": 14,
+      "text": "Other",
+      "name": "New recurring other chip label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 432,
+      "width": 342,
+      "height": 50,
+      "name": "New recurring frequency row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 442,
+      "width": 120,
+      "height": 14,
+      "text": "REPEATS",
+      "name": "New recurring frequency label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.7,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 459,
+      "width": 250,
+      "height": 18,
+      "text": "Monthly · on the 28th",
+      "name": "New recurring frequency value",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 326,
+      "y": 450,
+      "width": 24,
+      "height": 18,
+      "text": "›",
+      "name": "New recurring frequency chevron",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fill": "#94A3B8"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 494,
+      "width": 342,
+      "height": 50,
+      "name": "New recurring next date row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 504,
+      "width": 140,
+      "height": 14,
+      "text": "NEXT CHARGE",
+      "name": "New recurring next label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.7,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 521,
+      "width": 250,
+      "height": 18,
+      "text": "28 Sep 2026",
+      "name": "New recurring next value",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 326,
+      "y": 512,
+      "width": 24,
+      "height": 18,
+      "text": "›",
+      "name": "New recurring next chevron",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fill": "#94A3B8"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 556,
+      "width": 342,
+      "height": 50,
+      "name": "New recurring method row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 566,
+      "width": 140,
+      "height": 14,
+      "text": "PAID WITH",
+      "name": "New recurring method label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.7,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 583,
+      "width": 250,
+      "height": 18,
+      "text": "BIAT Bank · default",
+      "name": "New recurring method value",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 326,
+      "y": 574,
+      "width": 24,
+      "height": 18,
+      "text": "›",
+      "name": "New recurring method chevron",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fill": "#94A3B8"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 622,
+      "width": 342,
+      "height": 62,
+      "name": "New recurring auto log row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 634,
+      "width": 220,
+      "height": 18,
+      "text": "Log automatically",
+      "name": "New recurring auto log label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 40,
+      "y": 654,
+      "width": 240,
+      "height": 15,
+      "text": "Otherwise remind me to log it",
+      "name": "New recurring auto log detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 302,
+      "y": 636,
+      "width": 46,
+      "height": 28,
+      "name": "New recurring auto log switch",
+      "props": {
+        "fill": "#314154",
+        "cornerRadius": 14
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 2127,
+      "x": 306,
+      "y": 640,
+      "width": 20,
+      "height": 20,
+      "name": "New recurring auto log knob",
+      "props": {
+        "fill": "#1B2736"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 24,
+      "y": 704,
+      "width": 342,
+      "height": 32,
+      "text": "Auto-logged charges become normal expenses. Remind-only charges wait for you to confirm them.",
+      "name": "New recurring explanation",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "lineHeight": "140%",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2127,
+      "x": 24,
+      "y": 777,
+      "width": 342,
+      "height": 48,
+      "name": "New recurring save button",
+      "props": {
+        "fill": "#246BCE",
+        "cornerRadius": 14
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2127,
+      "x": 118,
+      "y": 790,
+      "width": 160,
+      "height": 22,
+      "text": "Save recurring",
+      "name": "New recurring save label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 14,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  }
+]

@@ -1,0 +1,4 @@
+[
+  {"command":"frame.create","params":{"x":4100,"y":0,"width":390,"height":844,"name":"Debt person — details","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":4510,"y":0,"width":390,"height":844,"name":"Debt person — details — dark mode","props":{"fill":"#101721","clip":true}}}
+]

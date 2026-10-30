@@ -1,0 +1,14 @@
+[
+  {"command":"proto.interaction.add","params":{"id":52,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":114}}},
+  {"command":"proto.interaction.add","params":{"id":108,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":154}}},
+  {"command":"proto.interaction.add","params":{"id":150,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":194}}},
+  {"command":"proto.interaction.add","params":{"id":190,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":195}}},
+  {"command":"proto.interaction.add","params":{"id":196,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":114}}},
+  {"command":"proto.interaction.add","params":{"id":197,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":114}}},
+  {"command":"proto.interaction.add","params":{"id":245,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":154}}},
+  {"command":"proto.interaction.add","params":{"id":246,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":154}}},
+  {"command":"proto.interaction.add","params":{"id":151,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":2}}},
+  {"command":"proto.interaction.add","params":{"id":152,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":2}}},
+  {"command":"proto.interaction.add","params":{"id":191,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":58}}},
+  {"command":"proto.interaction.add","params":{"id":192,"trigger":{"type":"onClick"},"action":{"type":"navigate","dest":58}}}
+]

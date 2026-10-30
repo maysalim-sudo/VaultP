@@ -1,0 +1,296 @@
+[
+  {
+    "command": "node.set",
+    "params": {
+      "id": 784,
+      "fill": "#D9BB7F"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 834,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 838,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 842,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 868,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 872,
+      "fill": "#6FAF8A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 876,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 881,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 886,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1050,
+      "fill": "#A7B4C5"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1064,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1154,
+      "fill": "#A7BCD8"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1161,
+      "fill": "#2A394C"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1164,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1165,
+      "fill": "#2A394C"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1166,
+      "fill": "#6FAF8A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1169,
+      "fill": "#2A394C"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1175,
+      "fill": "#2A394C"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1315,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1360,
+      "fill": "#A7BCD8"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1403,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1555,
+      "fill": "#A7B4C5"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1562,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1575,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1620,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1626,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1631,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1634,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1680,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1858,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1871,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1948,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 1951,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2084,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2087,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2099,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2101,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2344,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2346,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2448,
+      "fill": "#8EC5A1"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2459,
+      "fill": "#F0D19A"
+    }
+  },
+  {
+    "command": "node.set",
+    "params": {
+      "id": 2519,
+      "fill": "#F0D19A"
+    }
+  }
+]

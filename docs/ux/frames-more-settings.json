@@ -1,0 +1,8 @@
+[
+  {"command":"frame.create","params":{"x":0,"y":4500,"width":390,"height":844,"name":"More hub","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":410,"y":4500,"width":390,"height":844,"name":"More hub — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":820,"y":4500,"width":390,"height":844,"name":"Settings","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":1230,"y":4500,"width":390,"height":844,"name":"Settings — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":1640,"y":4500,"width":390,"height":844,"name":"Sync & backup","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2050,"y":4500,"width":390,"height":844,"name":"Sync & backup — dark mode","props":{"fill":"#101721","clip":true}}}
+]

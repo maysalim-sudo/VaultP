@@ -1,0 +1,14 @@
+[
+  {"command":"frame.create","params":{"x":0,"y":6300,"width":390,"height":844,"name":"New debt","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":410,"y":6300,"width":390,"height":844,"name":"New debt — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":820,"y":6300,"width":390,"height":844,"name":"New recurring charge","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":1230,"y":6300,"width":390,"height":844,"name":"New recurring charge — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":1640,"y":6300,"width":390,"height":844,"name":"Scan document","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2050,"y":6300,"width":390,"height":844,"name":"Scan document — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":2460,"y":6300,"width":390,"height":844,"name":"Folders & labels","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2870,"y":6300,"width":390,"height":844,"name":"Folders & labels — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":3280,"y":6300,"width":390,"height":844,"name":"Archive","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":3690,"y":6300,"width":390,"height":844,"name":"Archive — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":4100,"y":6300,"width":390,"height":844,"name":"Scan pairing code","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":4510,"y":6300,"width":390,"height":844,"name":"Scan pairing code — dark mode","props":{"fill":"#101721","clip":true}}}
+]

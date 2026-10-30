@@ -1,0 +1,551 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 2133,
+      "x": 24,
+      "y": 38,
+      "width": 36,
+      "height": 36,
+      "name": "Archive back button",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 35,
+      "y": 44,
+      "width": 18,
+      "height": 24,
+      "text": "‹",
+      "name": "Archive back icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 25,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 73,
+      "y": 43,
+      "width": 220,
+      "height": 24,
+      "text": "Archive",
+      "name": "Archive title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 24,
+      "y": 90,
+      "width": 342,
+      "height": 18,
+      "text": "Hidden from lists, still searchable",
+      "name": "Archive subtitle",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 24,
+      "y": 124,
+      "width": 108,
+      "height": 36,
+      "name": "Archive notes tab selected",
+      "props": {
+        "fill": "#246BCE",
+        "cornerRadius": 11
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 46,
+      "y": 134,
+      "width": 64,
+      "height": 16,
+      "text": "Notes 8",
+      "name": "Archive notes tab label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 140,
+      "y": 124,
+      "width": 102,
+      "height": 36,
+      "name": "Archive people tab",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 11,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 160,
+      "y": 134,
+      "width": 72,
+      "height": 16,
+      "text": "People 2",
+      "name": "Archive people tab label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 250,
+      "y": 124,
+      "width": 116,
+      "height": 36,
+      "name": "Archive documents tab",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 11,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 268,
+      "y": 134,
+      "width": 90,
+      "height": 16,
+      "text": "Documents 3",
+      "name": "Archive documents tab label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 24,
+      "y": 176,
+      "width": 342,
+      "height": 44,
+      "name": "Archive search field",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 2133,
+      "x": 39,
+      "y": 189,
+      "width": 12,
+      "height": 12,
+      "name": "Archive search lens",
+      "props": {
+        "fills": [],
+        "stroke": "#63738A",
+        "strokeWeight": 2
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 50,
+      "y": 200,
+      "width": 2,
+      "height": 7,
+      "rotation": -45,
+      "name": "Archive search handle",
+      "props": {
+        "fill": "#63738A",
+        "cornerRadius": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 67,
+      "y": 190,
+      "width": 250,
+      "height": 18,
+      "text": "Search the archive",
+      "name": "Archive search placeholder",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fill": "#94A3B8"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 24,
+      "y": 242,
+      "width": 160,
+      "height": 14,
+      "text": "RECENTLY ARCHIVED",
+      "name": "Archive section heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 24,
+      "y": 264,
+      "width": 342,
+      "height": 76,
+      "name": "Old shopping list archive card",
+      "props": {
+        "fill": "#2B2A25",
+        "cornerRadius": 14,
+        "strokes": [
+          "#4D4636"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 278,
+      "width": 220,
+      "height": 18,
+      "text": "Old shopping list",
+      "name": "Old shopping title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 300,
+      "width": 260,
+      "height": 15,
+      "text": "Checklist · archived 2 weeks ago",
+      "name": "Old shopping detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 286,
+      "y": 310,
+      "width": 64,
+      "height": 16,
+      "text": "Restore",
+      "name": "Old shopping restore",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 24,
+      "y": 348,
+      "width": 342,
+      "height": 76,
+      "name": "2025 receipts archive card",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 14,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 362,
+      "width": 220,
+      "height": 18,
+      "text": "2025 receipts",
+      "name": "Receipts title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 384,
+      "width": 260,
+      "height": 15,
+      "text": "Note · archived 1 month ago",
+      "name": "Receipts detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 286,
+      "y": 394,
+      "width": 64,
+      "height": 16,
+      "text": "Restore",
+      "name": "Receipts restore",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 2133,
+      "x": 24,
+      "y": 432,
+      "width": 342,
+      "height": 76,
+      "name": "Draft post archive card",
+      "props": {
+        "fill": "#38222C",
+        "cornerRadius": 14,
+        "strokes": [
+          "#5C3A49"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 446,
+      "width": 220,
+      "height": 18,
+      "text": "Draft post",
+      "name": "Draft post title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 40,
+      "y": 468,
+      "width": 260,
+      "height": 15,
+      "text": "Note · archived 3 months ago",
+      "name": "Draft post detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 286,
+      "y": 478,
+      "width": 64,
+      "height": 16,
+      "text": "Restore",
+      "name": "Draft post restore",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 24,
+      "y": 536,
+      "width": 342,
+      "height": 32,
+      "text": "Archived notes stay out of lists but remain in global search. Restoring puts them back where they were.",
+      "name": "Archive explanation",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "lineHeight": "140%",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 2133,
+      "x": 24,
+      "y": 600,
+      "width": 200,
+      "height": 18,
+      "text": "Empty this archive",
+      "name": "Archive empty action",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F1A2A2"
+      }
+    }
+  }
+]

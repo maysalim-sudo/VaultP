@@ -1,0 +1,7 @@
+[
+ {"command":"node.get","params":{"id":243}},
+ {"command":"node.get","params":{"id":244}},
+ {"command":"node.get","params":{"id":256}},
+ {"command":"node.get","params":{"id":257}},
+ {"command":"node.get","params":{"id":258}}
+]

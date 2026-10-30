@@ -1,0 +1,6 @@
+[
+  {"command":"frame.create","params":{"x":2460,"y":0,"width":390,"height":844,"name":"Attach image to note","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2870,"y":0,"width":390,"height":844,"name":"Attach image to note — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":3280,"y":0,"width":390,"height":844,"name":"People — debts","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":3690,"y":0,"width":390,"height":844,"name":"People — debts — dark mode","props":{"fill":"#101721","clip":true}}}
+]

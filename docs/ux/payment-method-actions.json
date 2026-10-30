@@ -1,0 +1,12 @@
+[
+  {"command":"node.set","params":{"id":209,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":217,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":224,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":231,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":238,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":258,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":266,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":273,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":280,"characters":"Manage","x":258,"width":58}},
+  {"command":"node.set","params":{"id":287,"characters":"Manage","x":258,"width":58}}
+]

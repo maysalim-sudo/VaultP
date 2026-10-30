@@ -1,0 +1,4 @@
+[
+  {"command":"frame.create","params":{"x":1640,"y":0,"width":390,"height":844,"name":"Payment methods — settings","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2050,"y":0,"width":390,"height":844,"name":"Payment methods — dark mode","props":{"fill":"#101721","clip":true}}}
+]

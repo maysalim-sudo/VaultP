@@ -1,0 +1,8 @@
+[
+  {"command":"frame.create","params":{"x":0,"y":5400,"width":390,"height":844,"name":"Lock screen","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":410,"y":5400,"width":390,"height":844,"name":"Lock screen — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":820,"y":5400,"width":390,"height":844,"name":"First run — create vault","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":1230,"y":5400,"width":390,"height":844,"name":"First run — create vault — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":1640,"y":5400,"width":390,"height":844,"name":"Record debt repayment","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2050,"y":5400,"width":390,"height":844,"name":"Record debt repayment — dark mode","props":{"fill":"#101721","clip":true}}}
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "command": "frame.create",
+    "params": {
+      "x": 820,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "name": "Add expense — payment method",
+      "props": {
+        "fill": "#F5F7FB",
+        "clip": true
+      }
+    }
+  }
+]

@@ -8,6 +8,9 @@ build/
 *.sqlite
 *.sqlite3
 vault/
+# The rule above is for vault data folders. The phone's vault source code shares
+# the name and was silently left out of every commit until 0.4.2.
+!apps/mobile/src/vault/
 .DS_Store
 Thumbs.db
 

@@ -1,0 +1,6 @@
+[
+ {"command":"node.set","params":{"id":869,"fill":"#BFE3CC"}},
+ {"command":"node.set","params":{"id":870,"fill":"#A9C9B7"}},
+ {"command":"node.set","params":{"id":871,"fill":"#315C48"}},
+ {"command":"node.set","params":{"id":872,"fill":"#6FAF8A"}}
+]

@@ -1,0 +1,531 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 1411,
+      "x": 24,
+      "y": 38,
+      "width": 36,
+      "height": 36,
+      "name": "Viewer back button",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 35,
+      "y": 44,
+      "width": 18,
+      "height": 24,
+      "text": "‹",
+      "name": "Viewer back icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 25,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 73,
+      "y": 43,
+      "width": 220,
+      "height": 24,
+      "text": "Car insurance",
+      "name": "Viewer title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 327,
+      "y": 44,
+      "width": 30,
+      "height": 22,
+      "text": "⋯",
+      "name": "Viewer more",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 24,
+      "y": 92,
+      "width": 342,
+      "height": 430,
+      "name": "Viewer page preview",
+      "props": {
+        "fill": "#273548",
+        "cornerRadius": 14,
+        "strokes": [
+          "#324154"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 56,
+      "y": 116,
+      "width": 278,
+      "height": 382,
+      "name": "Viewer page paper",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 6,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 142,
+      "width": 220,
+      "height": 18,
+      "text": "CAR INSURANCE POLICY",
+      "name": "Viewer page heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 170,
+      "width": 220,
+      "height": 14,
+      "text": "Policy number · AX-2048-991",
+      "name": "Viewer policy number",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 198,
+      "width": 220,
+      "height": 14,
+      "text": "Insured · Personal vehicle",
+      "name": "Viewer insured",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 226,
+      "width": 220,
+      "height": 14,
+      "text": "Valid from · 01 Jan 2026",
+      "name": "Viewer valid from",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 254,
+      "width": 220,
+      "height": 14,
+      "text": "Valid until · 31 Dec 2026",
+      "name": "Viewer valid until",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 82,
+      "y": 290,
+      "width": 220,
+      "height": 1,
+      "name": "Viewer page divider",
+      "props": {
+        "fill": "#E5EAF1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 82,
+      "y": 308,
+      "width": 220,
+      "height": 60,
+      "text": "Coverage details, excess and the assistance number are written here in the scan. The text is searchable.",
+      "name": "Viewer page paragraph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "lineHeight": "150%",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 82,
+      "y": 390,
+      "width": 88,
+      "height": 28,
+      "name": "Viewer page stamp",
+      "props": {
+        "fill": "#2B2540",
+        "cornerRadius": 6
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 90,
+      "y": 398,
+      "width": 76,
+      "height": 14,
+      "text": "ASSISTANCE",
+      "name": "Viewer page stamp label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 7,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.5,
+        "fill": "#B2A4E0"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 161,
+      "y": 534,
+      "width": 68,
+      "height": 16,
+      "text": "1 / 2",
+      "name": "Viewer page indicator",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 322,
+      "y": 532,
+      "width": 30,
+      "height": 18,
+      "text": "＋",
+      "name": "Viewer zoom in",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 16,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 292,
+      "y": 532,
+      "width": 24,
+      "height": 18,
+      "text": "−",
+      "name": "Viewer zoom out",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 24,
+      "y": 548,
+      "width": 342,
+      "height": 82,
+      "name": "Viewer metadata card",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 14,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 42,
+      "y": 562,
+      "width": 180,
+      "height": 16,
+      "text": "INSURANCE",
+      "name": "Viewer metadata label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.7,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 42,
+      "y": 582,
+      "width": 240,
+      "height": 18,
+      "text": "Expires 31 Dec 2026 · 2 pages",
+      "name": "Viewer metadata expiry",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 42,
+      "y": 604,
+      "width": 280,
+      "height": 15,
+      "text": "Searchable text · reminder 30 days before",
+      "name": "Viewer metadata search",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 1411,
+      "x": 24,
+      "y": 646,
+      "width": 342,
+      "height": 52,
+      "name": "Viewer searchable text card",
+      "props": {
+        "fill": "#352B1D",
+        "cornerRadius": 12,
+        "strokes": [
+          "#51432B"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 40,
+      "y": 658,
+      "width": 300,
+      "height": 15,
+      "text": "TEXT FOUND: “Valid until 31 Dec 2026”",
+      "name": "Viewer searchable text",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#D9BB7F"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 40,
+      "y": 676,
+      "width": 300,
+      "height": 14,
+      "text": "Search found this document by the words inside it.",
+      "name": "Viewer searchable detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#805D24"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 24,
+      "y": 720,
+      "width": 110,
+      "height": 18,
+      "text": "Share",
+      "name": "Viewer share action",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 134,
+      "y": 720,
+      "width": 110,
+      "height": 18,
+      "text": "Export copy",
+      "name": "Viewer export action",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 1411,
+      "x": 276,
+      "y": 720,
+      "width": 90,
+      "height": 18,
+      "text": "Delete",
+      "name": "Viewer delete action",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 10,
+        "fontStyle": "Bold",
+        "fill": "#F1A2A2",
+        "textAlign": "right"
+      }
+    }
+  }
+]

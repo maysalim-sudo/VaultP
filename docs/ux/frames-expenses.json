@@ -1,0 +1,8 @@
+[
+  {"command":"frame.create","params":{"x":0,"y":1800,"width":390,"height":844,"name":"Expenses — list","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":410,"y":1800,"width":390,"height":844,"name":"Expenses — list — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":820,"y":1800,"width":390,"height":844,"name":"Edit expense","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":1230,"y":1800,"width":390,"height":844,"name":"Edit expense — dark mode","props":{"fill":"#101721","clip":true}}},
+  {"command":"frame.create","params":{"x":1640,"y":1800,"width":390,"height":844,"name":"Month insights","props":{"fill":"#F5F7FB","clip":true}}},
+  {"command":"frame.create","params":{"x":2050,"y":1800,"width":390,"height":844,"name":"Month insights — dark mode","props":{"fill":"#101721","clip":true}}}
+]

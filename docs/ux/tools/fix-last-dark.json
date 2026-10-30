@@ -1,0 +1,10 @@
+[
+ {"command":"node.set","params":{"id":2371,"fill":"#F0D19A"}},
+ {"command":"node.set","params":{"id":2406,"fill":"#F8FAFC"}},
+ {"command":"node.set","params":{"id":2407,"fill":"#CBD5E1"}},
+ {"command":"node.set","params":{"id":2408,"fill":"#E2E8F0"}},
+ {"command":"node.set","params":{"id":2409,"fill":"#E2E8F0"}},
+ {"command":"node.set","params":{"id":2410,"fill":"#E2E8F0"}},
+ {"command":"node.set","params":{"id":2411,"fill":"#E2E8F0"}},
+ {"command":"node.set","params":{"id":2412,"fill":"#17324D"}}
+]

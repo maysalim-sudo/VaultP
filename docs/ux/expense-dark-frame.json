@@ -1,0 +1,16 @@
+[
+  {
+    "command": "frame.create",
+    "params": {
+      "x": 1230,
+      "y": 0,
+      "width": 390,
+      "height": 844,
+      "name": "Add expense — dark mode",
+      "props": {
+        "fill": "#101721",
+        "clip": true
+      }
+    }
+  }
+]

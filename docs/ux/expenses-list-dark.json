@@ -1,0 +1,1137 @@
+[
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 24,
+      "y": 42,
+      "width": 240,
+      "height": 32,
+      "text": "Expenses",
+      "name": "Expenses title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 23,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 24,
+      "y": 78,
+      "width": 300,
+      "height": 18,
+      "text": "Every charge, by day and by method",
+      "name": "Expenses subtitle",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 330,
+      "y": 38,
+      "width": 34,
+      "height": 34,
+      "name": "Expenses new button",
+      "props": {
+        "fill": "#246BCE"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 339,
+      "y": 41,
+      "width": 18,
+      "height": 22,
+      "text": "+",
+      "name": "Expenses new plus",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 22,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 112,
+      "width": 342,
+      "height": 84,
+      "name": "Expenses month summary",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 16,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 42,
+      "y": 126,
+      "width": 160,
+      "height": 14,
+      "text": "SEPTEMBER 2026",
+      "name": "Expenses month label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 42,
+      "y": 148,
+      "width": 190,
+      "height": 32,
+      "text": "428.750",
+      "name": "Expenses month total",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 27,
+        "fontStyle": "Bold",
+        "fill": "#EEF3FA"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 216,
+      "y": 158,
+      "width": 80,
+      "height": 18,
+      "text": "TND spent",
+      "name": "Expenses month unit",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 11,
+        "fontStyle": "Bold",
+        "fill": "#68768A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 42,
+      "y": 178,
+      "width": 280,
+      "height": 14,
+      "text": "18.500 today · 42 charges",
+      "name": "Expenses month detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 218,
+      "width": 50,
+      "height": 28,
+      "name": "Expenses all filter",
+      "props": {
+        "fill": "#246BCE",
+        "cornerRadius": 9
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 38,
+      "y": 226,
+      "width": 26,
+      "height": 14,
+      "text": "All",
+      "name": "Expenses all filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 82,
+      "y": 218,
+      "width": 64,
+      "height": 28,
+      "name": "Expenses food filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 9,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 94,
+      "y": 226,
+      "width": 44,
+      "height": 14,
+      "text": "Food",
+      "name": "Expenses food filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 154,
+      "y": 218,
+      "width": 64,
+      "height": 28,
+      "name": "Expenses bills filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 9,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 166,
+      "y": 226,
+      "width": 44,
+      "height": 14,
+      "text": "Bills",
+      "name": "Expenses bills filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 226,
+      "y": 218,
+      "width": 76,
+      "height": 28,
+      "name": "Expenses transport filter",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 9,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 238,
+      "y": 226,
+      "width": 58,
+      "height": 14,
+      "text": "Transport",
+      "name": "Expenses transport filter label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 24,
+      "y": 268,
+      "width": 80,
+      "height": 14,
+      "text": "TODAY",
+      "name": "Today expenses heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 286,
+      "y": 268,
+      "width": 80,
+      "height": 14,
+      "text": "18.500 TND",
+      "name": "Today expenses total",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 290,
+      "width": 342,
+      "height": 62,
+      "name": "Carrefour expense row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 40,
+      "y": 305,
+      "width": 32,
+      "height": 32,
+      "name": "Carrefour category icon",
+      "props": {
+        "fill": "#21382C"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 50,
+      "y": 312,
+      "width": 14,
+      "height": 18,
+      "text": "G",
+      "name": "Carrefour category glyph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#8EC5A1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 300,
+      "width": 180,
+      "height": 18,
+      "text": "Carrefour",
+      "name": "Carrefour title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 321,
+      "width": 200,
+      "height": 15,
+      "text": "Groceries · BIAT Bank",
+      "name": "Carrefour detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 252,
+      "y": 305,
+      "width": 98,
+      "height": 18,
+      "text": "−12.500",
+      "name": "Carrefour amount",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 290,
+      "y": 323,
+      "width": 60,
+      "height": 14,
+      "text": "TND",
+      "name": "Carrefour unit",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 360,
+      "width": 342,
+      "height": 62,
+      "name": "Cafe expense row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 40,
+      "y": 375,
+      "width": 32,
+      "height": 32,
+      "name": "Cafe category icon",
+      "props": {
+        "fill": "#3A2E1E"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 50,
+      "y": 382,
+      "width": 14,
+      "height": 18,
+      "text": "C",
+      "name": "Cafe category glyph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#E0B466"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 370,
+      "width": 180,
+      "height": 18,
+      "text": "Café de la Place",
+      "name": "Cafe title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 391,
+      "width": 200,
+      "height": 15,
+      "text": "Food · Cash",
+      "name": "Cafe detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 262,
+      "y": 375,
+      "width": 88,
+      "height": 18,
+      "text": "−6.000",
+      "name": "Cafe amount",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 290,
+      "y": 393,
+      "width": 60,
+      "height": 14,
+      "text": "TND",
+      "name": "Cafe unit",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 24,
+      "y": 444,
+      "width": 100,
+      "height": 14,
+      "text": "YESTERDAY",
+      "name": "Yesterday expenses heading",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "letterSpacing": 0.8,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 286,
+      "y": 444,
+      "width": 80,
+      "height": 14,
+      "text": "44.000 TND",
+      "name": "Yesterday expenses total",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 466,
+      "width": 342,
+      "height": 62,
+      "name": "Netflix expense row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 40,
+      "y": 481,
+      "width": 32,
+      "height": 32,
+      "name": "Netflix category icon",
+      "props": {
+        "fill": "#2B2540"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 50,
+      "y": 488,
+      "width": 14,
+      "height": 18,
+      "text": "S",
+      "name": "Netflix category glyph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#B2A4E0"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 476,
+      "width": 180,
+      "height": 18,
+      "text": "Netflix",
+      "name": "Netflix title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 497,
+      "width": 200,
+      "height": 15,
+      "text": "Subscriptions · Rizon Card",
+      "name": "Netflix detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 252,
+      "y": 481,
+      "width": 98,
+      "height": 18,
+      "text": "−36.000",
+      "name": "Netflix amount",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 290,
+      "y": 499,
+      "width": 60,
+      "height": 14,
+      "text": "TND",
+      "name": "Netflix unit",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 24,
+      "y": 536,
+      "width": 342,
+      "height": 62,
+      "name": "Taxi expense row",
+      "props": {
+        "fill": "#1B2736",
+        "cornerRadius": 12,
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 40,
+      "y": 551,
+      "width": 32,
+      "height": 32,
+      "name": "Taxi category icon",
+      "props": {
+        "fill": "#21344D"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 50,
+      "y": 558,
+      "width": 14,
+      "height": 18,
+      "text": "T",
+      "name": "Taxi category glyph",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#9CC4FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 546,
+      "width": 180,
+      "height": 18,
+      "text": "Taxi",
+      "name": "Taxi title",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 86,
+      "y": 567,
+      "width": 200,
+      "height": 15,
+      "text": "Transport · Cash",
+      "name": "Taxi detail",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 262,
+      "y": 551,
+      "width": 88,
+      "height": 18,
+      "text": "−8.000",
+      "name": "Taxi amount",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 12,
+        "fontStyle": "Bold",
+        "fill": "#DCE5F1",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 290,
+      "y": 569,
+      "width": 60,
+      "height": 14,
+      "text": "TND",
+      "name": "Taxi unit",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#A7B4C5",
+        "textAlign": "right"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 0,
+      "y": 774,
+      "width": 390,
+      "height": 70,
+      "name": "Expenses bottom navigation",
+      "props": {
+        "fill": "#1B2736",
+        "strokes": [
+          "#2A394C"
+        ],
+        "strokeWeight": 1
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 44,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "⌂",
+      "name": "Expenses nav home icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 20,
+        "fontStyle": "Bold",
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 39,
+      "y": 805,
+      "width": 38,
+      "height": 14,
+      "text": "Home",
+      "name": "Expenses nav home label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 112,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "▤",
+      "name": "Expenses nav notes icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 105,
+      "y": 805,
+      "width": 42,
+      "height": 14,
+      "text": "Notes",
+      "name": "Expenses nav notes label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "ellipse",
+      "parent": 903,
+      "x": 174,
+      "y": 777,
+      "width": 44,
+      "height": 44,
+      "name": "Expenses create action",
+      "props": {
+        "fill": "#246BCE"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 185,
+      "y": 781,
+      "width": 24,
+      "height": 28,
+      "text": "+",
+      "name": "Expenses create icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 28,
+        "fontStyle": "Bold",
+        "fill": "#F8FAFC"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "rectangle",
+      "parent": 903,
+      "x": 236,
+      "y": 781,
+      "width": 72,
+      "height": 42,
+      "name": "Expenses selected navigation item",
+      "props": {
+        "fill": "#203450",
+        "cornerRadius": 14
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 256,
+      "y": 784,
+      "width": 24,
+      "height": 22,
+      "text": "↗",
+      "name": "Expenses nav expenses icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 18,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 249,
+      "y": 805,
+      "width": 52,
+      "height": 14,
+      "text": "Expenses",
+      "name": "Expenses nav expenses label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fontStyle": "Bold",
+        "fill": "#6DA5FF"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 326,
+      "y": 786,
+      "width": 24,
+      "height": 22,
+      "text": "•••",
+      "name": "Expenses nav more icon",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 16,
+        "fill": "#7D899A"
+      }
+    }
+  },
+  {
+    "command": "node.create",
+    "params": {
+      "type": "text",
+      "parent": 903,
+      "x": 319,
+      "y": 805,
+      "width": 38,
+      "height": 14,
+      "text": "More",
+      "name": "Expenses nav more label",
+      "props": {
+        "fontFamily": "Inter",
+        "fontSize": 9,
+        "fill": "#7D899A"
+      }
+    }
+  }
+]
