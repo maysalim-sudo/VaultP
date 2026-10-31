@@ -18,6 +18,21 @@ Each `## <version>` section becomes that release's notes on GitHub.
 - Fixed: a recurring charge created just after midnight was dated the day
   before, and could log a charge for that day.
 
+## 0.2.1
+
+- **The phone in the new look.** Home is the same overview as the computer's:
+  the month, owed and owing, the allowance, the next bill and what needs you.
+  Spent, People, Repeats, Accounts, Documents, Search and Vault are rebuilt to
+  match, with light, dark or following the system.
+- Adding an expense on the phone uses the card-terminal keypad too, laid out
+  so Save stays in reach on every screen size.
+- The fingerprint is asked for once when opening the phone app, not twice.
+  Cancelling it no longer leaves the app on the loading spinner.
+- The tab and top bars clear the phone's own navigation buttons.
+- Fixed: a repeating charge made just after midnight was dated the day before,
+  and logged a charge for that day.
+- Fixed: Repeats and Home disagreed about when the next charge is due.
+
 ## 0.2.0
 
 - **A new look.** Black or warm paper, soft tiles, one safety orange for what
