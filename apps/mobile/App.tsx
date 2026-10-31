@@ -13,7 +13,9 @@ import {
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, useColorScheme } from 'react-native';
+
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { loadThemeChoice } from './src/components/themeChoice.js';
 
@@ -61,6 +63,7 @@ function VaultGate() {
 }
 
 export default function App() {
+  const scheme = useColorScheme();
   useEffect(() => {
     void loadThemeChoice();
   }, []);
@@ -88,10 +91,12 @@ export default function App() {
   }
 
   return (
-    <VaultProvider>
-      <VaultGate />
-      <StatusBar style="auto" />
-    </VaultProvider>
+    <SafeAreaProvider>
+      <VaultProvider>
+        <VaultGate />
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      </VaultProvider>
+    </SafeAreaProvider>
   );
 }
 

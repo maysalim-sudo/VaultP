@@ -565,14 +565,14 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
                 style={({ pressed }) => [
                   styles.filter,
                   {
-                    backgroundColor: hovered ? palette.accent : active ? palette.accent : 'transparent',
-                    borderColor: active || hovered ? palette.accent : palette.border,
+                    backgroundColor: hovered ? palette.accent : active ? palette.text : 'transparent',
+                    borderColor: hovered ? palette.accent : active ? palette.text : palette.border,
                   },
                   hovered ? styles.chipHovered : null,
                   pressed ? styles.pressed : null,
                 ]}
               >
-                <Text style={[styles.filterText, { color: active || hovered ? palette.onAccent : palette.text }]}>
+                <Text style={[styles.filterText, { color: hovered ? palette.onAccent : active ? palette.background : palette.text }]}>
                   {chip.label}
                 </Text>
               </Pressable>
@@ -678,19 +678,6 @@ export function Notes({ onClose, intent, onIntentHandled }: { onClose?: () => vo
           </Pressable>
         </ScrollView>
 
-        {!drag ? (
-          <Pressable
-            onPress={() => setEditor({ kind: 'new', with: 'text', folderId: currentFolder })}
-            accessibilityLabel="New note"
-            style={({ pressed }) => [
-              styles.fab,
-              { backgroundColor: palette.accent, elevation: palette.elevationOverlay },
-              pressed ? styles.pressed : null,
-            ]}
-          >
-            <Text style={[styles.fabGlyph, { color: palette.onAccent }]}>＋</Text>
-          </Pressable>
-        ) : null}
 
         {notice ? (
           <View pointerEvents="none" style={[styles.notice, { backgroundColor: palette.text }]}>
@@ -1129,17 +1116,6 @@ const styles = StyleSheet.create({
 
   floating: { position: 'absolute', top: 0, left: 0, opacity: 0.96, borderRadius: radii.md },
 
-  fab: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: 40,
-    width: 58,
-    height: 58,
-    borderRadius: radii.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabGlyph: { fontFamily: fonts.uiMedium, fontSize: 28, },
 
   notice: {
     position: 'absolute',

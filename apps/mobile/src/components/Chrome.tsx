@@ -8,7 +8,8 @@
  * the top bar; making something new is the button in the middle of the tabs.
  */
 
-import { Modal, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Intent, Navigate, ViewName } from '../navigation.js';
 import { Icon, type IconName } from './icons.js';
@@ -39,8 +40,9 @@ export function TopBar({
   onSearch: () => void;
   onVault: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.top}>
+    <View style={[styles.top, { paddingTop: insets.top + 6 }]}>
       <Mark palette={palette} />
       <Text style={[styles.name, { color: palette.text }]}>VAULTP</Text>
       <View style={styles.grow} />
@@ -61,6 +63,9 @@ export function TabBar({
   onSelect: Navigate;
   onCreate: () => void;
 }) {
+  // Gesture phones report a thin strip here, three-button phones a full bar;
+  // either way the tabs sit clear of it.
+  const insets = useSafeAreaInsets();
   const current = (place: ViewName) => (place === 'insights' ? MONEY.includes(active) : place === active);
   const tab = (place: (typeof PLACES)[number]) => {
     const on = current(place.view);
@@ -80,7 +85,7 @@ export function TabBar({
   };
 
   return (
-    <View style={styles.tabWrap}>
+    <View style={[styles.tabWrap, { paddingBottom: insets.bottom + 8 }]}>
       <View style={[styles.tabBar, { backgroundColor: palette.surface }]}>
         {PLACES.slice(0, 2).map(tab)}
         <View style={styles.tab}>
@@ -219,14 +224,7 @@ function RoundButton({
 const styles = StyleSheet.create({
   // The app draws edge to edge, so the bar clears the status bar itself; the
   // screens below it no longer pad for it.
-  top: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: (StatusBar.currentHeight ?? 32) + 6,
-    paddingBottom: 6,
-  },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingBottom: 6 },
   grow: { flex: 1 },
   name: { fontFamily: fonts.monoBold, fontSize: 12, letterSpacing: 2.6 },
   mark: {
@@ -243,7 +241,7 @@ const styles = StyleSheet.create({
   markDot: { width: 4, height: 4, borderRadius: 2 },
   round: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
-  tabWrap: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 14 },
+  tabWrap: { paddingHorizontal: 12, paddingTop: 8 },
   tabBar: { height: 64, borderRadius: 32, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 },
   tab: { flex: 1, height: 56, alignItems: 'center', justifyContent: 'center', gap: 5 },
   tabDot: { width: 4, height: 4, borderRadius: 2 },

@@ -157,3 +157,14 @@ The industrial design (`docs/ux/industrial/`) replaced the FigCraft pass, so Pha
   the Home hero with daily bars, and emoji replaced by icons across Home, Notes, the editor, Accounts and Debts.
   Next: build a debug APK (needs the Android SDK and NDK on this machine), install over USB, screenshot with adb,
   then rebuild the Money pages and the expense entry to match the desktop.
+
+## Progress, 2026-10-31
+
+- **Phase 3 (phone) done:** Home as the bento, Spent (replacing the Month screen), People and the ledger, Repeats,
+  Accounts, Documents, Search and Vault on shared tiles (`components/Industrial.tsx`). The till keypad fills from the
+  right on every amount. Every screen uses the bundled faces; orange carries black text or its darker cut. Vault has a
+  light, dark or auto choice. The tab bar and top bar use real insets, so three-button phones are clear too.
+- **Phase 5, part done:** every main page seen on an emulator in both themes and with three-button navigation, against a
+  throwaway vault. That run caught what typechecking could not: the keypad wrapped to two columns and pushed Save off
+  the screen, Repeats and Home disagreed about the next charge, and the status bar was pale on paper.
+- **Still open:** font scale 1.3, the desktop's screenshots beside the phone's, and README screenshots.

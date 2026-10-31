@@ -84,6 +84,7 @@ export function Spent({ onEditExpense }: { onEditExpense: (expense: Expense) => 
   const [editingLimit, setEditingLimit] = useState<CategoryBudget | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingCeiling, setEditingCeiling] = useState(false);
+  const [settingBudgets, setSettingBudgets] = useState(false);
 
   const month = useMemo(() => monthTotal(vault.db, monthKey(today), BASE_CURRENCY), [vault, version, today]);
   const forecast = useMemo(() => forecastMonth(vault.expenses, vault.db, today), [vault, version, today]);
@@ -160,7 +161,7 @@ export function Spent({ onEditExpense }: { onEditExpense: (expense: Expense) => 
             </View>
           ) : null}
 
-          {withoutLimits.length > 0 ? (
+          {settingBudgets ? (
             <View style={styles.wrap}>
               {withoutLimits.map((budget) => (
                 <Pill
@@ -173,9 +174,16 @@ export function Spent({ onEditExpense }: { onEditExpense: (expense: Expense) => 
               ))}
             </View>
           ) : null}
-          <Text style={[styles.note, { color: palette.textFaint }]}>
-            Tap a category for its budget; hold it to rename or archive.
-          </Text>
+          {withoutLimits.length > 0 ? (
+            <Pressable onPress={() => setSettingBudgets((current) => !current)} hitSlop={8} accessibilityRole="button">
+              <Text style={[styles.link, { color: palette.accentText }]}>{settingBudgets ? 'Done' : 'Set a budget'}</Text>
+            </Pressable>
+          ) : null}
+          {settingBudgets || withLimits.length > 0 ? (
+            <Text style={[styles.note, { color: palette.textFaint }]}>
+              Tap a category for its budget; hold it to rename or archive.
+            </Text>
+          ) : null}
         </Tile>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -336,7 +344,10 @@ function ExpenseRow({
   onPress: () => void;
 }) {
   const foreign = expense.amount.currency !== BASE_CURRENCY;
-  const meta = [category, foreign ? formatAmount(expense.amount) : null, expense.note].filter(Boolean).join(' · ');
+  // The title already says the category when no merchant was typed.
+  const meta = [expense.merchant ? category : null, foreign ? formatAmount(expense.amount) : null, expense.note]
+    .filter(Boolean)
+    .join(' · ');
 
   // A foreign charge is one of three things, and they must not look alike.
   const shown = !foreign

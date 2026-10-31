@@ -3,6 +3,20 @@
 What changed in each release, for the people using it. The newest is first.
 Each `## <version>` section becomes that release's notes on GitHub.
 
+## Unreleased
+
+- **The phone wears the new look everywhere.** Home is the bento: the month as
+  one bar per day, a note one tap away, what you are owed and owe, the next
+  bill, what needs you and recent notes.
+- **Money on the phone.** Spent lists every charge under its day, with budgets
+  as segmented meters; People, Repeats and Accounts match the computer.
+- **Every amount on the phone fills from the right**, like a card terminal, so
+  the decimals are always there.
+- **Vault** leads with whether the computer is in step, and has a light, dark or
+  automatic theme of its own.
+- Fixed: a recurring charge created just after midnight was dated the day
+  before, and could log a charge for that day.
+
 ## 0.2.0
 
 - **A new look.** Black or warm paper, soft tiles, one safety orange for what

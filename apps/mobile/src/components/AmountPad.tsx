@@ -15,7 +15,12 @@ import { type Draft, draftDisplay, pressBackspace, pressDigit } from './amount.j
 import { Icon } from './icons.js';
 import { fonts, type Palette } from './theme.js';
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'back'] as const;
+const ROWS = [
+  ['1', '2', '3'],
+  ['4', '5', '6'],
+  ['7', '8', '9'],
+  ['00', '0', 'back'],
+] as const;
 
 export function AmountDisplay({
   draft,
@@ -49,26 +54,30 @@ export function AmountPad({
 }) {
   return (
     <View style={styles.keypad}>
-      {KEYS.map((key) => (
-        <Pressable
-          key={key}
-          accessibilityRole="button"
-          accessibilityLabel={key === 'back' ? 'Delete a digit' : `Digit ${key}`}
-          style={({ pressed }) => [
-            styles.key,
-            { backgroundColor: palette.surface },
-            pressed ? styles.pressed : null,
-          ]}
-          onPress={() =>
-            onChange(key === 'back' ? pressBackspace(draft, exponent) : pressDigit(draft, key, exponent))
-          }
-        >
-          {key === 'back' ? (
-            <Icon name="back" size={20} color={palette.text} />
-          ) : (
-            <Text style={[styles.keyText, { color: palette.text }]}>{key}</Text>
-          )}
-        </Pressable>
+      {ROWS.map((row) => (
+        <View key={row[0]} style={styles.row}>
+          {row.map((key) => (
+            <Pressable
+              key={key}
+              accessibilityRole="button"
+              accessibilityLabel={key === 'back' ? 'Delete a digit' : `Digit ${key}`}
+              style={({ pressed }) => [
+                styles.key,
+                { backgroundColor: palette.surface },
+                pressed ? styles.pressed : null,
+              ]}
+              onPress={() =>
+                onChange(key === 'back' ? pressBackspace(draft, exponent) : pressDigit(draft, key, exponent))
+              }
+            >
+              {key === 'back' ? (
+                <Icon name="back" size={20} color={palette.text} />
+              ) : (
+                <Text style={[styles.keyText, { color: palette.text }]}>{key}</Text>
+              )}
+            </Pressable>
+          ))}
+        </View>
       ))}
     </View>
   );
@@ -79,8 +88,11 @@ const styles = StyleSheet.create({
   amount: { fontFamily: fonts.display, fontSize: 56, flexShrink: 1 },
   currency: { fontFamily: fonts.monoMedium, fontSize: 12, marginBottom: 8 },
 
-  keypad: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  key: { width: '32.4%', height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  keypad: { gap: 6 },
+  // Rows of equal keys rather than a wrapped list: a percentage width plus the
+  // gaps overflows on some screens and drops the last key to the next line.
+  row: { flexDirection: 'row', gap: 6 },
+  key: { flex: 1, height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   pressed: { transform: [{ scale: 0.97 }] },
   keyText: { fontFamily: fonts.display, fontSize: 26 },
 });

@@ -28,6 +28,7 @@
     "react-native-nitro-modules": "^0.37.1",
     "react-native-quick-base64": "^3.0.1",
     "react-native-quick-crypto": "^1.1.7",
+    "react-native-safe-area-context": "~5.7.0",
     "react-native-svg": "^15.15.4"
   },
   "devDependencies": {

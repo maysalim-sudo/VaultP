@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 
 import {
+  addDays,
   BASE_CURRENCY,
   type Category,
   daysBetween,
@@ -33,6 +34,7 @@ import {
   type Frequency,
   money,
   nextOccurrenceOnOrAfter,
+  pendingReminders,
   type RecurringRule,
   todayIn,
   upcomingCharges,
@@ -74,9 +76,16 @@ export function RecurringRules({
   const [repricing, setRepricing] = useState<RecurringRule | null>(null);
 
   const rules = useMemo(() => vault.expenses.listRules(), [vault, version]);
+  const waiting = useMemo(() => pendingReminders(vault.expenses, today), [vault, version, today]);
+
+  // What is next, as Home counts it: from tomorrow, since today's charge has
+  // either logged itself or is waiting for you, and then it keeps that date.
+  const nextFor = (rule: RecurringRule) =>
+    waiting.find((due) => due.rule.id === rule.id)?.date ?? nextOccurrenceOnOrAfter(rule, addDays(today, 1));
+
   const active = rules
     .filter((rule) => rule.state === 'active')
-    .map((rule) => ({ rule, next: nextOccurrenceOnOrAfter(rule, today) }))
+    .map((rule) => ({ rule, next: nextFor(rule) }))
     .sort((a, b) => a.next.localeCompare(b.next));
   const inactive = rules.filter((rule) => rule.state !== 'active');
 
