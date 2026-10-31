@@ -13,7 +13,7 @@
 
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 
 import {
@@ -22,20 +22,20 @@ import {
   exportBackup,
   loadBackupHistory,
   parseBackup,
-  radii,
   recordBackup,
   restoreBackup,
   serializeBackup,
-  spacing,
   todayIn,
-  typeScale,
 } from '@vaultp/core';
 
+import { Label, PageHead, Tile } from '../components/Industrial.js';
 import { Screen } from '../components/Screen.js';
-import { paletteFor, type Palette } from '../components/theme.js';
-import { useOpenVault } from '../vault/VaultContext.js';
+import { loadThemeChoice, setThemeChoice, type ThemeChoice } from '../components/themeChoice.js';
+import { fonts, labelStyle, paletteFor, type Palette } from '../components/theme.js';
+import { loadPairing } from '../sync/pairing.js';
+import { useOpenVault, useVault } from '../vault/VaultContext.js';
 import { Sync } from './Sync.js';
-import { Glyph } from '../components/icons.js';
+import { Glyph, Icon } from '../components/icons.js';
 
 function ago(iso: string): string {
   const days = Math.floor((Date.now() - Date.parse(iso)) / 86_400_000);
@@ -55,6 +55,19 @@ export function BackupScreen({ onClose }: { onClose?: () => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showingSync, setShowingSync] = useState(false);
+  const [pairedWith, setPairedWith] = useState<string | null>(null);
+  const [theme, setTheme] = useState<ThemeChoice>('auto');
+  const { computerSync } = useVault();
+  const synced = pairedWith !== null && !computerSync.error && computerSync.lastAt !== null;
+
+  useEffect(() => {
+    void loadThemeChoice().then(setTheme);
+  }, []);
+
+  // Re-read when the sync sheet closes: pairing happens in there.
+  useEffect(() => {
+    void loadPairing().then((pairing) => setPairedWith(pairing?.name ?? null));
+  }, [showingSync]);
 
   const eventCount = useMemo(() => vault.store.allEvents().length, [vault, version]);
   const history = useMemo(() => loadBackupHistory(vault.store), [vault, version]);
@@ -120,54 +133,53 @@ export function BackupScreen({ onClose }: { onClose?: () => void }) {
 
   return (
     <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: palette.background }]}>
-        <View style={styles.header}>
-          {onClose ? (
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.back, { color: palette.dim }]}>←</Text>
-            </Pressable>
-          ) : null}
-          <Text style={[styles.title, { color: palette.text }]}>Backup</Text>
-        </View>
-
+      <View style={styles.screen}>
         <ScrollView contentContainerStyle={styles.body}>
-          {/* Am I covered? */}
-          <View style={styles.status}>
-            <View
-              style={[
-                styles.shield,
-                { backgroundColor: palette.surface, borderColor: palette.border },
-              ]}
-            >
-              <Text style={[styles.shieldGlyph, { color: fresh ? palette.positive : palette.warning }]}>
-                {fresh ? '✓' : '!'}
-              </Text>
+          <PageHead title="Vault" palette={palette} />
+
+          {/* Is the other device in step? */}
+          <Tile palette={palette} style={styles.syncTile} onPress={() => setShowingSync(true)} label="Sync with my computer">
+            <View style={[styles.syncRing, { borderColor: palette.border }]}>
+              <View style={[styles.syncDot, { backgroundColor: synced ? palette.positive : palette.textFaint }]} />
             </View>
             <View style={styles.statusText}>
-              <Text style={[styles.statusTitle, { color: palette.text }]}>
-                {last ? `Last backup ${ago(last.at)}` : 'Not backed up yet'}
+              <Text style={[styles.statusTitle, { color: palette.text }]} numberOfLines={1}>
+                {computerSync.running ? 'Syncing…' : pairedWith ? 'Paired' : 'Not paired yet'}
               </Text>
-              <Text style={[styles.statusSub, { color: palette.dim }]}>
-                {last
-                  ? changedSince === 0
-                    ? 'Nothing has changed since.'
-                    : `${changedSince} change${changedSince === 1 ? '' : 's'} since then`
-                  : `${eventCount} entries in this vault, none saved outside it`}
-              </Text>
+              <Label palette={palette} colour={computerSync.error ? palette.accentText : palette.textFaint}>
+                {pairedWith ? `PHONE ⇄ ${pairedWith.toUpperCase()}` : 'SCAN A CODE TO KEEP A COMPUTER IN STEP'}
+              </Label>
             </View>
-          </View>
+            <Icon name="phone" size={18} color={palette.dim} />
+          </Tile>
 
-          <View style={styles.weeks}>
-            {coverage.map((had, index) => (
-              <View
-                key={index}
-                style={[styles.week, { backgroundColor: had ? palette.positive : palette.key }]}
-              />
-            ))}
-          </View>
-          <Text style={[styles.weeksCaption, { color: palette.dim }]}>
-            {covered} of the last {coverage.length} weeks backed up
-          </Text>
+          {/* Am I covered? */}
+          <Tile palette={palette}>
+            <View style={styles.labelRow}>
+              <Label palette={palette}>BACKUP</Label>
+              <View style={[styles.tag, { backgroundColor: fresh ? palette.key : palette.accent }]}>
+                <Text style={[styles.tagText, { color: fresh ? palette.positive : palette.onAccent }]}>{fresh ? 'COVERED' : 'DUE'}</Text>
+              </View>
+            </View>
+            <Text style={[styles.statusTitle, { color: palette.text }]}>
+              {last ? `Last backup ${ago(last.at)}` : 'Not backed up yet'}
+            </Text>
+            <Text style={[styles.statusSub, { color: palette.dim }]}>
+              {last
+                ? changedSince === 0
+                  ? 'Nothing has changed since.'
+                  : `${changedSince} change${changedSince === 1 ? '' : 's'} since then`
+                : `${eventCount} entries in this vault, none saved outside it`}
+            </Text>
+            <View style={styles.weeks}>
+              {coverage.map((had, index) => (
+                <View key={index} style={[styles.week, { backgroundColor: had ? palette.positive : palette.border }]} />
+              ))}
+            </View>
+            <Label palette={palette}>
+              {covered} OF THE LAST {coverage.length} WEEKS BACKED UP
+            </Label>
+          </Tile>
 
           {/* The one thing to do. */}
           <ActionCard
@@ -179,7 +191,7 @@ export function BackupScreen({ onClose }: { onClose?: () => void }) {
             palette={palette}
             onPress={() => void exportToFile()}
           />
-          <View style={[styles.warning, { borderLeftColor: palette.warning }]}>
+          <View style={styles.warning}>
             <Text style={[styles.warningText, { color: palette.text }]}>
               This file is <Text style={styles.bold}>readable</Text>. Keep it somewhere private — not a shared drive.
             </Text>
@@ -202,15 +214,25 @@ export function BackupScreen({ onClose }: { onClose?: () => void }) {
             carries them between them.
           </Text>
 
-          <Text style={[styles.section, { color: palette.dim }]}>Your other device</Text>
-          <ActionCard
-            title="Sync with my computer"
-            detail="Scan a code once; they keep in step by themselves"
-            glyph="⇄"
-            busy={false}
-            palette={palette}
-            onPress={() => setShowingSync(true)}
-          />
+          <View style={[styles.themes, { backgroundColor: palette.surface }]} accessibilityRole="radiogroup" accessibilityLabel="Theme">
+            {(['auto', 'light', 'dark'] as const).map((choice) => {
+              const on = theme === choice;
+              return (
+                <Pressable
+                  key={choice}
+                  onPress={() => {
+                    setTheme(choice);
+                    setThemeChoice(choice);
+                  }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  style={[styles.theme, { backgroundColor: on ? palette.text : 'transparent' }]}
+                >
+                  <Text style={[labelStyle, { color: on ? palette.background : palette.dim }]}>{choice.toUpperCase()}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </ScrollView>
 
         {showingSync ? <Sync onClose={() => setShowingSync(false)} /> : null}
@@ -243,8 +265,8 @@ function ActionCard({
       style={({ pressed }) => [
         styles.card,
         primary
-          ? { backgroundColor: palette.accent, borderColor: palette.accent }
-          : { backgroundColor: palette.surface, borderColor: palette.border },
+          ? { backgroundColor: palette.accent }
+          : { backgroundColor: palette.surface },
         pressed ? styles.pressed : null,
       ]}
     >
@@ -264,50 +286,36 @@ function ActionCard({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 4 },
-  pressed: { transform: [{ scale: 0.97 }] },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
-  back: { fontSize: 24, fontWeight: '600' },
-  title: { fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },
+  screen: { flex: 1 },
+  pressed: { transform: [{ scale: 0.98 }] },
+  body: { paddingHorizontal: 12, paddingBottom: 16, gap: 10 },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
-  body: { paddingHorizontal: spacing.lg, paddingBottom: 56, gap: spacing.md },
-  status: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
-  shield: { width: 52, height: 52, borderRadius: radii.lg, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  shieldGlyph: { fontSize: 24, fontWeight: '800' },
-  statusText: { flex: 1, gap: 2 },
-  statusTitle: { fontSize: typeScale.lg, fontWeight: '700' },
-  statusSub: { fontSize: typeScale.sm },
+  syncTile: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  syncRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  syncDot: { width: 12, height: 12, borderRadius: 6 },
+  statusText: { flex: 1, gap: 4 },
+  statusTitle: { fontFamily: fonts.uiSemibold, fontSize: 17, letterSpacing: -0.2 },
+  statusSub: { fontFamily: fonts.ui, fontSize: 13 },
+  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  tagText: { fontFamily: fonts.monoMedium, fontSize: 9, letterSpacing: 1.3 },
 
-  weeks: { flexDirection: 'row', gap: 4, marginTop: spacing.xs },
-  week: { flex: 1, height: 6, borderRadius: radii.pill },
-  weeksCaption: { fontSize: typeScale.xs, marginTop: -6 },
+  weeks: { flexDirection: 'row', gap: 4 },
+  week: { flex: 1, height: 10, borderRadius: 2 },
 
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    padding: spacing.lg,
-    marginTop: spacing.xs,
-  },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 22, padding: 18 },
   cardText: { flex: 1, gap: 2 },
-  cardTitle: { fontSize: typeScale.md, fontWeight: '700' },
-  cardDetail: { fontSize: typeScale.sm },
+  cardTitle: { fontFamily: fonts.uiSemibold, fontSize: 15 },
+  cardDetail: { fontFamily: fonts.ui, fontSize: 13 },
   soft: { opacity: 0.8 },
-  cardGlyph: { fontSize: 22, fontWeight: '700' },
 
-  warning: { borderLeftWidth: 3, paddingLeft: spacing.md, paddingVertical: 4, borderRadius: 0 },
-  warningText: { fontSize: typeScale.sm, lineHeight: 19 },
-  bold: { fontWeight: '700' },
+  warning: { paddingHorizontal: 18 },
+  warningText: { fontFamily: fonts.ui, fontSize: 13, lineHeight: 19 },
+  bold: { fontFamily: fonts.uiBold },
 
-  result: { fontSize: typeScale.sm, fontWeight: '600', lineHeight: 19 },
-  fine: { fontSize: typeScale.xs, lineHeight: 18, marginTop: spacing.sm },
-  section: {
-    fontSize: typeScale.xs,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginTop: spacing.lg,
-  },
+  result: { fontFamily: fonts.uiSemibold, fontSize: 13, lineHeight: 19, paddingHorizontal: 6 },
+  fine: { fontFamily: fonts.ui, fontSize: 12, lineHeight: 18, paddingHorizontal: 6 },
+
+  themes: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 999 },
+  theme: { flex: 1, height: 44, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
 });

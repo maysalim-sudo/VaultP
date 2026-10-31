@@ -22,7 +22,7 @@ import {
 
 import { radii, spacing, typeScale } from '@vaultp/core';
 
-import type { Palette } from './theme.js';
+import { fonts, type Palette } from './theme.js';
 
 export interface SheetField {
   readonly key: string;
@@ -112,10 +112,10 @@ export function FieldsSheet({
                           style={[
                             styles.chip,
                             { borderColor: palette.border },
-                            on ? { backgroundColor: palette.accent, borderColor: 'transparent' } : null,
+                            on ? { backgroundColor: palette.text, borderColor: palette.text } : null,
                           ]}
                         >
-                          <Text style={{ color: on ? palette.onAccent : palette.dim, fontWeight: '600', fontSize: 13 }}>
+                          <Text style={{ color: on ? palette.background : palette.dim, fontFamily: fonts.monoMedium, fontSize: 11 }}>
                             {option.label}
                           </Text>
                         </Pressable>
@@ -134,7 +134,7 @@ export function FieldsSheet({
                     hitSlop={6}
                     style={({ pressed }) => [styles.extra, pressed ? styles.pressed : null]}
                   >
-                    <Text style={{ color: action.destructive ? palette.danger : palette.accent, fontWeight: '600' }}>
+                    <Text style={{ color: action.destructive ? palette.danger : palette.accentText, fontFamily: fonts.uiSemibold }}>
                       {action.label}
                     </Text>
                   </Pressable>
@@ -172,16 +172,16 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', padding: spacing.xl },
   card: { borderRadius: radii.xl, maxHeight: '90%' },
   content: { padding: spacing.xl, gap: spacing.md },
-  title: { fontSize: typeScale.lg, fontWeight: '700' },
+  title: { fontFamily: fonts.uiSemibold, fontSize: typeScale.lg },
   field: { gap: 6 },
-  label: { fontSize: typeScale.xs, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
-  input: { fontSize: typeScale.md, paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: radii.md },
+  label: { fontFamily: fonts.monoMedium, fontSize: 10, letterSpacing: 1.6, textTransform: 'uppercase' },
+  input: { fontFamily: fonts.uiMedium, fontSize: typeScale.md, paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: radii.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: radii.pill, borderWidth: 1 },
-  footnote: { fontSize: typeScale.sm, lineHeight: 19 },
+  footnote: { fontFamily: fonts.ui, fontSize: typeScale.sm, lineHeight: 19 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs, flexWrap: 'wrap' },
   extra: { paddingVertical: 11, paddingRight: spacing.sm },
   action: { paddingHorizontal: spacing.lg, paddingVertical: 11, borderRadius: radii.md, minWidth: 80, alignItems: 'center' },
-  actionText: { fontSize: typeScale.md, fontWeight: '700' },
+  actionText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.md },
   pressed: { transform: [{ scale: 0.97 }] },
 });

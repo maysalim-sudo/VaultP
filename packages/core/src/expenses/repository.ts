@@ -14,7 +14,7 @@ import type { Json } from '../oplog/event.js';
 import { BASE_CURRENCY, type CurrencyCode } from '../money/currency.js';
 import { type Money, deriveRate, money } from '../money/money.js';
 import type { IsoDate } from '../time/date.js';
-import { parseDate } from '../time/date.js';
+import { parseDate, todayIn } from '../time/date.js';
 import { estimateInBase } from './rates.js';
 import type { Frequency, RuleState } from './recurrence.js';
 
@@ -615,7 +615,10 @@ export class ExpenseRepository {
     return {
       id: row.id,
       // Stored as a full timestamp; only the calendar date matters here.
-      createdOn: row.created_at ? row.created_at.slice(0, 10) : null,
+      // The day here, not in UTC: `created_at` is an instant, and the scheduler
+      // compares this with local dates. Slicing it would date a rule made just
+      // after local midnight to the day before, and log a charge for that day.
+      createdOn: row.created_at ? todayIn(new Date(row.created_at)) : null,
       name: row.name ?? '',
       amount: money(row.amount_minor ?? 0, currency),
       categoryId: row.category_id,

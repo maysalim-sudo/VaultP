@@ -41,7 +41,7 @@ import {
   type TextBlock,
 } from '@vaultp/core';
 
-import type { Palette } from '../components/theme.js';
+import { fonts, type Palette } from '../components/theme.js';
 import type { OpenVault } from '../vault/open.js';
 import { NoteImage } from './images.js';
 
@@ -329,13 +329,13 @@ function Tool({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   grow: { flex: 1 },
-  text: { fontSize: typeScale.md, lineHeight: 24, paddingVertical: 4, textAlignVertical: 'top' },
-  h1: { fontSize: 24, lineHeight: 32, fontWeight: '700', paddingTop: spacing.sm },
-  h2: { fontSize: typeScale.lg, lineHeight: 28, fontWeight: '600', paddingTop: spacing.xs },
+  text: { fontFamily: fonts.ui, fontSize: typeScale.md, lineHeight: 24, paddingVertical: 4, textAlignVertical: 'top' },
+  h1: { fontFamily: fonts.uiBold, fontSize: 24, lineHeight: 32, paddingTop: spacing.sm },
+  h2: { fontFamily: fonts.uiSemibold, fontSize: typeScale.lg, lineHeight: 28, paddingTop: spacing.xs },
   quoteText: { fontStyle: 'italic' },
   quoteBar: { width: 3, alignSelf: 'stretch', borderRadius: 2, marginVertical: 4, opacity: 0.6 },
   checkedText: { textDecorationLine: 'line-through' },
-  gutter: { fontSize: typeScale.md, lineHeight: 24, paddingTop: 4, minWidth: 14, textAlign: 'center' },
+  gutter: { fontFamily: fonts.ui, fontSize: typeScale.md, lineHeight: 24, paddingTop: 4, minWidth: 14, textAlign: 'center' },
   number: { minWidth: 22, textAlign: 'right', fontVariant: ['tabular-nums'] },
   box: {
     width: 20,
@@ -346,14 +346,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  boxMark: { fontSize: 13, fontWeight: '900', lineHeight: 15 },
+  boxMark: { fontFamily: fonts.uiBold, fontSize: 13, lineHeight: 15 },
 
   dividerHit: { paddingVertical: spacing.md },
   divider: { height: StyleSheet.hairlineWidth * 2, opacity: 0.5 },
 
   imageBlock: { marginVertical: spacing.xs },
   image: { borderRadius: radii.md },
-  caption: { fontSize: typeScale.sm, paddingVertical: 4, textAlign: 'center' },
+  caption: { fontFamily: fonts.ui, fontSize: typeScale.sm, paddingVertical: 4, textAlign: 'center' },
 
   tableBlock: { marginVertical: spacing.xs, gap: spacing.xs },
   table: { borderWidth: 1, borderRadius: radii.sm, overflow: 'hidden' },
@@ -364,15 +364,15 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: spacing.sm,
     paddingVertical: 8,
-    fontSize: typeScale.base,
+    fontFamily: fonts.ui, fontSize: typeScale.base,
     borderRightWidth: 1,
     textAlignVertical: 'top',
   },
   lastCell: { borderRightWidth: 0 },
-  headerCell: { fontWeight: '700' },
+  headerCell: { fontFamily: fonts.uiBold },
   tableTools: { flexDirection: 'row', gap: spacing.xs },
   tool: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radii.pill },
-  toolText: { fontSize: typeScale.sm, fontWeight: '600' },
+  toolText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.sm, },
 
   unknown: { padding: spacing.md, borderRadius: radii.md },
   pressed: { transform: [{ scale: 0.97 }] },

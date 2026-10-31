@@ -1,15 +1,14 @@
 /**
  * The document vault.
  *
- * Two things drive the layout: expiring papers go at the top, because that is the
- * one thing the app can tell you that you would not otherwise notice; and adding a
- * document is a single button, because a vault that is tedious to add to stays
- * empty.
+ * Two things drive the layout: whatever ends soonest leads the page, its days
+ * left in dot-matrix, because that is the one thing the app can tell you that you
+ * would not otherwise notice; and adding a document is a single button, because a
+ * vault that is tedious to add to stays empty.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -23,7 +22,10 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { daysBetween, todayIn, type VaultDocument } from '@vaultp/core';
 
-import { paletteFor, type Palette } from '../components/theme.js';
+import { describeDate } from '../components/DateField.js';
+import { Button, Empty, Figure, Label, PageHead, Tile } from '../components/Industrial.js';
+import { Icon } from '../components/icons.js';
+import { fonts, paletteFor, type Palette } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { importFile } from '../documents/fileStore.js';
 import { recogniseText, suggestTitle } from '../documents/ocr.js';
@@ -153,73 +155,53 @@ export function Documents({ onClose, intent, onIntentHandled }: { onClose?: () =
     if (created) setOpen(created);
   }
 
+  // The one that ends soonest, if anything is ending: it leads the page.
+  const next = expiring[0];
+  const nextDays = next?.expiryDate ? daysBetween(today, next.expiryDate) : null;
+
   return (
     <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: palette.background }]}>
-        <View style={styles.header}>
-          {onClose ? (
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.headerAction, { color: palette.dim }]}>Close</Text>
-            </Pressable>
-          ) : (
-            // Keeps the title centred in a three-slot header when there is
-            // nothing to close: this screen is the page, not a layer over one.
-            <View />
-          )}
-          <Text style={[styles.headerTitle, { color: palette.text }]}>Documents</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+      <View style={styles.page}>
+        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <PageHead title="Documents" palette={palette} />
 
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search titles and text inside documents"
-          placeholderTextColor={palette.dim}
-          style={[
-            styles.search,
-            {
-              color: palette.text,
-              borderColor: palette.border,
-              backgroundColor: palette.surface,
-            },
-          ]}
-        />
+          <View style={[styles.search, { backgroundColor: palette.surface }]}>
+            <Icon name="search" size={17} color={palette.dim} />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Titles, notes and text inside scans"
+              placeholderTextColor={palette.textFaint}
+              style={[styles.searchInput, { color: palette.text }]}
+            />
+          </View>
 
-        {error ? (
-          <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>
-        ) : null}
+          {error ? <Text style={[styles.error, { color: palette.danger }]}>{error}</Text> : null}
 
-        <ScrollView contentContainerStyle={styles.list}>
-          {expiring.length > 0 ? (
-            <>
-              <Text style={[styles.sectionLabel, { color: palette.warning }]}>
-                Needs attention
-              </Text>
-              {expiring.map((document) => (
-                <DocumentRow
-                  key={document.id}
-                  document={document}
-                  today={today}
-                  palette={palette}
-                  onPress={() => setOpen(document)}
-                />
-              ))}
-            </>
+          {next && nextDays !== null ? (
+            <Tile palette={palette} onPress={() => setOpen(next)} label={`Open ${next.title}`}>
+              <Label palette={palette}>
+                {next.title.toUpperCase()} {nextDays < 0 ? 'ENDED' : 'ENDS IN'}
+              </Label>
+              <Figure
+                value={String(Math.abs(nextDays))}
+                unit={`${nextDays < 0 ? 'DAYS AGO' : 'DAYS'} · ${describeDate(next.expiryDate!).toUpperCase()}`}
+                size={64}
+                colour={palette.accentText}
+                palette={palette}
+              />
+            </Tile>
           ) : null}
 
-          <Text style={[styles.sectionLabel, { color: palette.dim }]}>
-            {search.trim() === '' ? 'All documents' : 'Results'}
-          </Text>
-
           {documents.length === 0 ? (
-            <Text style={[styles.empty, { color: palette.dim }]}>
+            <Empty palette={palette}>
               {search.trim() === ''
-                ? 'Nothing stored yet. Photograph a passport, a contract, an insurance paper — anything you would otherwise hunt for in a drawer.'
-                : 'Nothing matches that.'}
-            </Text>
+                ? 'NOTHING STORED YET. A PASSPORT, A CONTRACT, AN INSURANCE PAPER: ANYTHING YOU WOULD HUNT FOR IN A DRAWER.'
+                : 'NOTHING MATCHES'}
+            </Empty>
           ) : (
             documents.map((document) => (
-              <DocumentRow
+              <DocumentTile
                 key={document.id}
                 document={document}
                 today={today}
@@ -228,31 +210,24 @@ export function Documents({ onClose, intent, onIntentHandled }: { onClose?: () =
               />
             ))
           )}
-        </ScrollView>
 
-        <View style={styles.actions}>
-          <Pressable
-            onPress={() => void capture('camera')}
+          <Button
+            label={busy ? 'Reading the scan…' : 'Scan a document'}
+            icon="scan"
             disabled={busy}
-            style={[styles.action, { backgroundColor: palette.accent }]}
-          >
-            {busy ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.actionText}>Photograph</Text>
-            )}
-          </Pressable>
+            palette={palette}
+            onPress={() => void capture('camera')}
+          />
           <Pressable
             onPress={() => void capture('library')}
             disabled={busy}
-            style={[
-              styles.action,
-              { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1 },
-            ]}
+            hitSlop={8}
+            accessibilityRole="button"
+            style={styles.gallery}
           >
-            <Text style={[styles.actionText, { color: palette.text }]}>From gallery</Text>
+            <Text style={[styles.galleryText, { color: palette.dim }]}>Or choose from the gallery</Text>
           </Pressable>
-        </View>
+        </ScrollView>
 
         {open ? (
           <DocumentDetail
@@ -265,7 +240,7 @@ export function Documents({ onClose, intent, onIntentHandled }: { onClose?: () =
   );
 }
 
-function DocumentRow({
+function DocumentTile({
   document,
   today,
   palette,
@@ -278,75 +253,52 @@ function DocumentRow({
 }) {
   const days = document.expiryDate ? daysBetween(today, document.expiryDate) : null;
   const expired = days !== null && days < 0;
+  const soon = days !== null && days < document.reminderLeadDays;
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.row, { borderBottomColor: palette.divider }]}
-      android_ripple={{ color: palette.ripple }}
-    >
-      <View style={styles.rowMain}>
-        <Text style={[styles.title, { color: palette.text }]} numberOfLines={1}>
+    <Tile palette={palette} style={styles.doc} onPress={onPress} label={`Open ${document.title}`}>
+      <View style={[styles.thumb, { backgroundColor: palette.key, borderColor: palette.border }]}>
+        {[70, 100, 90, 60].map((width, index) => (
+          <View key={index} style={[styles.thumbLine, { width: `${width}%`, backgroundColor: palette.border }]} />
+        ))}
+      </View>
+      <View style={styles.docMain}>
+        <Label palette={palette}>{(document.kind ?? 'Document').toUpperCase()}</Label>
+        <Text style={[styles.docTitle, { color: palette.text }]} numberOfLines={1}>
           {document.title}
         </Text>
-        {days !== null ? (
-          <Text
-            style={[
-              styles.meta,
-              { color: expired ? palette.negative : days < 30 ? palette.warning : palette.dim },
-            ]}
-          >
-            {expired
-              ? `expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`
-              : `expires in ${days} day${days === 1 ? '' : 's'} · ${document.expiryDate}`}
-          </Text>
-        ) : null}
+        <Text style={[styles.docMeta, { color: palette.dim }]} numberOfLines={1}>
+          {document.extractedText ? 'Text read' : document.note || 'Stored encrypted'}
+        </Text>
       </View>
-    </Pressable>
+      {document.expiryDate ? (
+        <View style={[styles.badge, { backgroundColor: soon || expired ? palette.accent : palette.key }]}>
+          <Text style={[styles.badgeText, { color: soon || expired ? palette.onAccent : palette.dim }]}>
+            {expired ? 'EXPIRED' : 'EXP'} {document.expiryDate.slice(5, 7)}.{document.expiryDate.slice(0, 4)}
+          </Text>
+        </View>
+      ) : null}
+    </Tile>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 4 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  headerTitle: { fontWeight: '700', fontSize: 17 },
-  headerAction: { fontSize: 16, fontWeight: '600' },
-  headerSpacer: { width: 44 },
+  page: { flex: 1 },
+  body: { paddingHorizontal: 12, paddingBottom: 16, gap: 10 },
 
-  search: {
-    marginHorizontal: 20,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-  },
-  error: { paddingHorizontal: 20, paddingTop: 10, fontSize: 13, fontWeight: '600' },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 18, borderRadius: 26 },
+  searchInput: { flex: 1, fontFamily: fonts.uiMedium, fontSize: 15, padding: 0 },
+  error: { fontFamily: fonts.uiSemibold, fontSize: 13, paddingHorizontal: 6 },
 
-  list: { paddingHorizontal: 20, paddingBottom: 24 },
-  sectionLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 4,
-  },
-  empty: { paddingVertical: 28, lineHeight: 20 },
-  row: {
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  rowMain: { gap: 3 },
-  title: { fontSize: 16, fontWeight: '600' },
-  meta: { fontSize: 12 },
+  doc: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, minHeight: 88 },
+  thumb: { width: 48, height: 60, borderRadius: 8, borderWidth: 1, padding: 8, gap: 4 },
+  thumbLine: { height: 3, borderRadius: 2 },
+  docMain: { flex: 1, minWidth: 0, gap: 3 },
+  docTitle: { fontFamily: fonts.uiSemibold, fontSize: 15 },
+  docMeta: { fontFamily: fonts.ui, fontSize: 12 },
+  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
+  badgeText: { fontFamily: fonts.monoMedium, fontSize: 9, letterSpacing: 0.8 },
 
-  actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingVertical: 16 },
-  action: { flex: 1, alignItems: 'center', paddingVertical: 15, borderRadius: 14 },
-  actionText: { color: '#fff', fontWeight: '700' },
+  gallery: { alignItems: 'center', paddingVertical: 8 },
+  galleryText: { fontFamily: fonts.uiMedium, fontSize: 14 },
 });

@@ -9,7 +9,7 @@ import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, TextInput, Vi
 
 import { radii, spacing, typeScale } from '@vaultp/core';
 
-import type { Palette } from './theme.js';
+import { fonts, type Palette } from './theme.js';
 
 export function TextPrompt({
   title,
@@ -77,10 +77,10 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.45)', justifyContent: 'center', padding: spacing.xl },
   card: { borderRadius: radii.xl, padding: spacing.xl, gap: spacing.md },
-  title: { fontSize: typeScale.lg, fontWeight: '700' },
-  input: { fontSize: typeScale.md, paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: radii.md },
+  title: { fontFamily: fonts.uiSemibold, fontSize: typeScale.lg },
+  input: { fontFamily: fonts.uiMedium, fontSize: typeScale.md, paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: radii.md },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.xs },
   action: { paddingHorizontal: spacing.lg, paddingVertical: 11, borderRadius: radii.md, minWidth: 80, alignItems: 'center' },
-  actionText: { fontSize: typeScale.md, fontWeight: '700' },
+  actionText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.md },
   pressed: { transform: [{ scale: 0.97 }] },
 });

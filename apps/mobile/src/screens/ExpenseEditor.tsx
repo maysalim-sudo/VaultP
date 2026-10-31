@@ -40,7 +40,8 @@ import {
   draftToMinor,
   retypeForExponent,
 } from '../components/amount.js';
-import { paletteFor } from '../components/theme.js';
+import { Pill } from '../components/Industrial.js';
+import { fonts, labelStyle, paletteFor } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 const CURRENCIES = [BASE_CURRENCY, 'USD', 'EUR'] as const;
@@ -127,12 +128,12 @@ export function ExpenseEditor({
               <Text style={[styles.headerAction, { color: palette.dim }]}>Cancel</Text>
             </Pressable>
             <Pressable onPress={() => setEditingDate((current) => !current)} hitSlop={8}>
-              <Text style={[styles.headerTitle, { color: palette.accent }]}>
+              <Text style={[styles.headerTitle, { color: palette.text }]}>
                 {describeDate(occurredOn)}
               </Text>
             </Pressable>
             <Pressable onPress={save} hitSlop={12}>
-              <Text style={[styles.headerAction, { color: palette.accent }]}>Save</Text>
+              <Text style={[styles.headerAction, { color: palette.accentText }]}>Save</Text>
             </Pressable>
           </View>
 
@@ -154,7 +155,7 @@ export function ExpenseEditor({
             <Pressable onPress={() => setField('billed')}>
               <View style={field === 'billed' && foreign ? styles.activeField : undefined}>
                 {foreign ? (
-                  <Text style={[styles.fieldLabel, { color: palette.dim }]}>Billed</Text>
+                  <Text style={[labelStyle, styles.fieldLabel, { color: palette.textFaint }]}>BILLED</Text>
                 ) : null}
                 <AmountDisplay draft={billed} currency={currency} palette={palette} />
               </View>
@@ -162,33 +163,16 @@ export function ExpenseEditor({
 
             <View style={styles.currencyRow}>
               {CURRENCIES.map((code) => (
-                <Pressable
-                  key={code}
-                  onPress={() => changeCurrency(code)}
-                  style={[
-                    styles.currencyChip,
-                    { borderColor: palette.border },
-                    currency === code ? { backgroundColor: palette.accent, borderColor: 'transparent' } : null,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.currencyText,
-                      { color: currency === code ? '#fff' : palette.text },
-                    ]}
-                  >
-                    {code}
-                  </Text>
-                </Pressable>
+                <Pill key={code} label={code} selected={currency === code} palette={palette} onPress={() => changeCurrency(code)} />
               ))}
             </View>
 
             {foreign ? (
               <Pressable onPress={() => setField('debited')}>
                 <View style={field === 'debited' ? styles.activeField : undefined}>
-                  <Text style={[styles.fieldLabel, { color: palette.dim }]}>
-                    Debited by the bank
-                    {debited.whole === '' ? ' — not known yet' : ''}
+                  <Text style={[labelStyle, styles.fieldLabel, { color: field === 'debited' ? palette.text : palette.textFaint }]}>
+                    DEBITED BY THE BANK
+                    {debited.whole === '' ? ' · NOT KNOWN YET' : ''}
                   </Text>
                   <AmountDisplay
                     draft={debited}
@@ -212,12 +196,12 @@ export function ExpenseEditor({
 
             <Pressable
               onPress={() => setEditingWords(true)}
-              style={[styles.wordsRow, { backgroundColor: palette.surface, borderColor: palette.border }]}
+              style={[styles.wordsRow, { backgroundColor: palette.surface }]}
             >
               <Text style={[styles.wordsText, { color: merchant || note ? palette.text : palette.dim }]} numberOfLines={2}>
                 {merchant || note ? [merchant, note].filter(Boolean).join('  ·  ') : 'Where, and a note'}
               </Text>
-              <Text style={{ color: palette.accent, fontWeight: '600' }}>Edit</Text>
+              <Text style={[styles.wordsEdit, { color: palette.accentText }]}>Edit</Text>
             </Pressable>
 
             <AmountPad
@@ -237,19 +221,19 @@ export function ExpenseEditor({
                     onPress={() => setConfirmingDelete(false)}
                     style={[styles.confirmButton, { backgroundColor: palette.surface }]}
                   >
-                    <Text style={{ color: palette.text, fontWeight: '600' }}>Keep</Text>
+                    <Text style={[styles.confirmLabel, { color: palette.text }]}>Keep</Text>
                   </Pressable>
                   <Pressable
                     onPress={remove}
                     style={[styles.confirmButton, { backgroundColor: palette.danger }]}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '700' }}>Delete</Text>
+                    <Text style={[styles.confirmLabel, { color: palette.onAccent }]}>Delete</Text>
                   </Pressable>
                 </View>
               </View>
             ) : (
               <Pressable onPress={() => setConfirmingDelete(true)} style={styles.deleteLink}>
-                <Text style={{ color: palette.danger, fontWeight: '600' }}>
+                <Text style={[styles.confirmLabel, { color: palette.danger }]}>
                   Delete this expense
                 </Text>
               </Pressable>
@@ -281,7 +265,7 @@ export function ExpenseEditor({
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { maxHeight: '92%', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  sheet: { maxHeight: '92%', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,34 +273,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  headerTitle: { fontWeight: '600' },
-  headerAction: { fontSize: 16, fontWeight: '600' },
-  body: { paddingHorizontal: 20, paddingBottom: 32 },
+  headerTitle: { fontFamily: fonts.monoMedium, fontSize: 13 },
+  headerAction: { fontFamily: fonts.uiSemibold, fontSize: 15 },
+  body: { paddingHorizontal: 12, paddingBottom: 24 },
   dateRow: { paddingBottom: 8 },
   wordsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 12,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    minHeight: 52,
+    marginBottom: 10,
   },
-  wordsText: { flex: 1, fontSize: 14 },
+  wordsText: { flex: 1, fontFamily: fonts.uiMedium, fontSize: 14 },
+  wordsEdit: { fontFamily: fonts.uiSemibold, fontSize: 13 },
 
-  fieldLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
+  fieldLabel: { marginTop: 8 },
   activeField: { opacity: 1 },
-  hint: { fontSize: 12, marginTop: 4, marginBottom: 4 },
+  hint: { fontFamily: fonts.ui, fontSize: 12, marginTop: 4, marginBottom: 4 },
 
-  currencyRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 12 },
-  currencyChip: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 999, borderWidth: 1 },
-  currencyText: { fontWeight: '600' },
+  currencyRow: { flexDirection: 'row', gap: 6, justifyContent: 'flex-end', marginTop: 10 },
 
 
   deleteLink: { alignItems: 'center', paddingVertical: 16 },
   confirmRow: { paddingTop: 12, gap: 10 },
-  confirmText: { textAlign: 'center', fontWeight: '600' },
+  confirmText: { fontFamily: fonts.uiSemibold, textAlign: 'center' },
+  confirmLabel: { fontFamily: fonts.uiSemibold, fontSize: 15 },
   confirmButtons: { flexDirection: 'row', gap: 10 },
-  confirmButton: { flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 12 },
+  confirmButton: { flex: 1, alignItems: 'center', paddingVertical: 15, borderRadius: 999 },
 });

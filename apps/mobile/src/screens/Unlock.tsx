@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 
 import { PassphraseField } from '../components/PassphraseField.js';
-import { paletteFor } from '../components/theme.js';
+import { fonts, paletteFor } from '../components/theme.js';
 
 export function Unlock({
   onPassphrase,
@@ -91,7 +91,7 @@ export function Unlock({
             <Text
               style={[
                 styles.buttonText,
-                { color: passphrase.length > 0 && !busy ? '#fff' : palette.dim },
+                { color: passphrase.length > 0 && !busy ? palette.onAccent : palette.dim },
               ]}
             >
               Unlock
@@ -102,7 +102,7 @@ export function Unlock({
 
       {quickUnlockAvailable ? (
         <Pressable onPress={onBiometric} style={styles.link} disabled={busy}>
-          <Text style={{ color: palette.accent, fontWeight: '600' }}>
+          <Text style={{ color: palette.accentText, fontWeight: '600' }}>
             Use fingerprint
           </Text>
         </Pressable>
@@ -119,11 +119,11 @@ export function Unlock({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, justifyContent: 'center', padding: 28, gap: 14 },
-  title: { fontSize: 32, fontWeight: '700', textAlign: 'center', marginBottom: 12 },
+  title: { fontFamily: fonts.uiBold, fontSize: 32, textAlign: 'center', marginBottom: 12 },
   busy: { alignItems: 'center', gap: 8 },
-  hint: { fontSize: 13 },
-  error: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  button: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  buttonText: { fontSize: 17, fontWeight: '700' },
+  hint: { fontFamily: fonts.ui, fontSize: 13 },
+  error: { fontFamily: fonts.uiSemibold, fontSize: 13, textAlign: 'center' },
+  button: { borderRadius: 999, paddingVertical: 17, alignItems: 'center' },
+  buttonText: { fontFamily: fonts.uiBold, fontSize: 17, },
   link: { alignItems: 'center', paddingVertical: 10 },
 });

@@ -12,7 +12,10 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
+import { loadThemeChoice } from './src/components/themeChoice.js';
 
 import { Shell } from './src/screens/Shell.js';
 import { Setup } from './src/screens/Setup.js';
@@ -58,6 +61,10 @@ function VaultGate() {
 }
 
 export default function App() {
+  useEffect(() => {
+    void loadThemeChoice();
+  }, []);
+
   // Bundled with the app (SIL OFL), never fetched. Until they are registered a
   // screen would flash in the system face and jump, so the first frame waits.
   const [fontsReady, fontError] = useFonts({

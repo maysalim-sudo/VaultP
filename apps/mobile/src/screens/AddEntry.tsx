@@ -1,64 +1,52 @@
 /**
- * Adding money: an expense, or money lent or borrowed — one sheet.
+ * Adding money: an expense, or money lent or borrowed, on one till.
  *
  * The three are the same gesture with a different "who": a category for an
- * expense, a person for a loan. So they share one screen, in the manner of Ivy
- * Wallet's add sheet, rather than living in two places that feel unrelated.
+ * expense, a person for a loan. Digits fill in from the right, like a card
+ * terminal, so the decimals are always there. Category, then what it was for and
+ * when on ruled lines, then the keypad and Save under the thumb. Save names the
+ * amount, so the last thing read before committing is what is being committed.
  *
- * The amount is the hero, on a band of colour that says what is being recorded:
- * the chosen category's own colour for an expense, sage for money lent (it will
- * come back), ochre for money borrowed (it will go out). Everything else sits
- * below in the order a hand reaches for it — who, when, a note, then the keypad
- * and Save under the thumb.
- *
- * Kept from the old quick entry, because they were right: the category survives
- * a save, so the second coffee of the week is amount then Save; today is the
- * default date; the dinar is the default currency.
+ * The category survives a save, so the second coffee of the week is amount then
+ * Save; today is the default date; the dinar is the default currency.
  */
 
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useColorScheme } from 'react-native';
 
 import {
   BASE_CURRENCY,
   type Category,
-  categoryColourFor,
   type Expense,
   exponentOf,
   formatAmount,
   type IsoDate,
   money,
   type Person,
-  radii,
-  spacing,
   todayIn,
-  typeScale,
 } from '@vaultp/core';
 
 import { AmountPad } from '../components/AmountPad.js';
 import { EMPTY_DRAFT, type Draft, draftDisplay, draftToMinor, retypeForExponent } from '../components/amount.js';
-import { Avatar } from '../components/Avatar.js';
 import { NewCategory } from '../components/CategoryChips.js';
 import { describeDate } from '../components/DateField.js';
+import { Button, Label, Pill, Tile } from '../components/Industrial.js';
 import { TextPrompt } from '../components/TextPrompt.js';
-import { paletteFor } from '../components/theme.js';
+import { categoryIcon, Icon } from '../components/icons.js';
+import { fonts, labelStyle, paletteFor, type Palette } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { ExpenseEditor } from './ExpenseEditor.js';
 
 type Mode = 'expense' | 'lent' | 'borrowed';
 
 const MODES: ReadonlyArray<{ key: Mode; label: string }> = [
-  { key: 'expense', label: 'Expense' },
-  { key: 'lent', label: 'I lent' },
-  { key: 'borrowed', label: 'I borrowed' },
+  { key: 'expense', label: 'EXPENSE' },
+  { key: 'lent', label: 'I LENT' },
+  { key: 'borrowed', label: 'I BORROWED' },
 ];
 
 const CURRENCIES = [BASE_CURRENCY, 'EUR', 'USD'] as const;
-
-/** Deep cuts of sage and ochre from the category palette: white reads on both. */
-const LENT_BAND = '#43795C';
-const BORROWED_BAND = '#9A7127';
 
 function toIso(date: Date): IsoDate {
   return [
@@ -75,8 +63,7 @@ function fromIso(value: IsoDate): Date {
 
 export function AddEntry() {
   const { vault, version, mutate } = useOpenVault();
-  const scheme = useColorScheme();
-  const palette = paletteFor(scheme);
+  const palette = paletteFor(useColorScheme());
   const today = todayIn();
 
   const [mode, setMode] = useState<Mode>('expense');
@@ -85,8 +72,9 @@ export function AddEntry() {
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [personId, setPersonId] = useState<string | null>(null);
   const [date, setDate] = useState<IsoDate>(today);
+  const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
-  const [prompt, setPrompt] = useState<null | 'note' | 'person' | 'category'>(null);
+  const [prompt, setPrompt] = useState<null | 'person' | 'category'>(null);
   const [saved, setSaved] = useState<{ text: string; expense: Expense | null } | null>(null);
   const [editing, setEditing] = useState<Expense | null>(null);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,29 +84,10 @@ export function AddEntry() {
 
   const exponent = exponentOf(currency);
   const amountMinor = draftToMinor(draft, exponent);
-  const category = categories.find((c) => c.id === categoryId) ?? null;
   const person = people.find((p) => p.id === personId) ?? null;
   const needsWho = mode !== 'expense' && person === null;
   const canSave = amountMinor > 0 && !needsWho;
-
-  const band =
-    mode === 'lent'
-      ? LENT_BAND
-      : mode === 'borrowed'
-        ? BORROWED_BAND
-        : category
-          ? categoryColourFor(category.id, category.color)
-          : null;
-  const onBand = band ? '#fff' : palette.text;
-  const onBandDim = band ? 'rgba(255, 255, 255, 0.78)' : palette.dim;
-
-  const when = date === today ? 'today' : describeDate(date);
-  const context =
-    mode === 'expense'
-      ? `${category ? category.name : 'No category'} · ${when}`
-      : mode === 'lent'
-        ? `${person ? `To ${person.name}` : 'Choose who'} · ${when}`
-        : `${person ? `From ${person.name}` : 'Choose who'} · ${when}`;
+  const shown = draftDisplay(draft, exponent);
 
   function cycleCurrency() {
     const next = CURRENCIES[(CURRENCIES.indexOf(currency as (typeof CURRENCIES)[number]) + 1) % CURRENCIES.length]!;
@@ -147,6 +116,7 @@ export function AddEntry() {
     if (!canSave) return;
     const amount = money(amountMinor, currency);
     const trimmedNote = note.trim();
+    const trimmedMerchant = merchant.trim();
 
     if (mode === 'expense') {
       const expense = mutate((v) =>
@@ -154,6 +124,7 @@ export function AddEntry() {
           occurredOn: date,
           amount,
           ...(categoryId ? { categoryId } : {}),
+          ...(trimmedMerchant ? { merchant: trimmedMerchant } : {}),
           ...(trimmedNote ? { note: trimmedNote } : {}),
         }),
       );
@@ -176,154 +147,139 @@ export function AddEntry() {
       );
     }
 
-    // The amount and note are for this entry only; the category, person, date
+    // The amount and words are for this entry only; the category, person, date
     // and currency are likely to be right for the next one too.
     setDraft(EMPTY_DRAFT);
+    setMerchant('');
     setNote('');
   }
 
-  return (
-    <View style={[styles.screen, { backgroundColor: palette.background }]}>
-      {/* The band: what is being recorded, and how much. */}
-      <View style={[styles.band, { backgroundColor: band ?? palette.surface }]}>
-        <View style={[styles.modes, { backgroundColor: band ? 'rgba(0, 0, 0, 0.22)' : palette.key }]}>
-          {MODES.map((option) => {
-            const active = option.key === mode;
-            return (
-              <Pressable
-                key={option.key}
-                onPress={() => setMode(option.key)}
-                style={({ pressed }) => [
-                  styles.mode,
-                  active ? { backgroundColor: palette.background } : null,
-                  pressed ? styles.pressed : null,
-                ]}
-              >
-                <Text style={[styles.modeText, { color: active ? palette.text : onBandDim }]}>{option.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+  const saveLabel =
+    needsWho && amountMinor > 0
+      ? mode === 'lent'
+        ? 'Choose who you lent to'
+        : 'Choose who you borrowed from'
+      : `${mode === 'expense' ? 'Save' : mode === 'lent' ? 'Lend' : 'Borrow'} ${shown} ${currency}`;
 
-        <Text style={[styles.context, { color: onBandDim }]} numberOfLines={1}>
-          {context}
-        </Text>
-        <Pressable onPress={cycleCurrency} style={styles.amountRow} accessibilityLabel="Change currency">
-          <Text style={[styles.amount, { color: onBand }]} numberOfLines={1} adjustsFontSizeToFit>
-            {draftDisplay(draft)}
-          </Text>
-          <Text style={[styles.currency, { color: onBandDim }]}>{currency}</Text>
-        </Pressable>
-        {saved ? (
-          <Pressable
-            onPress={() => saved.expense && setEditing(saved.expense)}
-            style={[styles.saved, { backgroundColor: band ? 'rgba(0, 0, 0, 0.22)' : palette.key }]}
-          >
-            <Text style={[styles.savedText, { color: onBand }]}>
-              ✓ {saved.text}
-              {saved.expense ? '  ·  Edit' : ''}
-            </Text>
-          </Pressable>
-        ) : (
-          <View style={styles.savedSpace} />
-        )}
+  return (
+    <ScrollView
+      style={{ backgroundColor: palette.background }}
+      contentContainerStyle={styles.body}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={[styles.seg, { backgroundColor: palette.surface }]} accessibilityRole="tablist">
+        {MODES.map((option) => {
+          const active = option.key === mode;
+          return (
+            <Pressable
+              key={option.key}
+              onPress={() => setMode(option.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              style={[styles.segItem, { backgroundColor: active ? palette.text : 'transparent' }]}
+            >
+              <Text style={[labelStyle, styles.segText, { color: active ? palette.background : palette.dim }]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
-      <View style={styles.body}>
-        {/* Who: categories for an expense, people for a loan. */}
+      <Tile palette={palette}>
+        <View style={styles.labelRow}>
+          <Label palette={palette}>AMOUNT</Label>
+          <Pressable onPress={cycleCurrency} hitSlop={10} accessibilityRole="button" accessibilityLabel="Change currency">
+            <Label palette={palette} colour={palette.text}>
+              {currency} · {exponent} DECIMALS
+            </Label>
+          </Pressable>
+        </View>
+        <Text style={[styles.amount, { color: palette.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+          {shown}
+        </Text>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tiles}
+          contentContainerStyle={styles.chips}
           keyboardShouldPersistTaps="handled"
         >
           {mode === 'expense'
             ? categories.map((c) => (
-                <Tile
+                <Pill
                   key={c.id}
                   label={c.name}
+                  icon={categoryIcon(c.name)}
                   selected={c.id === categoryId}
                   palette={palette}
                   onPress={() => setCategoryId(c.id === categoryId ? null : c.id)}
-                >
-                  <View style={[styles.tileIcon, { backgroundColor: categoryColourFor(c.id, c.color) }]}>
-                    <Text style={styles.tileGlyph}>{c.icon ?? c.name.slice(0, 1).toUpperCase()}</Text>
-                  </View>
-                </Tile>
+                />
               ))
             : people.map((p) => (
-                <Tile
+                <Pill
                   key={p.id}
                   label={p.name}
                   selected={p.id === personId}
                   palette={palette}
                   onPress={() => setPersonId(p.id === personId ? null : p.id)}
-                >
-                  <Avatar id={p.id} name={p.name} size={44} />
-                </Tile>
+                />
               ))}
-          <Tile
-            label={mode === 'expense' ? 'Other' : 'Someone new'}
-            selected={false}
+          <Pill
+            label={mode === 'expense' ? '+ New category' : '+ Someone new'}
             palette={palette}
             onPress={() => setPrompt(mode === 'expense' ? 'category' : 'person')}
-          >
-            <View style={[styles.tileIcon, styles.tileNew, { borderColor: palette.dim }]}>
-              <Text style={[styles.tileGlyph, { color: palette.dim }]}>＋</Text>
-            </View>
-          </Tile>
+          />
         </ScrollView>
 
-        <View style={styles.chips}>
-          <Chip label={date === today ? 'Today' : describeDate(date)} glyph="📅" palette={palette} onPress={pickDate} />
-          <Chip label={currency} glyph="💱" palette={palette} onPress={cycleCurrency} />
-          <Chip
-            label={note.trim() ? note.trim() : 'Note'}
-            glyph="✎"
-            faint={!note.trim()}
-            palette={palette}
-            onPress={() => setPrompt('note')}
-          />
+        <View style={[styles.lines, { borderTopColor: palette.border }]}>
+          {mode === 'expense' ? (
+            <Line label="FOR" palette={palette}>
+              <TextInput
+                value={merchant}
+                onChangeText={setMerchant}
+                placeholder="Shop, café, service"
+                placeholderTextColor={palette.textFaint}
+                maxLength={120}
+                style={[styles.lineInput, { color: palette.text }]}
+              />
+            </Line>
+          ) : null}
+          <Pressable onPress={pickDate} accessibilityRole="button" accessibilityLabel="Change the date">
+            <Line label="WHEN" palette={palette}>
+              <Text style={[styles.lineText, { color: palette.text }]}>{date === today ? 'Today' : describeDate(date)}</Text>
+              <Icon name="clock" size={16} color={palette.dim} />
+            </Line>
+          </Pressable>
+          <Line label="NOTE" palette={palette} last>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder={mode === 'expense' ? 'Anything to remember' : 'What it was for'}
+              placeholderTextColor={palette.textFaint}
+              maxLength={200}
+              style={[styles.lineInput, { color: palette.text }]}
+            />
+          </Line>
         </View>
+      </Tile>
 
-        <AmountPad draft={draft} exponent={exponent} onChange={setDraft} palette={palette} />
+      <AmountPad draft={draft} exponent={exponent} onChange={setDraft} palette={palette} />
 
+      <Button label={saveLabel} tone="accent" disabled={!canSave} palette={palette} onPress={save} />
+
+      {saved ? (
         <Pressable
-          onPress={save}
-          disabled={!canSave}
-          style={({ pressed }) => [
-            styles.save,
-            { backgroundColor: canSave ? palette.accent : palette.key },
-            pressed && canSave ? styles.pressed : null,
-          ]}
+          onPress={() => saved.expense && setEditing(saved.expense)}
+          accessibilityRole="button"
+          style={[styles.toast, { backgroundColor: palette.text }]}
         >
-          <Text style={[styles.saveText, { color: canSave ? palette.onAccent : palette.dim }]}>
-            {needsWho && amountMinor > 0
-              ? mode === 'lent'
-                ? 'Choose who you lent to'
-                : 'Choose who you borrowed from'
-              : mode === 'expense'
-                ? 'Save expense'
-                : mode === 'lent'
-                  ? 'Record the loan'
-                  : 'Record what I borrowed'}
+          <Icon name="check" size={16} stroke={2.2} color={palette.background} />
+          <Text style={[styles.toastText, { color: palette.background }]} numberOfLines={1}>
+            {saved.text}
+            {saved.expense ? '  ·  Edit' : ''}
           </Text>
         </Pressable>
-      </View>
-
-      {prompt === 'note' ? (
-        <TextPrompt
-          title="Note"
-          placeholder={mode === 'expense' ? 'Where, or what for' : 'What it was for'}
-          initial={note}
-          allowEmpty
-          palette={palette}
-          onCancel={() => setPrompt(null)}
-          onSave={(value) => {
-            setNote(value);
-            setPrompt(null);
-          }}
-        />
       ) : null}
 
       {prompt === 'person' ? (
@@ -362,119 +318,55 @@ export function AddEntry() {
           }}
         />
       ) : null}
+    </ScrollView>
+  );
+}
+
+function Line({
+  label,
+  last = false,
+  palette,
+  children,
+}: {
+  label: string;
+  last?: boolean;
+  palette: Palette;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={[styles.line, last ? null : { borderBottomWidth: 1, borderBottomColor: palette.border }]}>
+      <Text style={[labelStyle, styles.lineLabel, { color: palette.textFaint }]}>{label}</Text>
+      {children}
     </View>
   );
 }
 
-function Tile({
-  label,
-  selected,
-  palette,
-  onPress,
-  children,
-}: {
-  label: string;
-  selected: boolean;
-  palette: ReturnType<typeof paletteFor>;
-  onPress: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.tile, pressed ? styles.pressed : null]}>
-      <View style={[styles.tileRing, { borderColor: selected ? palette.text : 'transparent' }]}>{children}</View>
-      <Text
-        numberOfLines={1}
-        style={[styles.tileLabel, { color: selected ? palette.text : palette.dim, fontWeight: selected ? '700' : '500' }]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function Chip({
-  label,
-  glyph,
-  faint,
-  palette,
-  onPress,
-}: {
-  label: string;
-  glyph: string;
-  faint?: boolean;
-  palette: ReturnType<typeof paletteFor>;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.chip, { borderColor: palette.border }, pressed ? styles.pressed : null]}
-    >
-      <Text style={styles.chipGlyph}>{glyph}</Text>
-      <Text numberOfLines={1} style={[styles.chipText, { color: faint ? palette.dim : palette.text }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  pressed: { transform: [{ scale: 0.97 }] },
+  body: { paddingHorizontal: 12, paddingTop: 4, paddingBottom: 16, gap: 10 },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
-  band: {
-    paddingTop: 4,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomLeftRadius: radii.xl,
-    borderBottomRightRadius: radii.xl,
-  },
-  modes: { flexDirection: 'row', borderRadius: radii.pill, padding: 3 },
-  mode: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radii.pill },
-  modeText: { fontSize: typeScale.sm, fontWeight: '600' },
-  context: { textAlign: 'center', marginTop: spacing.lg, fontSize: typeScale.sm, fontWeight: '500' },
-  amountRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: 2 },
-  amount: {
-    fontSize: 54,
-    fontWeight: '300',
-    letterSpacing: -1,
-    fontVariant: ['tabular-nums'],
-    maxWidth: '82%',
-  },
-  currency: { fontSize: typeScale.lg, marginBottom: 10, marginLeft: 8, fontWeight: '600' },
-  saved: {
-    alignSelf: 'center',
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radii.pill,
-  },
-  savedText: { fontSize: typeScale.sm, fontWeight: '600' },
-  savedSpace: { height: 34 },
+  seg: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: 999 },
+  segItem: { flex: 1, height: 40, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  segText: { letterSpacing: 1.2 },
 
-  body: { flex: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, justifyContent: 'flex-end', gap: spacing.sm },
-  tiles: { gap: spacing.md, paddingVertical: spacing.sm, paddingRight: spacing.lg },
-  tile: { width: 68, alignItems: 'center', gap: 5 },
-  tileRing: { padding: 2, borderRadius: 18, borderWidth: 2 },
-  tileIcon: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  tileNew: { borderWidth: 1.5, borderStyle: 'dashed' },
-  tileGlyph: { fontSize: 20, color: '#fff', fontWeight: '700' },
-  tileLabel: { fontSize: typeScale.xs, maxWidth: 68 },
+  amount: { fontFamily: fonts.display, fontSize: 60, lineHeight: 64, textAlign: 'right' },
+  chips: { gap: 6 },
 
-  chips: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.xs },
-  chip: {
+  lines: { borderTopWidth: 1 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 46 },
+  lineLabel: { width: 52 },
+  lineInput: { flex: 1, fontFamily: fonts.uiMedium, fontSize: 15, padding: 0 },
+  lineText: { flex: 1, fontFamily: fonts.uiMedium, fontSize: 15 },
+
+  toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    flexShrink: 1,
+    alignSelf: 'center',
+    gap: 8,
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    maxWidth: '100%',
   },
-  chipGlyph: { fontSize: 13 },
-  chipText: { fontSize: typeScale.sm, fontWeight: '500', flexShrink: 1 },
-
-  save: { borderRadius: radii.lg, paddingVertical: 16, alignItems: 'center' },
-  saveText: { fontSize: typeScale.md, fontWeight: '700' },
+  toastText: { fontFamily: fonts.uiSemibold, fontSize: 14, flexShrink: 1 },
 });

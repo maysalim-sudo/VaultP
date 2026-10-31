@@ -10,7 +10,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import { radii, spacing, typeScale, type NoteFolder } from '@vaultp/core';
 
-import type { Palette } from '../components/theme.js';
+import { fonts, type Palette } from '../components/theme.js';
 import { SheetRow } from './sheet.js';
 
 export function FolderPicker({
@@ -69,7 +69,7 @@ export function FolderPicker({
         />
         {trimmed !== '' && !exists ? (
           <Pressable onPress={create} hitSlop={8}>
-            <Text style={[styles.create, { color: palette.accent }]}>Create</Text>
+            <Text style={[styles.create, { color: palette.accentText }]}>Create</Text>
           </Pressable>
         ) : null}
       </View>
@@ -88,6 +88,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.sm,
     gap: spacing.sm,
   },
-  input: { flex: 1, fontSize: typeScale.md, paddingVertical: 10 },
-  create: { fontWeight: '700', fontSize: typeScale.md },
+  input: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.md, paddingVertical: 10 },
+  create: { fontFamily: fonts.uiBold, fontSize: typeScale.md },
 });

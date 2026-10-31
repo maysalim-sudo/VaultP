@@ -23,7 +23,7 @@ import {
 import { addDays, isValidDate, type VaultDocument } from '@vaultp/core';
 
 import { DateField, describeDate } from '../components/DateField.js';
-import { paletteFor } from '../components/theme.js';
+import { fonts, paletteFor } from '../components/theme.js';
 import {
   clearPreviews,
   decryptForViewing,
@@ -130,7 +130,7 @@ export function DocumentDetail({
             <Text style={[styles.headerAction, { color: palette.dim }]}>Back</Text>
           </Pressable>
           <Pressable onPress={save} hitSlop={12}>
-            <Text style={[styles.headerAction, { color: palette.accent }]}>Save</Text>
+            <Text style={[styles.headerAction, { color: palette.accentText }]}>Save</Text>
           </Pressable>
         </View>
 
@@ -188,11 +188,11 @@ export function DocumentDetail({
                       styles.chip,
                       { borderColor: palette.border, backgroundColor: palette.surface },
                       lead === option.days
-                        ? { backgroundColor: palette.accent, borderColor: 'transparent' }
+                        ? { backgroundColor: palette.text, borderColor: palette.text }
                         : null,
                     ]}
                   >
-                    <Text style={{ color: lead === option.days ? '#fff' : palette.text }}>
+                    <Text style={[styles.chipText, { color: lead === option.days ? palette.background : palette.text }]}>
                       {option.label} before
                     </Text>
                   </Pressable>
@@ -242,26 +242,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  headerAction: { fontSize: 16, fontWeight: '600' },
+  headerAction: { fontFamily: fonts.uiSemibold, fontSize: 16, },
 
   body: { paddingHorizontal: 20, paddingBottom: 48, gap: 10 },
   preview: {
     height: 260,
-    borderRadius: 14,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   image: { width: '100%', height: '100%' },
-  previewError: { paddingHorizontal: 16, textAlign: 'center', fontSize: 13 },
+  previewError: { paddingHorizontal: 16, textAlign: 'center', fontFamily: fonts.ui, fontSize: 13 },
 
-  label: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
+  label: { fontFamily: fonts.ui, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: fonts.ui, fontSize: 16 },
   multiline: { minHeight: 84, textAlignVertical: 'top' },
-  hint: { fontSize: 12 },
+  hint: { fontFamily: fonts.ui, fontSize: 12 },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 1 },
 
+  chipText: { fontFamily: fonts.uiMedium, fontSize: 13 },
   delete: { alignItems: 'center', paddingVertical: 20 },
 });

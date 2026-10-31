@@ -1,10 +1,11 @@
 /**
- * Accounts on the phone: where the money is, as last read.
+ * Accounts: where the money is, as last read.
  *
- * Tapping an account asks for its new balance, because that is what you open it
- * to do — you just looked at your banking app. Its name, kind and note are
- * behind "Edit", with archive and delete. Each balance carries the day it was
- * checked, and says so once that is more than a month ago.
+ * Each account is a tile with its balance in dot-matrix and the day it was
+ * checked; a dot turns orange once that is over a month ago, because a figure is
+ * only as good as when it was looked at. Tapping asks for a new balance, since
+ * that is what you open it to do. Holding opens its name, kind and note, with
+ * archive and delete.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -14,21 +15,19 @@ import {
   type Account,
   ACCOUNT_KINDS,
   type AccountKind,
-  BASE_CURRENCY,
   daysBetween,
-  formatAmount,
+  formatAmountParts,
   money,
-  radii,
-  spacing,
   todayIn,
-  typeScale,
 } from '@vaultp/core';
 
 import { AmountSheet } from '../components/AmountSheet.js';
+import { describeDate } from '../components/DateField.js';
 import { FieldsSheet } from '../components/FieldsSheet.js';
+import { Empty, Figure, Label, PageHead, Tile } from '../components/Industrial.js';
 import { Screen } from '../components/Screen.js';
 import { Icon, type IconName } from '../components/icons.js';
-import { paletteFor, type Palette } from '../components/theme.js';
+import { fonts, paletteFor, type Palette } from '../components/theme.js';
 import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
@@ -58,6 +57,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
 
   const accounts = useMemo(() => vault.accounts.listAccounts(showArchived), [vault, version, showArchived]);
   const totals = useMemo(() => vault.accounts.totals(), [vault, version]);
+  const open = accounts.filter((account) => !account.archived).length;
 
   useEffect(() => {
     if (!intent) return;
@@ -76,59 +76,55 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
     ]);
   }
 
+  const kinds = ACCOUNT_KINDS.map((kind) => ({ value: kind, label: KIND_LABELS[kind].label }));
+
   return (
     <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: palette.background }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: palette.text }]}>Accounts</Text>
-          <Pressable
-            onPress={() => setSheet({ kind: 'new' })}
-            hitSlop={8}
-            style={({ pressed }) => [styles.newButton, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
-          >
-            <Text style={[styles.newText, { color: palette.text }]}>＋ Account</Text>
-          </Pressable>
-        </View>
-
+      <View style={styles.page}>
         <ScrollView contentContainerStyle={styles.body}>
+          <PageHead title="Accounts" action="Account" onAction={() => setSheet({ kind: 'new' })} palette={palette} />
+
           {totals.length > 0 ? (
-            <View style={[styles.total, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-              <Text style={[styles.totalLabel, { color: palette.dim }]}>Across your accounts</Text>
-              {totals.map((total, index) => (
-                <Text
-                  key={total.currency}
-                  style={[index === 0 ? styles.totalValue : styles.totalSecond, { color: palette.text }]}
-                >
-                  {formatAmount(total, { unit: 'none' })}
-                  <Text style={[styles.totalUnit, { color: palette.dim }]}> {total.currency}</Text>
-                </Text>
-              ))}
-            </View>
+            <Tile palette={palette}>
+              <Label palette={palette}>
+                ACROSS {open} ACCOUNT{open === 1 ? '' : 'S'} · AS LAST CHECKED
+              </Label>
+              {totals.map((total, index) => {
+                const parts = formatAmountParts(total);
+                return (
+                  <Figure key={total.currency} value={parts.figure} unit={parts.unit} size={index === 0 ? 46 : 24} palette={palette} />
+                );
+              })}
+            </Tile>
           ) : null}
 
           {accounts.length === 0 ? (
-            <View style={styles.empty}>
-              <Icon name="card" size={40} color={palette.textFaint} />
-              <Text style={[styles.emptyText, { color: palette.dim }]}>
-                Add your bank, the cash in your wallet, a card or a savings pot, with the balance you see today. You type
-                it in — nothing here talks to a bank.
-              </Text>
-            </View>
+            <Empty palette={palette}>ADD YOUR BANK, YOUR WALLET OR A CARD, WITH THE BALANCE YOU SEE TODAY. NOTHING HERE TALKS TO A BANK.</Empty>
           ) : null}
 
-          {accounts.map((account) => (
-            <AccountCard
-              key={account.id}
-              account={account}
-              age={Math.max(0, daysBetween(account.balanceOn, today))}
-              palette={palette}
-              onPress={() => setSheet({ kind: 'balance', account })}
-              onEdit={() => setSheet({ kind: 'edit', account })}
-            />
-          ))}
+          <View style={styles.grid}>
+            {accounts.map((account) => (
+              <AccountTile
+                key={account.id}
+                account={account}
+                age={Math.max(0, daysBetween(account.balanceOn, today))}
+                palette={palette}
+                onPress={() => setSheet({ kind: 'balance', account })}
+                onEdit={() => setSheet({ kind: 'edit', account })}
+              />
+            ))}
+          </View>
+
+          {accounts.length > 0 ? (
+            <Text style={[styles.hint, { color: palette.textFaint }]}>
+              Tap to update a balance; hold to rename or archive.
+            </Text>
+          ) : null}
 
           <Pressable onPress={() => setShowArchived((current) => !current)} hitSlop={8} style={styles.archivedToggle}>
-            <Text style={{ color: palette.dim }}>{showArchived ? 'Hide archived' : 'Show archived'}</Text>
+            <Label palette={palette} colour={palette.dim}>
+              {showArchived ? 'HIDE ARCHIVED' : 'SHOW ARCHIVED'}
+            </Label>
           </Pressable>
         </ScrollView>
 
@@ -140,14 +136,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
               { key: 'name', label: 'Name', placeholder: 'BIAT current account, Wallet…', required: true },
               { key: 'note', label: 'Note', placeholder: 'Optional' },
             ]}
-            choices={[
-              {
-                key: 'kind',
-                label: 'Kind',
-                initial: 'bank',
-                options: ACCOUNT_KINDS.map((kind) => ({ value: kind, label: KIND_LABELS[kind].label })),
-              },
-            ]}
+            choices={[{ key: 'kind', label: 'Kind', initial: 'bank', options: kinds }]}
             saveLabel="Next"
             onCancel={() => setSheet(null)}
             onSave={(values) =>
@@ -182,7 +171,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
         {sheet?.kind === 'balance' ? (
           <AmountSheet
             title={`${sheet.account.name}: new balance`}
-            hint={`Last checked ${sheet.account.balanceOn}. Saving dates it today.`}
+            hint={`Last checked ${describeDate(sheet.account.balanceOn)}. Saving dates it today.`}
             initialMinor={sheet.account.balance.amountMinor}
             currency={sheet.account.balance.currency}
             allowCurrencyChange
@@ -205,14 +194,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
               { key: 'name', label: 'Name', initial: sheet.account.name, required: true },
               { key: 'note', label: 'Note', initial: sheet.account.note ?? '' },
             ]}
-            choices={[
-              {
-                key: 'kind',
-                label: 'Kind',
-                initial: sheet.account.kind,
-                options: ACCOUNT_KINDS.map((kind) => ({ value: kind, label: KIND_LABELS[kind].label })),
-              },
-            ]}
+            choices={[{ key: 'kind', label: 'Kind', initial: sheet.account.kind, options: kinds }]}
             actions={[
               {
                 label: sheet.account.archived ? 'Unarchive' : 'Archive',
@@ -253,7 +235,7 @@ export function Accounts({ onClose, intent, onIntentHandled }: { onClose?: () =>
   );
 }
 
-function AccountCard({
+function AccountTile({
   account,
   age,
   palette,
@@ -268,83 +250,49 @@ function AccountCard({
 }) {
   const stale = age > STALE_AFTER_DAYS;
   const negative = account.balance.amountMinor < 0;
+  const parts = formatAmountParts(account.balance);
   return (
-    <Pressable
+    <Tile
+      palette={palette}
+      style={[styles.tile, account.archived ? styles.archived : null]}
       onPress={onPress}
       onLongPress={onEdit}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: palette.surface, borderColor: palette.border },
-        account.archived ? styles.archived : null,
-        pressed ? styles.pressed : null,
-      ]}
+      label={`${account.name}. Tap to update the balance, hold to edit.`}
     >
-      <View style={styles.cardIcon}>
-        <Icon name={KIND_LABELS[account.kind].icon} size={20} color={palette.dim} />
-      </View>
-      <View style={styles.cardMain}>
-        <Text style={[styles.cardName, { color: palette.text }]} numberOfLines={1}>
+      <View style={styles.tileHead}>
+        <Icon name={KIND_LABELS[account.kind].icon} size={18} color={palette.dim} />
+        <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>
           {account.name}
         </Text>
-        <Text style={[styles.cardSub, { color: stale ? palette.warning : palette.dim }]} numberOfLines={1}>
-          {account.archived ? 'archived · ' : ''}
-          {age === 0 ? 'checked today' : age === 1 ? 'checked yesterday' : `checked ${age} days ago`}
-          {stale ? ' — worth a fresh look' : ''}
-        </Text>
+        <View style={[styles.dot, { backgroundColor: stale ? palette.accent : palette.positive }]} />
       </View>
-      <View style={styles.cardRight}>
-        <Text style={[styles.cardAmount, { color: negative ? palette.negative : palette.text }]}>
-          {formatAmount(account.balance, { unit: 'none' })}
-        </Text>
-        <Text style={[styles.cardCurrency, { color: palette.dim }]}>
-          {account.balance.currency}
-        </Text>
-      </View>
-      <Pressable onPress={onEdit} hitSlop={10} style={styles.more} accessibilityLabel={`Edit ${account.name}`}>
-        <Text style={[styles.moreText, { color: palette.dim }]}>⋯</Text>
-      </Pressable>
-    </Pressable>
+      <Figure
+        value={parts.figure}
+        unit={parts.unit}
+        size={28}
+        colour={negative ? palette.accentText : palette.text}
+        palette={palette}
+      />
+      <Label palette={palette} colour={stale ? palette.accentText : palette.textFaint}>
+        {account.archived
+          ? 'ARCHIVED'
+          : age === 0
+            ? 'CHECKED TODAY'
+            : `CHECKED ${describeDate(account.balanceOn).toUpperCase()}`}
+      </Label>
+    </Tile>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 4 },
-  pressed: { transform: [{ scale: 0.97 }] },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
-  title: { flex: 1, fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },
-  newButton: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radii.pill },
-  newText: { fontSize: typeScale.sm, fontWeight: '700' },
-
-  body: { paddingHorizontal: spacing.lg, paddingBottom: 56, gap: spacing.sm },
-  total: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.lg, marginBottom: spacing.md },
-  totalLabel: { fontSize: typeScale.sm },
-  totalValue: { fontSize: 34, fontWeight: '700', letterSpacing: -1, fontVariant: ['tabular-nums'], marginTop: 4 },
-  totalSecond: { fontSize: typeScale.lg, fontWeight: '700', fontVariant: ['tabular-nums'], marginTop: 2 },
-  totalUnit: { fontSize: typeScale.base, fontWeight: '600' },
-
-  empty: { alignItems: 'center', paddingVertical: 40, gap: spacing.md },
-  emptyIcon: { fontSize: 40 },
-  emptyText: { textAlign: 'center', lineHeight: 21, paddingHorizontal: spacing.lg },
-
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    paddingVertical: spacing.md,
-    paddingLeft: spacing.lg,
-    paddingRight: spacing.xs,
-  },
+  page: { flex: 1 },
+  body: { paddingHorizontal: 12, paddingBottom: 16, gap: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  tile: { width: '48.5%', minHeight: 142, justifyContent: 'space-between' },
   archived: { opacity: 0.55 },
-  cardIcon: { fontSize: 24, width: 32, textAlign: 'center' },
-  cardMain: { flex: 1 },
-  cardName: { fontSize: typeScale.md, fontWeight: '600' },
-  cardSub: { fontSize: typeScale.xs, marginTop: 2 },
-  cardRight: { alignItems: 'flex-end' },
-  cardAmount: { fontSize: typeScale.md, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  cardCurrency: { fontSize: typeScale.xs },
-  more: { paddingHorizontal: spacing.sm, paddingVertical: spacing.sm },
-  moreText: { fontSize: 20, fontWeight: '700' },
-  archivedToggle: { alignItems: 'center', paddingVertical: spacing.lg },
+  tileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  name: { fontFamily: fonts.uiSemibold, fontSize: 15, flex: 1 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  hint: { fontFamily: fonts.ui, fontSize: 12, textAlign: 'center' },
+  archivedToggle: { alignItems: 'center', paddingVertical: 12 },
 });

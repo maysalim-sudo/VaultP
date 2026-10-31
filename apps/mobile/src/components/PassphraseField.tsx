@@ -9,7 +9,7 @@
 
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import type { Palette } from './theme.js';
+import { fonts, type Palette } from './theme.js';
 
 export function PassphraseField({
   value,
@@ -55,7 +55,7 @@ export function PassphraseField({
         accessibilityLabel={visible ? 'Hide the passphrase' : 'Show the passphrase'}
         style={({ pressed }) => [styles.toggle, pressed ? styles.pressed : null]}
       >
-        <Text style={[styles.toggleText, { color: palette.accent }]}>{visible ? 'Hide' : 'Show'}</Text>
+        <Text style={[styles.toggleText, { color: palette.accentText }]}>{visible ? 'Hide' : 'Show'}</Text>
       </Pressable>
     </View>
   );
@@ -63,8 +63,8 @@ export function PassphraseField({
 
 const styles = StyleSheet.create({
   field: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 12 },
-  input: { flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
+  input: { flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontFamily: fonts.ui, fontSize: 16 },
   toggle: { paddingHorizontal: 14, paddingVertical: 14 },
-  toggleText: { fontSize: 14, fontWeight: '700' },
+  toggleText: { fontFamily: fonts.uiBold, fontSize: 14, },
   pressed: { transform: [{ scale: 0.97 }] },
 });

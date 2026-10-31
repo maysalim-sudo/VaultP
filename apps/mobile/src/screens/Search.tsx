@@ -2,17 +2,19 @@
  * Searching everything at once.
  *
  * You look for "Sami" or "insurance" without first deciding which module it was
- * filed under — which is the whole reason these four things share an app rather
- * than being four apps.
+ * filed under, which is the whole reason these things share an app. Opened over
+ * whatever screen was showing, from the top bar; tapping a result opens the
+ * thing itself.
  *
- * Results keep a fixed section order so the screen never rearranges itself as you
- * type, which makes a moving target of whatever you were about to tap.
+ * Results keep a fixed section order so the screen never rearranges itself as
+ * you type, which makes a moving target of whatever you were about to tap.
  */
 
 import { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -28,23 +30,30 @@ import {
   type SearchResultKind,
 } from '@vaultp/core';
 
-import { paletteFor, type Palette } from '../components/theme.js';
+import { Disc, Empty, Label, Row } from '../components/Industrial.js';
+import { Icon, type IconName } from '../components/icons.js';
+import { fonts, paletteFor } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 const SECTION_LABELS: Record<SearchResultKind, string> = {
-  person: 'People',
-  note: 'Notes',
-  expense: 'Expenses',
-  debt: 'Debts',
-  account: 'Accounts',
-  document: 'Documents',
+  person: 'PEOPLE',
+  note: 'NOTES',
+  expense: 'EXPENSES',
+  debt: 'DEBTS',
+  account: 'ACCOUNTS',
+  document: 'DOCUMENTS',
 };
 
-/**
- * Opened over whatever screen was showing, from the 🔎 in the drawer or the
- * bar on Home. Tapping a result opens that thing itself.
- */
+const KIND_ICONS: Record<SearchResultKind, IconName> = {
+  person: 'people',
+  note: 'notes',
+  expense: 'receipt',
+  debt: 'money',
+  account: 'bank',
+  document: 'docs',
+};
+
 export function Search({
   onClose,
   onOpen,
@@ -60,58 +69,64 @@ export function Search({
     () => groupResults(searchEverything(vault.db, term)),
     [vault, version, term],
   );
-
   const total = grouped.reduce((sum, group) => sum + group.results.length, 0);
+  const searching = term.trim() !== '';
 
   return (
     <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: palette.background }]}>
+      <View style={[styles.page, { backgroundColor: palette.background }]}>
         <View style={styles.header}>
-          <TextInput
-            value={term}
-            onChangeText={setTerm}
-            placeholder="Search everything"
-            placeholderTextColor={palette.dim}
-            autoFocus
-            style={[
-              styles.input,
-              {
-                color: palette.text,
-                borderColor: palette.border,
-                backgroundColor: palette.surface,
-              },
-            ]}
-          />
           {onClose ? (
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.cancel, { color: palette.dim }]}>Close</Text>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              hitSlop={4}
+              style={[styles.back, { borderColor: palette.border }]}
+            >
+              <Icon name="back" size={18} stroke={1.9} color={palette.text} />
             </Pressable>
           ) : null}
+          <View style={[styles.field, { backgroundColor: palette.surface }]}>
+            <Icon name="search" size={18} color={palette.dim} />
+            <TextInput
+              value={term}
+              onChangeText={setTerm}
+              accessibilityLabel="Search everything"
+              placeholder="Notes, money, people, documents"
+              placeholderTextColor={palette.textFaint}
+              autoFocus
+              style={[styles.input, { color: palette.text }]}
+            />
+            {searching ? <Label palette={palette}>{total} FOUND</Label> : null}
+          </View>
         </View>
 
         <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-          {term.trim() === '' ? (
+          {!searching ? (
             <Text style={[styles.hint, { color: palette.dim }]}>
-              A person, a note, a merchant, an account, a policy number — including
-              text inside a scanned document.
+              A person, a note, a merchant, an account, a policy number, including text inside a scanned document.
             </Text>
           ) : total === 0 ? (
-            <Text style={[styles.hint, { color: palette.dim }]}>
-              Nothing matches “{term.trim()}”.
-            </Text>
+            <Empty palette={palette}>NOTHING MATCHES</Empty>
           ) : null}
 
           {grouped.map((group) => (
-            <View key={group.kind}>
-              <Text style={[styles.sectionLabel, { color: palette.dim }]}>
-                {SECTION_LABELS[group.kind]}
-              </Text>
+            <View key={group.kind} style={[styles.group, { backgroundColor: palette.surface }]}>
+              <View style={styles.groupHead}>
+                <Label palette={palette}>
+                  {SECTION_LABELS[group.kind]} · {group.results.length}
+                </Label>
+              </View>
               {group.results.map((result) => (
-                <ResultRow
+                <Row
                   key={`${result.kind}:${result.id}`}
-                  result={result}
                   palette={palette}
-                  onPress={onOpen ? () => onOpen(result) : undefined}
+                  leading={<Disc icon={KIND_ICONS[result.kind]} size={36} palette={palette} />}
+                  title={result.title}
+                  {...(result.detail ? { meta: result.detail } : {})}
+                  {...(result.amount ? { value: formatAmount(result.amount) } : {})}
+                  {...(onOpen ? { onPress: () => onOpen(result) } : {})}
                 />
               ))}
             </View>
@@ -122,91 +137,16 @@ export function Search({
   );
 }
 
-function ResultRow({
-  result,
-  palette,
-  onPress,
-}: {
-  result: SearchResult;
-  palette: Palette;
-  onPress?: (() => void) | undefined;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      android_ripple={{ color: palette.ripple }}
-      style={({ pressed }) => [
-        styles.row,
-        { borderBottomColor: palette.divider },
-        pressed ? { transform: [{ scale: 0.98 }] } : null,
-      ]}
-    >
-      <View style={styles.rowMain}>
-        <Text style={[styles.title, { color: palette.text }]} numberOfLines={2}>
-          {result.title}
-        </Text>
-        {result.detail ? (
-          <Text style={[styles.detail, { color: palette.dim }]} numberOfLines={1}>
-            {result.detail}
-          </Text>
-        ) : null}
-      </View>
-
-      <View style={styles.rowRight}>
-        {result.amount ? (
-          <Text style={[styles.amount, { color: palette.text }]}>
-            {formatAmount(result.amount)}
-          </Text>
-        ) : null}
-        {result.date ? (
-          <Text style={[styles.date, { color: palette.dim }]}>{result.date}</Text>
-        ) : null}
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 52 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-  },
-  cancel: { fontSize: 16, fontWeight: '600' },
+  // A modal draws from the very top, so it clears the status bar itself.
+  page: { flex: 1, paddingTop: (StatusBar.currentHeight ?? 32) + 6 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingBottom: 10 },
+  back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  field: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 18, borderRadius: 26 },
+  input: { flex: 1, fontFamily: fonts.uiMedium, fontSize: 16, padding: 0 },
 
-  list: { paddingHorizontal: 20, paddingBottom: 40 },
-  hint: { paddingVertical: 30, lineHeight: 20 },
-  sectionLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 22,
-    marginBottom: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  rowMain: { flexShrink: 1 },
-  rowRight: { alignItems: 'flex-end' },
-  title: { fontSize: 15, fontWeight: '600' },
-  detail: { fontSize: 12, marginTop: 2 },
-  amount: { fontWeight: '600' },
-  date: { fontSize: 11, marginTop: 2 },
+  list: { paddingHorizontal: 12, paddingBottom: 24, gap: 10 },
+  hint: { fontFamily: fonts.ui, fontSize: 14, lineHeight: 21, padding: 8 },
+  group: { borderRadius: 22, paddingVertical: 6, overflow: 'hidden' },
+  groupHead: { paddingHorizontal: 18, paddingTop: 12, paddingBottom: 8 },
 });

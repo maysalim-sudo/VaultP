@@ -16,7 +16,7 @@ import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 
 import { type IsoDate, isValidDate } from '@vaultp/core';
 
-import type { Palette } from './theme.js';
+import { fonts, type Palette } from './theme.js';
 
 /** Local noon: far enough from either boundary that no timezone shifts the day. */
 function toDate(value: IsoDate): Date {

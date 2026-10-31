@@ -21,6 +21,7 @@ import { toByteArray } from 'react-native-quick-base64';
 
 import type { StoredFile, VaultKeys } from '@vaultp/core';
 
+import { fonts } from '../components/theme.js';
 import { decryptForViewing, deleteEncrypted, importBytes, importFile } from '../documents/fileStore.js';
 import type { OpenVault } from '../vault/open.js';
 
@@ -232,5 +233,5 @@ export function NoteImage({
 const styles = StyleSheet.create({
   frame: { width: '100%' },
   placeholder: { alignItems: 'center', justifyContent: 'center', padding: 12 },
-  placeholderText: { fontSize: 12, textAlign: 'center', opacity: 0.8 },
+  placeholderText: { fontFamily: fonts.ui, fontSize: 12, textAlign: 'center', opacity: 0.8 },
 });

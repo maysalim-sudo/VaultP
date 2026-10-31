@@ -1,21 +1,13 @@
 /**
- * What surrounds every screen once the vault is open.
+ * What surrounds every screen once the vault is open: the top bar, the tabs, and
+ * whichever destination is current. The screens know nothing about navigation;
+ * they are rendered here, and those that send you somewhere else are handed a
+ * callback.
  *
- * Holds the drawer and whichever destination is current. The screens themselves
- * know nothing about navigation: they are rendered here, and the two that need to
- * send you somewhere else — Home, mostly — are handed a callback.
- *
- * Two behaviours worth stating, because both are about the back button, which on
- * Android is the gesture people actually use:
- *
- *   - Back closes the drawer if it is open, then returns to Home, then leaves the
- *     app. Nothing traps you.
- *   - Choosing a destination collapses the drawer. On a phone the expanded drawer
- *     takes a third of the width; leaving it open after a choice would mean
- *     reading every screen through a slot.
- *
- * There is no history stack. With nine flat destinations and a home screen that
- * links to all of them, a stack would only add ways to be somewhere unexpected.
+ * Back on Android, the gesture people actually use, returns to Home and then
+ * leaves the app. Nothing traps you. There is no history stack: with a handful
+ * of flat places and a home that links to all of them, a stack would only add
+ * ways to be somewhere unexpected.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -29,16 +21,16 @@ import type { Intent, IntentProps, Navigate, ViewName } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 
 import { Accounts } from './Accounts.js';
+import { AddEntry } from './AddEntry.js';
 import { BackupScreen } from './BackupScreen.js';
-import { Dashboard } from './Dashboard.js';
 import { Debts } from './Debts.js';
 import { Documents } from './Documents.js';
 import { ExpenseEditor } from './ExpenseEditor.js';
 import { Home } from './Home.js';
 import { Notes } from './Notes.js';
-import { AddEntry } from './AddEntry.js';
 import { RecurringRules } from './RecurringRules.js';
 import { Search } from './Search.js';
+import { Spent } from './Spent.js';
 
 export function Shell() {
   const { vault, version } = useOpenVault();
@@ -124,11 +116,11 @@ export function Shell() {
   function renderView() {
     switch (view) {
       case 'home':
-        return <Home onNavigate={navigate} onEditExpense={setEditing} onSearch={() => setSearching(true)} />;
+        return <Home onNavigate={navigate} />;
       case 'add':
         return <AddEntry />;
       case 'insights':
-        return <Dashboard />;
+        return <Spent onEditExpense={setEditing} />;
       case 'recurring':
         return <RecurringRules categories={categories} />;
       case 'debts':

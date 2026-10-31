@@ -54,7 +54,7 @@ import {
 } from '@vaultp/core';
 
 import { DateField } from '../components/DateField.js';
-import { paletteFor } from '../components/theme.js';
+import { fonts, paletteFor } from '../components/theme.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { BlockView } from './BlockView.js';
 import { FolderPicker } from './FolderPicker.js';
@@ -1059,7 +1059,7 @@ function LabelPicker({
               setName('');
             }}
           >
-            <Text style={{ color: palette.accent, fontWeight: '700' }}>Create</Text>
+            <Text style={{ color: palette.accentText, fontWeight: '700' }}>Create</Text>
           </Pressable>
         ) : null}
       </View>
@@ -1098,21 +1098,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  iconGlyph: { fontSize: 20, fontWeight: '600' },
+  iconGlyph: { fontFamily: fonts.uiSemibold, fontSize: 20, },
   pressed: { transform: [{ scale: 0.97 }] },
 
   page: { paddingHorizontal: spacing.xl, paddingBottom: 120, gap: 2 },
-  title: { fontSize: 22, lineHeight: 30, fontWeight: '600', paddingVertical: spacing.sm },
+  title: { fontFamily: fonts.uiSemibold, fontSize: 22, lineHeight: 30, paddingVertical: spacing.sm },
 
   tickedHead: { paddingVertical: spacing.sm, marginTop: spacing.xs },
-  tickedText: { fontSize: typeScale.sm, fontWeight: '600' },
+  tickedText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.sm, },
   addItem: { paddingVertical: spacing.sm, paddingLeft: 2 },
-  addItemText: { fontSize: typeScale.md },
+  addItemText: { fontFamily: fonts.ui, fontSize: typeScale.md },
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.lg },
   chip: { paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: radii.pill },
-  chipText: { fontSize: typeScale.sm, fontWeight: '500' },
-  error: { marginTop: spacing.md, fontWeight: '600' },
+  chipText: { fontFamily: fonts.uiMedium, fontSize: typeScale.sm, },
+  error: { marginTop: spacing.md, fontFamily: fonts.uiSemibold },
 
   toolbar: {
     flexDirection: 'row',
@@ -1123,7 +1123,7 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  edited: { flex: 1, textAlign: 'center', fontSize: typeScale.xs },
+  edited: { flex: 1, textAlign: 'center', fontFamily: fonts.ui, fontSize: typeScale.xs },
 
   backdrop: {
     position: 'absolute',
@@ -1151,16 +1151,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.md,
   },
-  sheetGlyph: { width: 26, textAlign: 'center', fontSize: 18, fontWeight: '600' },
+  sheetGlyph: { width: 26, textAlign: 'center', fontFamily: fonts.uiSemibold, fontSize: 18, },
   sheetBody: { padding: spacing.sm, gap: spacing.md },
-  sheetTitle: { fontSize: typeScale.md, fontWeight: '700' },
+  sheetTitle: { fontFamily: fonts.uiBold, fontSize: typeScale.md, },
 
   formatGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, padding: spacing.sm },
   formatOption: { paddingHorizontal: spacing.md, paddingVertical: 9, borderRadius: radii.pill },
 
   swatches: { flexDirection: 'row', gap: spacing.sm, padding: spacing.sm },
   swatch: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  swatchMark: { fontSize: 15, fontWeight: '800' },
+  swatchMark: { fontFamily: fonts.uiBold, fontSize: 15, },
 
   toggle: {
     flexDirection: 'row',
@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
-  labelInput: { flex: 1, fontSize: typeScale.md, paddingVertical: 10 },
+  labelInput: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.md, paddingVertical: 10 },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1197,5 +1197,5 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   viewerImage: { width: '100%', height: '85%' },
-  viewerText: { color: '#fff', fontSize: typeScale.md, textAlign: 'center' },
+  viewerText: { color: '#fff', fontFamily: fonts.ui, fontSize: typeScale.md, textAlign: 'center' },
 });

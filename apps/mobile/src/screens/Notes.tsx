@@ -49,7 +49,7 @@ import {
 } from '@vaultp/core';
 
 import { describeDate } from '../components/DateField.js';
-import { paletteFor, type Palette } from '../components/theme.js';
+import { fonts, paletteFor, type Palette } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { HoldCard, type Frame, type Point } from '../notes/HoldCard.js';
 import { NoteImage, clipboardHasImage } from '../notes/images.js';
@@ -860,7 +860,7 @@ function FolderNameSheet({
           style={[styles.nameInput, { color: palette.text }]}
         />
         <Pressable disabled={!valid} onPress={() => onSave(name)} hitSlop={8}>
-          <Text style={{ color: palette.accent, fontWeight: '700', opacity: valid ? 1 : 0.4 }}>{action}</Text>
+          <Text style={{ color: palette.accentText, fontWeight: '700', opacity: valid ? 1 : 0.4 }}>{action}</Text>
         </Pressable>
       </View>
     </Sheet>
@@ -1065,14 +1065,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  barGlyph: { fontSize: 20, fontWeight: '600' },
-  search: { flex: 1, fontSize: typeScale.md, paddingVertical: 8 },
+  barGlyph: { fontFamily: fonts.uiSemibold, fontSize: 20, },
+  search: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.md, paddingVertical: 8 },
   layoutButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
 
   filtersScroll: { flexGrow: 0, marginTop: spacing.md },
   filters: { paddingHorizontal: spacing.lg, paddingVertical: 4, gap: spacing.sm },
   filter: { paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radii.pill, borderWidth: 1 },
-  filterText: { fontSize: typeScale.sm, fontWeight: '600' },
+  filterText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.sm, },
   chipHovered: { transform: [{ scale: 1.08 }] },
   dashed: { borderStyle: 'dashed' },
 
@@ -1091,17 +1091,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   takeText: { flex: 1, paddingVertical: spacing.md },
-  takePlaceholder: { fontSize: typeScale.md },
+  takePlaceholder: { fontFamily: fonts.ui, fontSize: typeScale.md },
   takeButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
-  takeGlyph: { fontSize: 19 },
+  takeGlyph: { fontFamily: fonts.ui, fontSize: 19 },
 
   empty: { alignItems: 'center', paddingTop: 80, paddingHorizontal: spacing.xl, gap: spacing.md },
-  emptyIcon: { fontSize: 64, opacity: 0.35 },
-  emptyText: { fontSize: typeScale.md, textAlign: 'center', lineHeight: 22 },
+  emptyIcon: { fontFamily: fonts.ui, fontSize: 64, opacity: 0.35 },
+  emptyText: { fontFamily: fonts.ui, fontSize: typeScale.md, textAlign: 'center', lineHeight: 22 },
 
   section: {
-    fontSize: typeScale.xs,
-    fontWeight: '600',
+    fontFamily: fonts.uiSemibold, fontSize: typeScale.xs,
     letterSpacing: 1,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
@@ -1114,19 +1113,19 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.md, borderWidth: 1, overflow: 'hidden' },
   cardInner: { padding: spacing.md, gap: 4 },
   cardDone: { opacity: 0.62 },
-  cardTitle: { fontSize: typeScale.md, fontWeight: '600', lineHeight: 22, marginBottom: 2 },
-  cardLine: { fontSize: typeScale.base, lineHeight: 20, flexShrink: 1 },
-  cardHeading: { fontWeight: '700' },
+  cardTitle: { fontFamily: fonts.uiSemibold, fontSize: typeScale.md, lineHeight: 22, marginBottom: 2 },
+  cardLine: { fontFamily: fonts.ui, fontSize: typeScale.base, lineHeight: 20, flexShrink: 1 },
+  cardHeading: { fontFamily: fonts.uiBold },
   italic: { fontStyle: 'italic' },
   cardCheck: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
-  cardBox: { fontSize: typeScale.base, lineHeight: 20 },
+  cardBox: { fontFamily: fonts.ui, fontSize: typeScale.base, lineHeight: 20 },
   cardTick: { width: 12, height: 12, borderRadius: 3, borderWidth: 1.5, opacity: 0.8, marginTop: 4 },
-  cardMeta: { fontSize: typeScale.sm, lineHeight: 20 },
+  cardMeta: { fontFamily: fonts.ui, fontSize: typeScale.sm, lineHeight: 20 },
   cardDivider: { height: StyleSheet.hairlineWidth * 2, opacity: 0.4, marginVertical: 4 },
   struck: { textDecorationLine: 'line-through' },
   cardFoot: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   chip: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radii.pill, maxWidth: '100%' },
-  chipText: { fontSize: typeScale.xs, fontWeight: '500' },
+  chipText: { fontFamily: fonts.uiMedium, fontSize: typeScale.xs, },
 
   floating: { position: 'absolute', top: 0, left: 0, opacity: 0.96, borderRadius: radii.md },
 
@@ -1140,7 +1139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabGlyph: { fontSize: 28, fontWeight: '500' },
+  fabGlyph: { fontFamily: fonts.uiMedium, fontSize: 28, },
 
   notice: {
     position: 'absolute',
@@ -1150,7 +1149,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: radii.pill,
   },
-  noticeText: { fontSize: typeScale.sm, fontWeight: '600' },
+  noticeText: { fontFamily: fonts.uiSemibold, fontSize: typeScale.sm, },
 
   nameRow: {
     flexDirection: 'row',
@@ -1160,7 +1159,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.sm,
     gap: spacing.sm,
   },
-  nameInput: { flex: 1, fontSize: typeScale.md, paddingVertical: 10 },
+  nameInput: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.md, paddingVertical: 10 },
 
   // Press feedback: the thing touched answers the finger first.
   pressed: { transform: [{ scale: 0.97 }] },

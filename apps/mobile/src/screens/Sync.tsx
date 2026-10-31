@@ -39,7 +39,7 @@ import { androidCryptoProvider } from '../crypto/provider.js';
 import { phoneFileStore } from '../documents/fileStore.js';
 import { driveAuthFor, driveConnection, type DriveConnection } from '../sync/driveAuth.js';
 import { phoneDriveHttp } from '../sync/driveHttp.js';
-import { paletteFor } from '../components/theme.js';
+import { fonts, paletteFor } from '../components/theme.js';
 import { Screen } from '../components/Screen.js';
 import { loadKeyfile } from '../vault/keys.js';
 import { PhoneFolderBackend } from '../sync/folderBackend.js';
@@ -261,15 +261,15 @@ export function Sync({ onClose }: { onClose?: () => void }) {
                 style={[
                   styles.target,
                   {
-                    backgroundColor: target === option ? palette.accent : palette.surface,
-                    borderColor: target === option ? palette.accent : palette.border,
+                    backgroundColor: target === option ? palette.text : palette.surface,
+                    borderColor: target === option ? palette.text : palette.border,
                   },
                 ]}
               >
                 <Text
                   style={[
                     styles.buttonText,
-                    { color: target === option ? '#fff' : palette.text },
+                    { color: target === option ? palette.background : palette.text },
                   ]}
                 >
                   {option === 'computer' ? 'My computer' : option === 'folder' ? 'A folder' : 'Drive'}
@@ -468,7 +468,7 @@ export function Sync({ onClose }: { onClose?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 52 },
+  screen: { flex: 1, paddingTop: 44 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -476,21 +476,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
-  headerTitle: { fontWeight: '700', fontSize: 17 },
-  headerAction: { fontSize: 16, fontWeight: '600' },
+  headerTitle: { fontFamily: fonts.uiBold, fontSize: 17 },
+  headerAction: { fontFamily: fonts.uiSemibold, fontSize: 16, },
   headerSpacer: { width: 44 },
 
   body: { paddingHorizontal: 20, paddingBottom: 48, gap: 14 },
-  paragraph: { fontSize: 13, lineHeight: 20 },
-  folder: { fontSize: 11, lineHeight: 16 },
-  button: { borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  paragraph: { fontFamily: fonts.ui, fontSize: 13, lineHeight: 20 },
+  folder: { fontFamily: fonts.ui, fontSize: 11, lineHeight: 16 },
+  button: { borderRadius: 999, paddingVertical: 17, alignItems: 'center' },
   targets: { flexDirection: 'row', gap: 10 },
-  target: { flex: 1, borderRadius: 14, borderWidth: 1, paddingVertical: 14, alignItems: 'center' },
-  buttonText: { fontWeight: '700', fontSize: 16 },
-  result: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 4 },
-  lead: { fontSize: 20, fontWeight: '700', marginTop: 4 },
-  strong: { fontWeight: '700' },
+  target: { flex: 1, borderRadius: 999, borderWidth: 1, paddingVertical: 12, alignItems: 'center' },
+  buttonText: { fontFamily: fonts.uiBold, fontSize: 16 },
+  result: { borderWidth: 1, borderRadius: 22, padding: 18, gap: 4 },
+  lead: { fontFamily: fonts.uiBold, fontSize: 20, marginTop: 4 },
+  strong: { fontFamily: fonts.uiBold },
   link: { alignItems: 'center', paddingVertical: 8 },
-  small: { fontSize: 12 },
-  error: { fontSize: 13, fontWeight: '600', lineHeight: 19 },
+  small: { fontFamily: fonts.ui, fontSize: 12 },
+  error: { fontFamily: fonts.uiSemibold, fontSize: 13, lineHeight: 19 },
 });

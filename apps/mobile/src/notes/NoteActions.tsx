@@ -15,7 +15,7 @@ import {
   type NoteFolder,
 } from '@vaultp/core';
 
-import type { Palette } from '../components/theme.js';
+import { fonts, type Palette } from '../components/theme.js';
 import type { OpenVault } from '../vault/open.js';
 import { FolderPicker } from './FolderPicker.js';
 import { removeReleased } from './images.js';

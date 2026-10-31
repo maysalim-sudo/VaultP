@@ -25,7 +25,7 @@ import {
 import { MIN_PASSPHRASE_LENGTH, fetchKeyfileFrom } from '@vaultp/core';
 
 import { PassphraseField } from '../components/PassphraseField.js';
-import { paletteFor } from '../components/theme.js';
+import { fonts, paletteFor } from '../components/theme.js';
 import { PairScanner } from '../sync/PairScanner.js';
 import { pairFromCode } from '../sync/pairing.js';
 
@@ -183,9 +183,9 @@ export function Setup({
         style={[styles.button, { backgroundColor: ready ? palette.accent : palette.key }]}
       >
         {busy ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={palette.onAccent} />
         ) : (
-          <Text style={[styles.buttonText, { color: ready ? '#fff' : palette.dim }]}>
+          <Text style={[styles.buttonText, { color: ready ? palette.onAccent : palette.dim }]}>
             Create vault
           </Text>
         )}
@@ -205,7 +205,7 @@ export function Setup({
           another vault would strand it. */}
       {!protectingExistingData && !busy ? (
         <Pressable onPress={() => setScanning(true)} style={styles.joinLink}>
-          <Text style={[styles.joinText, { color: palette.accent }]}>
+          <Text style={[styles.joinText, { color: palette.accentText }]}>
             I already use VaultP on my computer
           </Text>
         </Pressable>
@@ -304,11 +304,11 @@ function JoinVault({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, justifyContent: 'center', padding: 28, gap: 14 },
-  title: { fontSize: 28, fontWeight: '700' },
-  body: { fontSize: 14, lineHeight: 21 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
-  hint: { fontSize: 12, lineHeight: 18 },
-  error: { fontSize: 13, fontWeight: '600' },
+  title: { fontFamily: fonts.uiBold, fontSize: 28, },
+  body: { fontFamily: fonts.ui, fontSize: 14, lineHeight: 21 },
+  input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontFamily: fonts.ui, fontSize: 16 },
+  hint: { fontFamily: fonts.ui, fontSize: 12, lineHeight: 18 },
+  error: { fontFamily: fonts.uiSemibold, fontSize: 13, },
 
   acknowledge: {
     flexDirection: 'row',
@@ -327,11 +327,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tick: { color: '#fff', fontWeight: '900', fontSize: 13 },
-  acknowledgeText: { flexShrink: 1, fontSize: 13, lineHeight: 19 },
+  tick: { color: '#fff', fontFamily: fonts.uiBold, fontSize: 13 },
+  acknowledgeText: { flexShrink: 1, fontFamily: fonts.ui, fontSize: 13, lineHeight: 19 },
 
   joinLink: { alignItems: 'center', paddingVertical: 14 },
-  joinText: { fontSize: 15, fontWeight: '600' },
-  button: { borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 6 },
-  buttonText: { fontSize: 17, fontWeight: '700' },
+  joinText: { fontFamily: fonts.uiSemibold, fontSize: 15, },
+  button: { borderRadius: 999, paddingVertical: 17, alignItems: 'center', marginTop: 6 },
+  buttonText: { fontFamily: fonts.uiBold, fontSize: 17, },
 });

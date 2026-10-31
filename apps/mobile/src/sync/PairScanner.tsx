@@ -9,6 +9,7 @@
  * inside it never travels over the network it will protect.
  */
 
+import { fonts } from '../components/theme.js';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -112,9 +113,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#000', justifyContent: 'space-between' },
   pressed: { transform: [{ scale: 0.97 }] },
   top: { paddingTop: 64, paddingHorizontal: spacing.xl, gap: spacing.sm, backgroundColor: 'rgba(0, 0, 0, 0.55)', paddingBottom: spacing.lg },
-  title: { color: '#fff', fontSize: typeScale.lg, fontWeight: '700' },
-  body: { color: 'rgba(255, 255, 255, 0.82)', fontSize: typeScale.base, lineHeight: 21 },
-  strong: { color: '#fff', fontWeight: '700' },
+  title: { color: '#fff', fontFamily: fonts.uiBold, fontSize: typeScale.lg, },
+  body: { color: 'rgba(255, 255, 255, 0.82)', fontFamily: fonts.ui, fontSize: typeScale.base, lineHeight: 21 },
+  strong: { color: '#fff', fontFamily: fonts.uiBold },
   frame: {
     alignSelf: 'center',
     width: 250,
@@ -127,10 +128,10 @@ const styles = StyleSheet.create({
   },
   permission: { paddingHorizontal: spacing.xl, gap: spacing.lg, alignItems: 'center' },
   button: { backgroundColor: '#7EA0B8', borderRadius: radii.lg, paddingVertical: 14, paddingHorizontal: spacing.xl },
-  buttonText: { color: '#0B0E12', fontWeight: '700', fontSize: typeScale.md },
+  buttonText: { color: '#0B0E12', fontFamily: fonts.uiBold, fontSize: typeScale.md },
   bottom: { paddingHorizontal: spacing.xl, paddingBottom: 44, paddingTop: spacing.lg, gap: spacing.md, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
-  status: { color: '#fff', fontSize: typeScale.base, textAlign: 'center', lineHeight: 21 },
-  error: { color: '#D49D42', fontWeight: '600' },
+  status: { color: '#fff', fontFamily: fonts.ui, fontSize: typeScale.base, textAlign: 'center', lineHeight: 21 },
+  error: { color: '#D49D42', fontFamily: fonts.uiSemibold },
   cancel: { alignSelf: 'center', paddingVertical: 12, paddingHorizontal: spacing.xl },
-  cancelText: { color: '#fff', fontSize: typeScale.md, fontWeight: '600' },
+  cancelText: { color: '#fff', fontFamily: fonts.uiSemibold, fontSize: typeScale.md, },
 });

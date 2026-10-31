@@ -1,10 +1,10 @@
 /**
- * Who owes what.
+ * People: who owes what.
  *
- * Two figures first — what is owed to you, what you owe — then the people, each
- * a card with their balance in words and how far it has been paid down. A net
- * figure is never shown as a signed number: "-200" reads as either direction
- * the moment attention lapses, and "owes you" / "you owe" cannot be misread.
+ * Two figures first, what you are owed and what you owe, then everyone on one
+ * tile with their initials and a coloured, signed balance. The sign is never
+ * alone: the words under it say the direction, because "-200" reads as either
+ * the moment attention lapses.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -16,18 +16,14 @@ import {
   type LedgerBalance,
   money,
   type Person,
-  radii,
   repaymentProgress,
-  spacing,
   todayIn,
-  typeScale,
 } from '@vaultp/core';
 
-import { Avatar } from '../components/Avatar.js';
+import { Empty, Figure, Initials, Label, PageHead, Row, Tile } from '../components/Industrial.js';
 import { Screen } from '../components/Screen.js';
 import { TextPrompt } from '../components/TextPrompt.js';
-import { Icon } from '../components/icons.js';
-import { paletteFor, type Palette } from '../components/theme.js';
+import { fonts, paletteFor, type Palette } from '../components/theme.js';
 import type { IntentProps } from '../navigation.js';
 import { useOpenVault } from '../vault/VaultContext.js';
 import { PersonLedger } from './PersonLedger.js';
@@ -96,66 +92,68 @@ export function Debts({ onClose, intent, onIntentHandled }: { onClose?: () => vo
 
   return (
     <Screen onClose={onClose}>
-      <View style={[styles.screen, { backgroundColor: palette.background }]}>
-        <View style={styles.header}>
-          {onClose ? (
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Text style={[styles.headerAction, { color: palette.dim }]}>←</Text>
-            </Pressable>
-          ) : null}
-          <Text style={[styles.title, { color: palette.text }]}>Debts</Text>
-          <Pressable
-            onPress={() => setAdding(true)}
-            hitSlop={8}
-            style={({ pressed }) => [styles.newButton, { backgroundColor: palette.key }, pressed ? styles.pressed : null]}
-          >
-            <Text style={[styles.newText, { color: palette.text }]}>＋ Person</Text>
-          </Pressable>
-        </View>
-
+      <View style={styles.page}>
         <ScrollView contentContainerStyle={styles.body}>
+          <PageHead title="People" action="Person" onAction={() => setAdding(true)} palette={palette} />
+
           <View style={styles.totals}>
-            <Total label="Owed to you" minor={owedToYou} colour={palette.positive} palette={palette} />
-            <Total label="You owe" minor={youOwe} colour={palette.negative} palette={palette} />
+            <Tile palette={palette} style={styles.total}>
+              <Label palette={palette}>OWED TO YOU</Label>
+              <Figure
+                value={formatAmount(money(owedToYou, BASE_CURRENCY), { unit: 'none' })}
+                size={30}
+                colour={owedToYou > 0 ? palette.positive : palette.textFaint}
+                palette={palette}
+              />
+            </Tile>
+            <Tile palette={palette} style={styles.total}>
+              <Label palette={palette}>YOU OWE</Label>
+              <Figure
+                value={formatAmount(money(youOwe, BASE_CURRENCY), { unit: 'none' })}
+                size={30}
+                colour={youOwe > 0 ? palette.accentText : palette.textFaint}
+                palette={palette}
+              />
+            </Tile>
           </View>
 
-          {people.length === 0 ? (
-            <View style={styles.empty}>
-              <Icon name="people" size={52} color={palette.textFaint} />
-              <Text style={[styles.emptyText, { color: palette.dim }]}>
-                Nobody yet. Add someone you have lent money to, or borrowed from — or record it straight from the ＋
-                on the home screen.
-              </Text>
+          {people.length === 0 ? <Empty palette={palette}>NOBODY YET. ADD SOMEONE YOU LENT TO OR BORROWED FROM.</Empty> : null}
+
+          {ordered.length > 0 ? (
+            <View style={[styles.list, { backgroundColor: palette.surface }]}>
+              {ordered.map((person, index) => (
+                <PersonRow
+                  key={person.id}
+                  person={person}
+                  balance={balances.get(person.id)}
+                  first={index === 0}
+                  palette={palette}
+                  onOpen={() => setOpenPerson(person)}
+                />
+              ))}
             </View>
           ) : null}
 
-          {ordered.map((person) => (
-            <PersonCard
-              key={person.id}
-              person={person}
-              balance={balances.get(person.id)}
-              palette={palette}
-              onOpen={() => setOpenPerson(person)}
-            />
-          ))}
-
           <Pressable onPress={() => setShowArchived((current) => !current)} hitSlop={8} style={styles.archivedToggle}>
-            <Text style={{ color: palette.dim }}>
-              {showArchived ? 'Hide archived people' : 'Show archived people'}
-            </Text>
+            <Label palette={palette} colour={palette.dim}>
+              {showArchived ? 'HIDE ARCHIVED' : 'SHOW ARCHIVED'}
+            </Label>
           </Pressable>
-          {showArchived && archived.length === 0 ? (
-            <Text style={{ color: palette.dim, textAlign: 'center' }}>Nobody is archived.</Text>
+          {showArchived && archived.length === 0 ? <Empty palette={palette}>NOBODY IS ARCHIVED</Empty> : null}
+          {archived.length > 0 ? (
+            <View style={[styles.list, { backgroundColor: palette.surface }]}>
+              {archived.map((person, index) => (
+                <PersonRow
+                  key={person.id}
+                  person={person}
+                  balance={undefined}
+                  first={index === 0}
+                  palette={palette}
+                  onOpen={() => setOpenPerson(person)}
+                />
+              ))}
+            </View>
           ) : null}
-          {archived.map((person) => (
-            <PersonCard
-              key={person.id}
-              person={person}
-              balance={undefined}
-              palette={palette}
-              onOpen={() => setOpenPerson(person)}
-            />
-          ))}
         </ScrollView>
 
         {adding ? (
@@ -179,113 +177,58 @@ export function Debts({ onClose, intent, onIntentHandled }: { onClose?: () => vo
   );
 }
 
-function Total({ label, minor, colour, palette }: { label: string; minor: number; colour: string; palette: Palette }) {
-  return (
-    <View style={[styles.total, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-      <Text style={[styles.totalLabel, { color: palette.dim }]}>{label}</Text>
-      <Text style={[styles.totalValue, { color: minor > 0 ? colour : palette.dim }]}>
-        {formatAmount(money(minor, BASE_CURRENCY), { unit: 'none' })}
-        <Text style={[styles.totalUnit, { color: palette.dim }]}> {BASE_CURRENCY}</Text>
-      </Text>
-    </View>
-  );
-}
-
-function PersonCard({
+function PersonRow({
   person,
   balance,
+  first,
   palette,
   onOpen,
 }: {
   person: Person;
   balance: LedgerBalance | 'mixed' | undefined;
+  first: boolean;
   palette: Palette;
   onOpen: () => void;
 }) {
   const real = balance && balance !== 'mixed' ? balance : null;
   const net = real?.net.amountMinor ?? 0;
-  const tone = net > 0 ? palette.positive : net < 0 ? palette.negative : palette.dim;
   const progress = real ? repaymentProgress(real) : null;
+  const meta =
+    balance === 'mixed'
+      ? 'Mixed currencies: open to see'
+      : progress
+        ? `${formatAmount(money(progress.repaidMinor, real!.currency), { unit: 'none' })} of ${formatAmount(money(progress.lentMinor, real!.currency), { unit: 'none' })} repaid`
+        : person.archived
+          ? 'Archived'
+          : balance
+            ? 'Square'
+            : 'Nothing recorded yet';
 
   return (
-    <Pressable
+    <Row
+      palette={palette}
+      first={first}
+      leading={<Initials name={person.name} palette={palette} />}
+      title={person.name}
+      meta={meta}
+      dimmed={person.archived}
       onPress={onOpen}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: palette.surface, borderColor: palette.border },
-        net === 0 ? styles.square : null,
-        pressed ? styles.pressed : null,
-      ]}
-    >
-      <Avatar id={person.id} name={person.name} size={42} />
-      <View style={styles.cardMain}>
-        <View style={styles.cardTop}>
-          <Text style={[styles.cardName, { color: palette.text }]} numberOfLines={1}>
-            {person.name}
-          </Text>
-          {real && net !== 0 ? (
-            <Text style={[styles.cardAmount, { color: tone }]}>
-              {formatAmount(money(Math.abs(net), real.currency))}
-            </Text>
-          ) : null}
-        </View>
-        <Text style={[styles.cardSub, { color: balance === 'mixed' ? palette.warning : palette.dim }]}>
-          {balance === 'mixed'
-            ? 'mixed currencies — open to see'
-            : net > 0
-              ? 'owes you'
-              : net < 0
-                ? 'you owe'
-                : balance
-                  ? 'square'
-                  : 'nothing recorded yet'}
-          {progress ? `  ·  ${Math.round(progress.ratio * 100)}% paid back` : ''}
-        </Text>
-        {progress ? (
-          <View style={[styles.track, { backgroundColor: palette.key }]}>
-            <View style={[styles.fill, { width: `${Math.round(progress.ratio * 100)}%`, backgroundColor: tone }]} />
-          </View>
-        ) : null}
-      </View>
-    </Pressable>
+      {...(real && net !== 0
+        ? {
+            value: `${net > 0 ? '+' : '−'}${formatAmount(money(Math.abs(net), real.currency), { unit: 'none' })}`,
+            valueColour: net > 0 ? palette.positive : palette.accentText,
+            unit: net > 0 ? 'OWES YOU' : 'YOU OWE',
+          }
+        : {})}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingTop: 4 },
-  pressed: { transform: [{ scale: 0.97 }] },
-  archivedToggle: { alignItems: 'center', paddingVertical: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
-  headerAction: { fontSize: 24, fontWeight: '600' },
-  title: { flex: 1, fontSize: typeScale.xl, fontWeight: '700', letterSpacing: -0.5 },
-  newButton: { paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radii.pill },
-  newText: { fontSize: typeScale.sm, fontWeight: '700' },
-
-  body: { paddingHorizontal: spacing.lg, paddingBottom: 56, gap: spacing.sm },
-  totals: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  total: { flex: 1, borderRadius: radii.lg, borderWidth: 1, padding: spacing.lg },
-  totalLabel: { fontSize: typeScale.xs, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
-  totalValue: { fontSize: typeScale.lg, fontWeight: '700', marginTop: 4, fontVariant: ['tabular-nums'] },
-  totalUnit: { fontSize: typeScale.sm, fontWeight: '600' },
-
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  square: { opacity: 0.7 },
-  cardMain: { flex: 1, gap: 3 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
-  cardName: { fontSize: typeScale.md, fontWeight: '600', flexShrink: 1 },
-  cardAmount: { fontSize: typeScale.md, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  cardSub: { fontSize: typeScale.xs },
-  track: { height: 5, borderRadius: radii.pill, overflow: 'hidden', marginTop: 4 },
-  fill: { height: '100%', borderRadius: radii.pill },
-
-  empty: { alignItems: 'center', paddingTop: 60, gap: spacing.md, paddingHorizontal: spacing.lg },
-  emptyIcon: { fontSize: 56, opacity: 0.4 },
-  emptyText: { fontSize: typeScale.base, textAlign: 'center', lineHeight: 21 },
+  page: { flex: 1 },
+  body: { paddingHorizontal: 12, paddingBottom: 16, gap: 10 },
+  totals: { flexDirection: 'row', gap: 10 },
+  total: { flex: 1, gap: 14 },
+  list: { borderRadius: 22, paddingVertical: 6, overflow: 'hidden' },
+  archivedToggle: { alignItems: 'center', paddingVertical: 12 },
 });

@@ -534,6 +534,23 @@ describe('auto-logging', () => {
     expect(created.map((e) => e.occurredOn)).toEqual([today]);
   });
 
+  it('dates a rule by the local day it was made, not the UTC one', () => {
+    const { repo, store } = newRepo();
+    repo.addRule({
+      id: 'r_midnight',
+      name: 'Parking',
+      amount: tnd('2.000'),
+      frequency: 'daily',
+      anchorDate: '2026-09-01',
+      autoLog: true,
+    });
+    // Half past midnight here: east of Greenwich that is still yesterday in UTC.
+    const justAfterMidnight = new Date(2026, 9, 31, 0, 30).toISOString();
+    store.database.run('UPDATE recurring_rule SET created_at = ? WHERE id = ?', [justAfterMidnight, 'r_midnight']);
+
+    expect(repo.getRule('r_midnight')?.createdOn).toBe('2026-10-31');
+  });
+
   it('does not back-fill beyond the lookback window', () => {
     const { repo, store } = newRepo();
     repo.addRule({

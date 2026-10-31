@@ -18,7 +18,7 @@ import {
   draftToMinor,
   retypeForExponent,
 } from './amount.js';
-import { paletteFor } from './theme.js';
+import { fonts, paletteFor } from './theme.js';
 
 const CURRENCIES = [BASE_CURRENCY, 'USD', 'EUR'] as const;
 
@@ -48,9 +48,7 @@ export function AmountSheet({
   const [currency, setCurrency] = useState(initialCurrency);
   const exponent = exponentOf(currency);
   const [negative, setNegative] = useState(signed && initialMinor < 0);
-  const [draft, setDraft] = useState<Draft>(
-    initialMinor !== 0 ? draftFromMinor(Math.abs(initialMinor), exponent) : EMPTY_DRAFT,
-  );
+  const [draft, setDraft] = useState<Draft>(initialMinor !== 0 ? draftFromMinor(initialMinor, exponent) : EMPTY_DRAFT);
 
   const minor = draftToMinor(draft, exponent) * (negative ? -1 : 1);
 
@@ -66,7 +64,7 @@ export function AmountSheet({
               {title}
             </Text>
             <Pressable onPress={() => onSave(minor, currency)} hitSlop={12}>
-              <Text style={[styles.action, { color: palette.accent }]}>{confirmLabel}</Text>
+              <Text style={[styles.action, { color: palette.accentText }]}>{confirmLabel}</Text>
             </Pressable>
           </View>
 
@@ -85,16 +83,14 @@ export function AmountSheet({
                     style={[
                       styles.currencyChip,
                       { borderColor: palette.border },
-                      currency === code
-                        ? { backgroundColor: palette.accent, borderColor: 'transparent' }
-                        : null,
+                      currency === code ? { backgroundColor: palette.text, borderColor: palette.text } : null,
                     ]}
                   >
                     <Text
                       style={{
-                        color: currency === code ? '#fff' : palette.dim,
-                        fontWeight: '600',
-                        fontSize: 13,
+                        color: currency === code ? palette.background : palette.dim,
+                        fontFamily: fonts.monoMedium,
+                        fontSize: 11,
                       }}
                     >
                       {code}
@@ -113,10 +109,10 @@ export function AmountSheet({
                     style={[
                       styles.currencyChip,
                       { borderColor: palette.border },
-                      negative === minus ? { backgroundColor: palette.accent, borderColor: 'transparent' } : null,
+                      negative === minus ? { backgroundColor: palette.text, borderColor: palette.text } : null,
                     ]}
                   >
-                    <Text style={{ color: negative === minus ? palette.onAccent : palette.dim, fontWeight: '600', fontSize: 13 }}>
+                    <Text style={{ color: negative === minus ? palette.background : palette.dim, fontFamily: fonts.monoMedium, fontSize: 11 }}>
                       {minus ? '− Overdrawn / owed' : '+ In credit'}
                     </Text>
                   </Pressable>
@@ -143,7 +139,7 @@ export function AmountSheet({
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 16 },
+  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,10 +148,10 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 12,
   },
-  title: { fontWeight: '700', flexShrink: 1, textAlign: 'center' },
-  action: { fontSize: 16, fontWeight: '600' },
-  body: { paddingHorizontal: 20, paddingBottom: 32, gap: 10 },
-  hint: { fontSize: 12, textAlign: 'center', lineHeight: 17 },
+  title: { fontFamily: fonts.uiSemibold, flexShrink: 1, textAlign: 'center' },
+  action: { fontFamily: fonts.uiSemibold, fontSize: 15 },
+  body: { paddingHorizontal: 12, paddingBottom: 24, gap: 10 },
+  hint: { fontFamily: fonts.ui, fontSize: 12, textAlign: 'center', lineHeight: 17 },
   currencyRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   currencyChip: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
 });

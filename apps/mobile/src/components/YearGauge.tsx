@@ -2,8 +2,8 @@
  * The foreign-currency ceiling, as one bar across the allowance year.
  *
  * What is left is the hero, because it is the number you act on. The bar under
- * it holds the rest at a glance: what is spent (steel), what subscriptions will
- * take before the year ends (ochre, fainter — it has not happened yet), and a
+ * it holds the rest at a glance: what is spent, what subscriptions will take
+ * before the year ends (the estimate colour, fainter: it has not happened), and a
  * marker for today, so "half gone" can be read against "half the year gone".
  * The run-out date, if there is one, is a plain sentence rather than a colour.
  */
@@ -22,7 +22,7 @@ import {
 } from '@vaultp/core';
 
 import { describeDate } from './DateField.js';
-import type { Palette } from './theme.js';
+import { fonts, type Palette } from './theme.js';
 
 function monthShort(date: IsoDate): string {
   const [y, m] = date.split('-').map(Number) as [number, number];
@@ -62,16 +62,16 @@ export function YearGauge({
 
   return (
     <View>
-      <Text style={[styles.eyebrow, { color: palette.dim }]}>Foreign-currency ceiling · {label}</Text>
+      <Text style={[styles.eyebrow, { color: palette.textFaint }]}>{label.toUpperCase()}</Text>
       {remaining >= 0 ? (
-        <Text style={[styles.hero, { color: palette.text }]}>
-          {formatAmount(allowance.remaining)}
-          <Text style={[styles.heroUnit, { color: palette.dim }]}> left</Text>
+        <Text style={[styles.hero, { color: palette.text }]} numberOfLines={1} adjustsFontSizeToFit>
+          {formatAmount(allowance.remaining, { unit: 'none' })}
+          <Text style={[styles.heroUnit, { color: palette.dim }]}> {currency} LEFT</Text>
         </Text>
       ) : (
-        <Text style={[styles.hero, { color: palette.negative }]}>
-          {formatAmount(money(-remaining, currency))}
-          <Text style={[styles.heroUnit, { color: palette.dim }]}> over</Text>
+        <Text style={[styles.hero, { color: palette.accentText }]} numberOfLines={1} adjustsFontSizeToFit>
+          {formatAmount(money(-remaining, currency), { unit: 'none' })}
+          <Text style={[styles.heroUnit, { color: palette.dim }]}> {currency} OVER</Text>
         </Text>
       )}
       <Text style={[styles.caption, { color: palette.dim }]}>
@@ -80,8 +80,8 @@ export function YearGauge({
 
       <View style={styles.gauge}>
         <View style={[styles.bar, { backgroundColor: palette.key }]}>
-          <View style={[styles.segment, { flex: usedRatio, backgroundColor: palette.accent }]} />
-          <View style={[styles.segment, styles.coming, { flex: comingRatio, backgroundColor: palette.warning }]} />
+          <View style={[styles.segment, { flex: usedRatio, backgroundColor: palette.text }]} />
+          <View style={[styles.segment, styles.coming, { flex: comingRatio, backgroundColor: palette.estimate }]} />
           <View style={{ flex: Math.max(0, 1 - usedRatio - comingRatio) }} />
         </View>
         {/* Today, against the year. */}
@@ -96,10 +96,10 @@ export function YearGauge({
       </View>
 
       <View style={styles.legend}>
-        <LegendRow colour={palette.accent} label="Spent" value={formatAmount(allowance.used)} palette={palette} />
+        <LegendRow colour={palette.text} label="Spent" value={formatAmount(allowance.used)} palette={palette} />
         {committed > 0 ? (
           <LegendRow
-            colour={palette.warning}
+            colour={palette.estimate}
             faded
             label="Subscriptions still to come"
             value={formatAmount(allowance.committedTotal, { estimated: true })}
@@ -109,8 +109,8 @@ export function YearGauge({
       </View>
 
       {allowance.exhaustionDate ? (
-        <View style={[styles.callout, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-          <Text style={[styles.calloutTitle, { color: palette.warning }]}>
+        <View style={[styles.callout, { backgroundColor: palette.key }]}>
+          <Text style={[styles.calloutTitle, { color: palette.accentText }]}>
             At this pace it runs out {describeDate(allowance.exhaustionDate)}
           </Text>
           <Text style={[styles.calloutBody, { color: palette.dim }]}>
@@ -127,7 +127,7 @@ export function YearGauge({
       ) : null}
 
       {allowance.rulesWithoutRate.length > 0 ? (
-        <Text style={[styles.caption, { color: palette.warning, marginTop: spacing.sm }]}>
+        <Text style={[styles.caption, { color: palette.accentText, marginTop: spacing.sm }]}>
           {allowance.rulesWithoutRate.length} subscription{allowance.rulesWithoutRate.length === 1 ? '' : 's'} not
           valued yet, so what is to come is a floor.
         </Text>
@@ -159,10 +159,10 @@ function LegendRow({
 }
 
 const styles = StyleSheet.create({
-  eyebrow: { fontSize: typeScale.sm, fontWeight: '500' },
-  hero: { fontSize: 34, fontWeight: '700', letterSpacing: -0.8, marginTop: 2, fontVariant: ['tabular-nums'] },
-  heroUnit: { fontSize: typeScale.md, fontWeight: '600', letterSpacing: 0 },
-  caption: { fontSize: typeScale.sm, lineHeight: 19 },
+  eyebrow: { fontFamily: fonts.monoMedium, fontSize: 10, letterSpacing: 1.6 },
+  hero: { fontFamily: fonts.display, fontSize: 40, marginTop: 6 },
+  heroUnit: { fontFamily: fonts.monoMedium, fontSize: 12 },
+  caption: { fontFamily: fonts.ui, fontSize: typeScale.sm, lineHeight: 19 },
 
   gauge: { marginTop: spacing.lg, justifyContent: 'center' },
   bar: { height: 26, borderRadius: radii.sm, overflow: 'hidden', flexDirection: 'row' },
@@ -170,16 +170,16 @@ const styles = StyleSheet.create({
   coming: { opacity: 0.55 },
   today: { position: 'absolute', width: 2, height: 34, marginLeft: -1, borderRadius: 1 },
   axis: { height: 18, marginTop: 4, flexDirection: 'row', justifyContent: 'space-between' },
-  axisText: { fontSize: typeScale.xs },
-  axisToday: { position: 'absolute', transform: [{ translateX: -24 }], fontWeight: '600' },
+  axisText: { fontFamily: fonts.mono, fontSize: 10 },
+  axisToday: { position: 'absolute', transform: [{ translateX: -24 }] },
 
   legend: { marginTop: spacing.sm, gap: 6 },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   swatch: { width: 10, height: 10, borderRadius: 3 },
-  legendLabel: { flex: 1, fontSize: typeScale.sm },
-  legendValue: { fontSize: typeScale.sm, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  legendLabel: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.sm },
+  legendValue: { fontFamily: fonts.monoMedium, fontSize: 12 },
 
-  callout: { marginTop: spacing.md, borderWidth: 1, borderRadius: radii.md, padding: spacing.md, gap: 3 },
-  calloutTitle: { fontSize: typeScale.sm, fontWeight: '700' },
-  calloutBody: { fontSize: typeScale.sm, lineHeight: 19 },
+  callout: { marginTop: spacing.md, borderRadius: 14, padding: spacing.md, gap: 3 },
+  calloutTitle: { fontFamily: fonts.uiSemibold, fontSize: typeScale.sm },
+  calloutBody: { fontFamily: fonts.ui, fontSize: typeScale.sm, lineHeight: 19 },
 });

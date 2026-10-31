@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { radii, spacing, typeScale } from '@vaultp/core';
 
-import type { Palette } from '../components/theme.js';
+import { fonts, type Palette } from '../components/theme.js';
 import { Glyph } from '../components/icons.js';
 
 export function Sheet({
@@ -67,7 +67,7 @@ export function SheetRow({
     >
       <Glyph glyph={glyph} color={colour} size={20} opacity={disabled ? 0.4 : 1} />
       <Text style={[styles.label, { color: colour, opacity: disabled ? 0.4 : 1 }]}>{label}</Text>
-      {trailing ? <Text style={[styles.trailing, { color: palette.accent }]}>{trailing}</Text> : null}
+      {trailing ? <Text style={[styles.trailing, { color: palette.accentText }]}>{trailing}</Text> : null}
     </Pressable>
   );
 }
@@ -123,8 +123,7 @@ const styles = StyleSheet.create({
   },
   grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2, marginBottom: spacing.sm },
   title: {
-    fontSize: typeScale.sm,
-    fontWeight: '600',
+    fontFamily: fonts.uiSemibold, fontSize: typeScale.sm,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xs,
   },
@@ -136,10 +135,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.md,
   },
-  glyph: { width: 26, textAlign: 'center', fontSize: 18, fontWeight: '600' },
-  label: { flex: 1, fontSize: typeScale.md },
-  trailing: { fontSize: typeScale.md, fontWeight: '700' },
+  glyph: { width: 26, textAlign: 'center', fontFamily: fonts.uiSemibold, fontSize: 18, },
+  label: { flex: 1, fontFamily: fonts.ui, fontSize: typeScale.md },
+  trailing: { fontFamily: fonts.uiBold, fontSize: typeScale.md, },
   swatch: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  swatchMark: { fontSize: 15, fontWeight: '800' },
+  swatchMark: { fontFamily: fonts.uiBold, fontSize: 15, },
   pressed: { transform: [{ scale: 0.97 }] },
 });
