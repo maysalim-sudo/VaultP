@@ -42,6 +42,12 @@ const LEGACY_DATA_KEY_ITEM = 'vaultp.datakey.v1';
 const DEVICE_ID_ITEM = 'vaultp.deviceid.v1';
 /** The biometric-gated copy of the data key. Absent until unlock is set up. */
 const QUICK_KEY_ITEM = 'vaultp.quickkey.v1';
+/**
+ * Whether that copy exists: 'on' or 'off'. Holds nothing secret, and is why it
+ * can be read freely. Android asks for a fingerprint on every read of the key
+ * itself, even one that only wanted to know it was there.
+ */
+const QUICK_STATE_ITEM = 'vaultp.quickkey.state.v1';
 
 export interface VaultKeyMaterial {
   readonly dataKey: Uint8Array;
@@ -156,8 +162,14 @@ export async function biometricCapability(): Promise<BiometricCapability> {
   return { available, enrolled };
 }
 
+/**
+ * Never reads the key: that would be a fingerprint prompt just to decide whether
+ * to show one. A vault from before the state was recorded is assumed to have
+ * quick unlock, which the first attempt then settles either way.
+ */
 export async function isQuickUnlockEnabled(): Promise<boolean> {
-  return (await SecureStore.getItemAsync(QUICK_KEY_ITEM)) !== null;
+  const state = await SecureStore.getItemAsync(QUICK_STATE_ITEM);
+  return state ? state === 'on' : hasVault();
 }
 
 /**
@@ -177,10 +189,12 @@ export async function enableQuickUnlock(dataKey: Uint8Array): Promise<void> {
     keychainAccessible: SecureStore.WHEN_UNLOCKED,
     authenticationPrompt: 'Unlock VaultP',
   });
+  await SecureStore.setItemAsync(QUICK_STATE_ITEM, 'on');
 }
 
 export async function disableQuickUnlock(): Promise<void> {
   await SecureStore.deleteItemAsync(QUICK_KEY_ITEM);
+  await SecureStore.setItemAsync(QUICK_STATE_ITEM, 'off');
 }
 
 /**
@@ -193,6 +207,7 @@ export async function unlockWithBiometrics(): Promise<VaultKeyMaterial | undefin
       requireAuthentication: true,
       authenticationPrompt: 'Unlock VaultP',
     });
+    await SecureStore.setItemAsync(QUICK_STATE_ITEM, stored ? 'on' : 'off');
     if (!stored) return undefined;
 
     return { dataKey: fromBase64(stored), slot: 'primary', deviceId: await deviceId() };
@@ -207,6 +222,7 @@ export async function unlockWithBiometrics(): Promise<VaultKeyMaterial | undefin
 export async function forgetDevice(): Promise<void> {
   await Promise.all([
     SecureStore.deleteItemAsync(QUICK_KEY_ITEM),
+    SecureStore.deleteItemAsync(QUICK_STATE_ITEM),
     SecureStore.deleteItemAsync(KEYFILE_ITEM),
   ]);
 }

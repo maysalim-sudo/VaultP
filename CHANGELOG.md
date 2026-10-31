@@ -14,6 +14,7 @@ Each `## <version>` section becomes that release's notes on GitHub.
   the decimals are always there.
 - **Vault** leads with whether the computer is in step, and has a light, dark or
   automatic theme of its own.
+- Fixed: opening the phone app asked for the fingerprint twice.
 - Fixed: a recurring charge created just after midnight was dated the day
   before, and could log a charge for that day.
 
